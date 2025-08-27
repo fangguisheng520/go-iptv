@@ -18,4 +18,4 @@ COPY --from=builder /app/iptv .
 RUN apk add --no-cache openjdk8-jre;\
 chmod +x ./iptv
 
-CMD ["./iptv","-port=8080","-conf=/config","-build=/build","-java=/opt/java/openjdk/bin"]
+CMD ["./iptv","-port=8080","-conf=/config","-build=/build","-java=/usr/bin"]
