@@ -13,6 +13,7 @@ jobs:
       - name: Modify hosts file
         run: |
           echo "192.168.1.5 git.qingh.xyz" | sudo tee -a /etc/hosts
+          echo "192.168.1.5 docker.qingh.xyz" | sudo tee -a /etc/hosts
 
       # 1. 拉取仓库代码
       - name: Checkout
