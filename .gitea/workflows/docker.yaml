@@ -38,7 +38,7 @@ jobs:
           context: .
           file: ./Dockerfile-cn
           push: true
-          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
+          platforms: linux/amd64,linux/arm64
           driver-opts: |
             network=host
           
