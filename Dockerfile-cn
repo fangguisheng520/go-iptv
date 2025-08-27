@@ -3,9 +3,7 @@ FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/golang:1.22-alpine AS bu
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN go env -w GO111MODULE=on &&  \
-go env -w  GOPROXY=https://goproxy.cn,direct && \
-go mod download
+RUN go mod download
 
 COPY . .
 
@@ -17,8 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /app/iptv .
 
-RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories; \
-apk add --no-cache openjdk8-jre;\
+RUN apk add --no-cache openjdk8-jre;\
 chmod +x ./iptv
 
 CMD ["./iptv","-port=8080","-conf=/config","-build=/build","-java=/opt/java/openjdk/bin"]
