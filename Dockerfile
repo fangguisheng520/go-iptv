@@ -10,11 +10,12 @@ COPY . .
 RUN go build -o iptv .
 
 
-FROM eclipse-temurin:8-jre-alpine
+FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/iptv .
 
-RUN chmod +x ./iptv
+RUN apk add --no-cache openjdk8-jre;\
+chmod +x ./iptv
 
 CMD ["./iptv","-port=8080","-conf=/config","-build=/build","-java=/opt/java/openjdk/bin"]
