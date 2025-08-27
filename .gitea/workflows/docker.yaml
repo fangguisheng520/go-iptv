@@ -8,14 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      BUILDKIT_HOST: tcp://127.0.0.1:1234
 
     steps:
       - name: Modify hosts file
         run: |
           echo "192.168.1.5 git.qingh.xyz" | sudo tee -a /etc/hosts
-          echo "BUILDKIT_HOST=tcp://127.0.0.1:1234" >> $GITHUB_ENV
 
       # 1. 拉取仓库代码
       - name: Checkout
@@ -36,14 +33,9 @@ jobs:
       # 4. 构建并推送镜像
       - name: Build and Push
         uses: docker/build-push-action@v6
-        env: 
-          DOCKER_BUILDKIT: 1
-          HTTP_PROXY: http://192.168.1.5:7890
-          HTTPS_PROXY: http://192.168.1.5:7890
-          NO_PROXY: localhost,127.0.0.1
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile-cn
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
           driver-opts: |
