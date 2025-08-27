@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      BUILDKIT_HOST: tcp://127.0.0.1:1234
 
     steps:
       - name: Modify hosts file
@@ -35,7 +37,6 @@ jobs:
         uses: docker/build-push-action@v6
         env: 
           DOCKER_BUILDKIT: 1
-          BUILDKIT_HOST: tcp://127.0.0.1:1234
           HTTP_PROXY: http://192.168.1.5:7890
           HTTPS_PROXY: http://192.168.1.5:7890
           NO_PROXY: localhost,127.0.0.1
