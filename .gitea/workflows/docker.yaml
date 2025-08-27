@@ -29,6 +29,10 @@ jobs:
       # 4. 构建并推送镜像
       - name: Build and Push
         uses: docker/build-push-action@v6
+        env: 
+          HTTP_PROXY: http://192.168.1.5:7890
+          HTTPS_PROXY: http://192.168.1.5:7890
+          NO_PROXY: localhost,127.0.0.1
         with:
           context: .
           file: ./Dockerfile
@@ -36,5 +40,6 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
           driver-opts: |
             network=host
+          
           tags: |
             ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/public/iptv:mini
