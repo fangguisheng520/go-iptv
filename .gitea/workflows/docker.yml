@@ -23,7 +23,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # 3. 设置 Buildx
@@ -42,4 +42,4 @@ jobs:
             network=host
           
           tags: |
-            ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ secrets.DOCKER_USERNAME }}/iptv:mini
+            ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ vars.DOCKER_USERNAME }}/iptv:mini
