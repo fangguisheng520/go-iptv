@@ -42,4 +42,4 @@ jobs:
             network=host
           
           tags: |
-            ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ vars.DOCKER_USERNAME }}/iptv:mini
+            ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ secrets.DOCKER_USERNAME }}/iptv:mini
