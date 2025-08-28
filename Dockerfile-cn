@@ -3,8 +3,7 @@ FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/golang:1.22-alpine AS bu
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN go env -w GO111MODULE=on 
-RUN go env -w  GOPROXY=https://goproxy.cn,direct 
+
 RUN go mod download
 
 COPY . .
