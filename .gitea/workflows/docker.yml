@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Modify hosts file
         run: |
-          echo "192.168.31.12 git.qingh.xyz" | sudo tee -a /etc/hosts
+          echo "${{ vars.DOCKER_HOST }} ${{ vars.DOCKER_REGISTRY }}" | sudo tee -a /etc/hosts
 
       # 1. 拉取仓库代码
       - name: Checkout
