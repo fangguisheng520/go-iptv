@@ -32,7 +32,7 @@ func UploadFile(c *gin.Context, imgType string) dto.ReturnJsonDto {
 		}
 		pngName := until.Md5(url.QueryEscape(fmt.Sprintf("%s%d", file.Filename, time.Now().Unix())))
 
-		dst := "./images/bj/" + pngName + ".png"
+		dst := "/app/images/bj/" + pngName + ".png"
 		if err := c.SaveUploadedFile(file, dst); err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "保存文件失败:" + err.Error(), Type: "danger"}
 		}
@@ -53,7 +53,7 @@ func DeleteFile(params url.Values, imgType string) dto.ReturnJsonDto {
 		if !until.IsSafeImgName(bjName) {
 			return dto.ReturnJsonDto{Code: 0, Msg: "文件名不合法", Type: "danger"}
 		}
-		bjFile := "./images/bj/" + bjName + ".png"
+		bjFile := "/app/images/bj/" + bjName + ".png"
 		if err := os.Remove(bjFile); err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "删除失败", Type: "danger"}
 		}

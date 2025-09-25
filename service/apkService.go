@@ -34,7 +34,7 @@ func Getver() dto.GetverRes {
 
 func GetBg() string {
 	// 获取指定目录下的所有png文件
-	dir := "./images/bj"
+	dir := "/app/images/bj"
 	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
 	if err != nil {
 		return ""

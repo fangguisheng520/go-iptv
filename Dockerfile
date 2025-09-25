@@ -20,7 +20,6 @@ COPY ./client /client
 COPY ./apktool/* /usr/bin/
 COPY ./static /app/static
 COPY ./database /app/database
-COPY ./images /app/images
 COPY ./config.yml /app/config.yml
 COPY ./README.md  /app/README.md
 
@@ -28,6 +27,8 @@ RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
     apk del tzdata ; \
     rm -rf /var/cache/apk/* /tmp/* ; \
+    mkdir -p /app/images/icon ; \
+    mkdir -p /app/images/bj ; \
     chmod 777 -R /app/iptv /usr/bin/apktool* 
 
 CMD ["./iptv"]

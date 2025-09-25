@@ -54,7 +54,7 @@ func GetBg(c *gin.Context) {
 		c.String(http.StatusOK, "")
 		return
 	}
-	c.String(http.StatusOK, dao.GetConfig().ServerUrl+"/static/images/bj/"+imgName)
+	c.String(http.StatusOK, dao.GetConfig().ServerUrl+"/images/bj/"+imgName)
 }
 
 func GetChannels(c *gin.Context) {
