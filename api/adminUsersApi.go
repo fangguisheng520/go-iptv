@@ -66,7 +66,7 @@ func EditUsers(c *gin.Context) {
 				return
 			}
 			dao.DB.Model(&models.IptvUser{}).Where("name in (?)", ids).Updates(map[string]interface{}{
-				"exp":    9999999999,
+				"exp":    0,
 				"status": 999,
 			})
 			c.JSON(200, gin.H{"code": 1, "msg": "已设为选中的用户账号为永不到期", "type": "success"})

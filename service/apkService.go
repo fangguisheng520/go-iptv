@@ -101,7 +101,6 @@ func GetChannels(channel dto.DataReqDto) string {
 	todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	userExp := int64(until.DiffDays(todayZero.Unix(), dbUser.Exp))
 	if userExp <= 0 {
-
 		resList = append(resList, dto.ChannelListDto{})
 	}
 
@@ -237,6 +236,9 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 		result.Exps = user.Exp
 		result.Exp = int64(until.DiffDays(todayZero.Unix(), user.Exp))
+	} else {
+		result.Exp = 0
+		result.Exps = 0
 	}
 
 	var movie []models.IptvMovie
@@ -260,7 +262,7 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 	return result
 }
 
-func CheckUserInfo(user dto.ApkUser, ip string) models.IptvUser {
+func CheckUserDb(user dto.ApkUser, ip string) models.IptvUser {
 	var dbUser models.IptvUser
 	res := dao.DB.Where("mac = ?", user.Mac).Find(&dbUser)
 	if res.RowsAffected == 0 {
@@ -283,6 +285,10 @@ func CheckUserInfo(user dto.ApkUser, ip string) models.IptvUser {
 
 	if dbUser.Status == -1 && dbUser.Exp > time.Now().Unix() {
 		dbUser.Status = 1
+	}
+
+	if dbUser.Status == 999 {
+		dbUser.Exp = time.Now().Unix() + 86400
 	}
 
 	return dbUser

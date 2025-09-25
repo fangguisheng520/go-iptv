@@ -31,7 +31,7 @@ func ApkLogin(c *gin.Context) {
 		user.Mac = user.DeviceID
 	}
 
-	dbUser := service.CheckUserInfo(user, ip)
+	dbUser := service.CheckUserDb(user, ip)
 
 	result := service.ApkLogin(dbUser)
 
