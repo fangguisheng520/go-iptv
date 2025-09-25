@@ -2,31 +2,59 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"go-iptv/bootstrap"
+	"go-iptv/crontab"
+	"go-iptv/dao"
 	"go-iptv/router"
 	"go-iptv/until"
+	"log"
 )
 
 func main() {
-	conf := flag.String("conf", "/config", "配置文件目录 eg: /config")
-	build := flag.String("build", "/build", "编译环境目录 eg: /build")
-	javaBin := flag.String("java", "", "java环境 eg: /usr/bin")
-	port := flag.String("port", "8080", "启动端口 eg: 8080")
+	port := flag.String("port", "80", "启动端口 eg: 80")
 	flag.Parse()
 	if !until.CheckPort(*port) {
 		return
 	}
-	fmt.Println("加载配置文件..")
-	if !bootstrap.LoadConfig(*conf) {
-		fmt.Println("配置文件出错..")
+
+	if !until.CheckJava() {
+		log.Println("请安装Java JDK 1.8环境")
 		return
 	}
-	if !bootstrap.BuildAPK(*conf, *build, *javaBin) {
-		fmt.Println("APK编译错误")
+
+	if !until.CheckApktool() {
+		log.Println("请安装apktool环境")
 		return
 	}
-	fmt.Println("启动接口...")
-	router := router.InitRouter(*conf)
+
+	if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
+		log.Println("检测到未安装，开始安装...")
+		log.Println("启动接口...")
+		router := router.InitRouter()
+		router.Run(":" + *port)
+	}
+
+	log.Println("加载数据库...")
+	dao.InitDB("/config/iptv.db")
+
+	dao.CONFIG_PATH = "/config/config.yml"
+	dao.LoadConfigFile()
+
+	if !dao.LoadConfig() {
+		log.Println("conf加载错误")
+		return
+	}
+
+	go crontab.Crontab()
+
+	if until.Exists("/config/install.lock") && until.Exists("/config/config.yml") && until.Exists("/config/iptv.db") {
+		if !bootstrap.BuildAPK() {
+			log.Println("APK编译错误")
+			return
+		}
+	}
+
+	log.Println("启动接口...")
+	router := router.InitRouter()
 	router.Run(":" + *port)
 }

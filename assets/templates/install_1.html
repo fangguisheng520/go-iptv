@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>说明</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 30px 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 20px;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        img {
+            max-width: 100%;
+        }
+        .donate {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .donate img {
+            width: 350px;
+            height: 350px;
+        }
+        .donate p {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        .install-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #4285f4;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .install-btn:hover {
+            background-color: #357ae8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="markdown-content">
+            <!-- Markdown 内容将被渲染到这里 -->
+        </div>
+
+        <div class="donate">
+            <!-- 前往安装按钮 -->
+            
+
+            <!-- <h3>支持作者</h3>
+            <img src="/static/images/qingh.jpg" alt="捐赠二维码">
+            <p>扫码捐赠，谢谢支持！</p>
+            <p></p> -->
+            <a href="/install" class="install-btn">前往安装</a>
+        </div>
+    </div>
+
+    <!-- 引入 marked.js -->
+    <script src="/static/js/marked.min.js"></script>
+    <script>
+        // 示例 Markdown 内容
+        const mdContent = `{{ .Content }}`;
+
+        // 渲染 Markdown
+        document.getElementById('markdown-content').innerHTML = marked.parse(mdContent);
+    </script>
+</body>
+</html>

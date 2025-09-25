@@ -1,0 +1,158 @@
+{{ template "header" . }}
+{{ template "admin_header" . }}
+<main class="lyear-layout-content">
+    <style type="text/css">
+	#categorylist{padding-left: 0px;padding-top: 5px;}
+	ul li{list-style: none}
+</style>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-lg-12">
+				<div class="card">
+					<div class="card-header"><h4>频道设置</h4></div>
+					<div class="tab-content">
+						<div class="tab-pane active">
+	                		<div class="table-responsive" >
+								<table class="table table-bordered table-vcenter">
+									<tr>
+										<td>
+											<form class="form-inline" method="post" id='autoupdate_form' action="/admin/channels">
+											<label>列表设置：</label>
+												<span>更新间隔</span>
+												<input type="text" name='updateinterval' style="width: 50px;height: 20px;" value="{{ .UpdateInterval }}" size="5"><span>&nbsp;分</span>
+												<label class="lyear-checkbox checkbox-inline">
+													<input type="checkbox" name="autoupdate" {{ if .AutoUpdate }} checked="checked"{{ end }}>
+													<span>自动更新</span>
+												</label>
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="update_interval">保存设定</button>
+											</form>
+										</td>
+									</tr>
+									<tr>
+									<td>
+										<form class="form-inline" method="post" action="/admin/channels">
+											<label>外部列表：</label>
+											<div class="input-group">
+												<div class="input-group-btn">
+													<select class="btn btn-sm btn-default dropdown-toggle" name="listname">
+														<option selected="selected" value="">请选列表</option>
+													{{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
+                                                    {{if .Url }}
+														<option value="{{ .Name }}">{{ .Name }}</option>
+													{{ end }}{{ end }}{{end}}
+													</select>
+													<button id="updatelist" class="btn btn-sm btn-default" style="width: 85px;height: 26.5px;" type="button" onclick="submitFormPOST(this)" name="updatelist">更新列表</button>
+												<button class="btn btn-sm btn-default" style="width: 85px;height: 26.5px;" type="button" data-toggle="modal" data-target="#addlist">导入列表</button>
+												<button class="btn btn-sm btn-default" style="width: 85px;height: 26.5px;" type="button" onclick="submitFormPOST(this)" name="dellist">删除列表</button>
+												</div>
+											</div>
+										</form>
+									</td>
+									</tr>
+								</table>
+								<div class="modal fade" id="addlist" tabindex="-1" role="dialog">
+									<div class="modal-dialog" role="document">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title">增加外部列表</h4>
+											</div>
+											<form method="post" action="/admin/channels">
+												<div class="modal-body">
+													<div class="form-group">
+														<label for="recipient-name" class="control-label">分类名称：</label>
+														<input type="text" class="form-control" name="listname" placeholder="分类名称">
+													</div>
+													<div class="form-group">
+														<label for="message-text" class="control-label">列表链接：</label>
+														<input class="form-control" name="listurl" placeholder="请输入列表链接"></input>
+													</div>
+													<div class="form-group">
+   														<input type="checkbox" name="autocategory" value="on"></input>
+   														<label for="message-text" class="control-label">启用DIYP格式自动分类</label>
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="addthirdlist" name="addlist">确定</button>
+													<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+												</div>
+											</form>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="card">
+					<div class="card-header">
+						<h4>
+							默认频道
+						</h4>
+					</div>
+            			<div class="card-body">
+	                		<div class="table-responsive" >
+								<table class="table table-bordered table-vcenter" style="min-width:750px;">
+										    <tr>
+											    <td colspan="5">
+							<form class="form-inline" method="post" style="padding: 0 15px 0 15px;" action="/admin/channels">
+								<label class="control-label">分类管理：</label>
+								<div class="input-group">
+									<div class="input-group-btn">
+                                        <input type="hidden" id="typename0" name="old_name" value=""/>
+										<input class="form-control" style="width: 108px;height: 30px;" id="typename" type="text" size="10" name="category" value="" placeholder="分类名称"/>
+										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_addtype">增加分类</button>
+										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_deltype">删除分类</button>
+										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_modifytype">修改分类</button>
+										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_moveup">上移分类</button>
+										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_movedown">下移分类</button>
+										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_movetop">移至最上</button>
+									</div>
+								</div>
+							</form>
+							</td>
+							</tr>
+							<tr>
+							<td align="center" valign="top" style="float: left;padding: 40px 0 0 0;border-width: 0px;height: 800px;overflow:auto;">
+								<div id="tip"></div>
+								<div class="btn-group-vertical categorylist" style="padding-left: 15px;">
+									<label class="btn-block">分类列表</label>
+                                    {{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
+                                    {{if eq .Type "add" }}
+                                        <button class="btn btn-default categorylist-btn" onclick="showlist('{{.Name}}')">
+                                            <div style='text-align:left;padding: 5px;'>
+                                                <label class="lyear-checkbox checkbox-inline checkbox-cyan">
+                                                    <input type="checkbox" {{if eq .Enable 1}}checked="checked"{{end}} value="{{.Name}}" name="category" id="category" onclick='categorycheck("{{.Name}}")'>
+                                                    <span></span>
+                                                </label>
+                                                {{.Name}}
+                                            </div>
+                                        </button>
+                                    {{ end }}{{end}}{{end}}
+								</div>
+							</td>
+							<td align="center" valign="top" style="padding-top: 5px;width: 100%;">
+								<form method="post" action="/admin/channels">
+									<div class="input-group">
+										<div class="input-group-btn">
+											<div class="col-xs-12" style="padding: 15px;">
+												<input type="hidden" id="categoryname" name="categoryname" value=""/>
+												<button class="btn btn-sm btn-default" id="updatesrc" style="width:100%;" type="button" onclick="submitFormPOST(this)" name="submitsave">保存</button>
+											</div>
+											<div class="col-xs-12">
+												<textarea class="form-control" id="srclist" name="srclist" rows="35" placeholder="节目列表"></textarea>
+											</div>
+										</div>
+									</div>
+								</form>
+							</td>
+							</tr>
+						</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+{{ template "admin_footer" . }}

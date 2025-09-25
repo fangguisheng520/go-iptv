@@ -1,0 +1,110 @@
+{{ template "header" . }}
+{{ template "admin_header" . }}
+<main class="lyear-layout-content">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-lg-12">
+				<div class="card">
+					<div class="card-header"><h4>套餐列表</h4></div>
+					<div class="tab-content">
+						<div class="tab-pane active">
+							<div class="form-group">
+								<div class="table-responsive" >
+									<table class="table table-hover table-vcenter">
+										<tr>
+											<td colspan="5">
+												<form class="form-inline" method="post" action="/admin/meals">
+													<button class="btn btn-default btn-info meals-add-btn" type="button" data-toggle="modal" onclick="mealsGetCategory(this)" name="addmeal" data-target="#editmeal">新增套餐</button>
+												</form>
+											</td>
+										</tr>
+										<tr align="center">
+											<td class="w-5">套餐编号</td>
+											<td class="w-5">套餐名称</td>
+											<td class="w-5">套餐期限</td>
+											<td class="w-5">套餐状态</td>
+											<td class="w-15">收视内容</td>
+											<td class="w-10">操作</td>
+										</tr>
+										<tbody style="font-size:12px;font-weight: bold;">
+										{{ if gt (len .Meals) 0 }}
+										{{range .Meals}}
+											<tr>
+												<td class="meal-id" align="center" style="font-size:12px;height:35px;font-weight: bold;" data-value="{{.ID}}">{{.ID}}</td>
+												<td class="meal-name" align="center" style="font-size:12px;font-weight: bold;" data-value="{{.Name}}">{{.Name}}</td>
+												<td class="meal-days" align="center" style="font-size:12px;font-weight: bold;" data-value="{{.Days}}">{{if eq .Days 999}}永久{{else}}{{.Days}}天{{end}}</td>
+												<td align="center" style="font-size:12px;font-weight: bold;">{{if eq .Status 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
+												<td align="left" style="font-size:12px;font-weight: bold;">{{.Content}}</td>
+												<td>
+													<button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.ID}}" class="btn btn-xs {{if eq .Status 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
+													<button class="btn btn-xs btn-info" type="button" name="editmeal" value="{{.ID}}" data-toggle="modal" onclick="mealsGetCategory(this)" data-target="#editmeal">编辑</button>
+													{{if eq .ID 1000 }}
+													{{else}}
+													<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="delmeal" value="{{.ID}}">删除</button>
+													{{end}}
+												</td>
+											</tr>
+										{{end}}
+										{{else}}
+											<tr>
+												<td colspan="5" align="center" style="font-size:14px;color:red;height:35px;font-weight: bold;">当前未有套餐数据</td>
+											</tr>
+										{{end}}
+										</tbody>
+									</table>
+									<table align="center">
+										<td style="font-size:14px;font-weight:bold;color:red;">
+											注：套餐新增加最大可以支持20个！
+										</td>
+									</table>
+									<div class="modal fade" id="editmeal" tabindex="-1" role="dialog">
+										<div class="modal-dialog modal-lg" role="document">
+											<div class="modal-content">
+												<div class="modal-header">
+													<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+													<h4 class="modal-title"></h4>
+												</div>
+												<form method="post" action="/admin/meals">
+													<div class="modal-body">
+														<table class="table table-bordered table-striped table-vcenter" align="center">
+															<tr>
+																<td>
+																	<div class="form-inline">
+																		<input type="hidden" name="mealId" id="mealId" value="">
+																		<label class="control-label">套餐名称：</label>
+																		<input class="form-control" type="text" name="mealName" id="mealName" value="">
+																		<label class="control-label">套餐期限：</label>
+																		<input class="form-control" type="text" name="mealDays" id="mealDays" value="">
+																	</div>
+																</td>
+															</tr>
+															<tr>
+																<td>
+																	<label class="lyear-checkbox m-b-10">
+																		<input type="checkbox" onclick="checkboxAllName(this)">
+																		<span>全选/反选</span>
+																	</label>
+																	<div class="form-inline meal-checkbox">
+																	</div>
+																</td>
+															</tr>
+														</table>
+													</div>
+													<div class="modal-footer">
+														<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="submitmeal" name="submitmeal">确定</button>
+														<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+													</div>
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+{{ template "admin_footer" . }}

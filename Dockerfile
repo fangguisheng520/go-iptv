@@ -1,21 +1,33 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
+RUN go env -w GO111MODULE=on 
+RUN go env -w  GOPROXY=https://goproxy.cn,direct 
 RUN go mod download
 
 COPY . .
 
-RUN go build -o iptv .
+RUN GOOS=linux CGO_ENABLED=0 go build -o iptv main.go
 
 
 FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/iptv .
+COPY ./client /client
+COPY ./apktool/* /usr/bin/
+COPY ./static /app/static
+COPY ./database /app/database
+COPY ./images /app/images
+COPY ./config.yml /app/config.yml
+COPY ./README.md  /app/README.md
 
-RUN apk add --no-cache openjdk8-jre;\
-chmod +x ./iptv
+RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
+    apk del tzdata ; \
+    rm -rf /var/cache/apk/* /tmp/* ; \
+    chmod 777 -R /app/iptv /usr/bin/apktool* 
 
-CMD ["./iptv","-port=8080","-conf=/config","-build=/build","-java=/usr/bin"]
+CMD ["./iptv"]

@@ -3,7 +3,9 @@ package service
 import (
 	"encoding/json"
 	"encoding/xml"
+	"go-iptv/dao"
 	"go-iptv/dto"
+	"go-iptv/models"
 	"go-iptv/until"
 	"strings"
 	"time"
@@ -24,20 +26,42 @@ func GetWeather() map[string]interface{} {
 
 func GetEpg(id string) dto.Response {
 	var res dto.Response
+	res.Code = 200
+	res.Msg = "请求成功!"
 
+	var epg models.IptvEpg
 	id = strings.ToLower(id)
-	if strings.Contains(id, "cctv") {
-		res = getEpgCntv(id)
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").First(&epg)
+	if epg.Content == "" {
+		return res
+	}
+
+	var epgName string
+
+	for _, v := range strings.Split(epg.Content, ",") {
+		if id == strings.ToLower(v) {
+			epgName = epg.Name
+			break
+		}
+	}
+
+	if epgName == "" {
+		return res
+	}
+	epgName = strings.Split(epgName, "-")[1]
+
+	if strings.Contains(epgName, "cctv") {
+		res = getEpgCntv(epgName)
 		if len(res.Data) <= 0 {
 			epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-			res = getEpg51Zmt(epgUrl, id)
+			res = getEpg51Zmt(epgUrl, epgName)
 		}
-	} else if strings.Contains(id, "卫视") || strings.Contains(id, "金鹰") || strings.Contains(id, "卡酷") || strings.Contains(id, "哈哈") {
+	} else if strings.Contains(epgName, "卫视") || strings.Contains(epgName, "金鹰") || strings.Contains(epgName, "卡酷") || strings.Contains(epgName, "哈哈") {
 		epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-		res = getEpg51Zmt(epgUrl, id)
+		res = getEpg51Zmt(epgUrl, epgName)
 	} else {
 		epgUrl := "http://epg.51zmt.top:8000/e.xml"
-		res = getEpg51Zmt(epgUrl, id)
+		res = getEpg51Zmt(epgUrl, epgName)
 	}
 	return res
 }
@@ -45,19 +69,42 @@ func GetEpg(id string) dto.Response {
 func GetSimpleEpg(id string) dto.SimpleResponse {
 	var res dto.SimpleResponse
 
+	res.Code = 200
+	res.Msg = "请求成功!"
+
+	var epg models.IptvEpg
 	id = strings.ToLower(id)
-	if strings.Contains(id, "cctv") {
-		res = getSimpleEpgCntv(id)
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").First(&epg)
+	if epg.Content == "" {
+		return res
+	}
+
+	var epgName string
+
+	for _, v := range strings.Split(epg.Content, ",") {
+		if id == strings.ToLower(v) {
+			epgName = epg.Name
+			break
+		}
+	}
+
+	if epgName == "" {
+		return res
+	}
+	epgName = strings.Split(epgName, "-")[1]
+
+	if strings.Contains(epgName, "cctv") {
+		res = getSimpleEpgCntv(epgName)
 		if res.Data != (dto.Program{}) {
 			epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-			res = getSimpleEpg51Zmt(epgUrl, id)
+			res = getSimpleEpg51Zmt(epgUrl, epgName)
 		}
-	} else if strings.Contains(id, "卫视") || strings.Contains(id, "金鹰") || strings.Contains(id, "卡酷") || strings.Contains(id, "哈哈") {
+	} else if strings.Contains(epgName, "卫视") || strings.Contains(epgName, "金鹰") || strings.Contains(epgName, "卡酷") || strings.Contains(epgName, "哈哈") {
 		epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-		res = getSimpleEpg51Zmt(epgUrl, id)
+		res = getSimpleEpg51Zmt(epgUrl, epgName)
 	} else {
 		epgUrl := "http://epg.51zmt.top:8000/e.xml"
-		res = getSimpleEpg51Zmt(epgUrl, id)
+		res = getSimpleEpg51Zmt(epgUrl, epgName)
 	}
 	return res
 }

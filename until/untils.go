@@ -1,16 +1,13 @@
 package until
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"crypto/md5"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go-iptv/core"
 	"io"
-	"io/fs"
+	"log"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -20,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,22 +35,6 @@ func ReverseString(s string) string {
 	}
 	return string(runes)
 }
-
-func GetExps() string {
-	now := time.Now()
-
-	// 计算一周后的时间
-	oneWeekLater := now.AddDate(0, 0, 7)
-
-	// 获取时间戳（秒级）
-	timestamp := oneWeekLater.Unix()
-
-	// 将时间戳转换为字符串
-	timestampStr := strconv.FormatInt(timestamp, 10)
-
-	return timestampStr
-}
-
 func GetUrl(c *gin.Context) string {
 	protocol := "http://"
 	if c.Request.TLS != nil ||
@@ -86,49 +68,24 @@ func GetUrlData(url string) string {
 	return string(body)
 }
 
-func BuildUrl(baseUrl string, targetPath string) string {
-	// 移除右侧的 '/'
-	trimmedBaseUrl := strings.TrimRight(baseUrl, "/")
-
-	// 找到最后一个斜杠的位置
-	lastSlashIndex := strings.LastIndex(trimmedBaseUrl, "/")
-	if lastSlashIndex == -1 {
-		return trimmedBaseUrl + targetPath
-	}
-
-	// 取出baseUrl到最后一个斜杠
-	trimmedBaseUrl = trimmedBaseUrl[:lastSlashIndex]
-
-	// 拼接目标路径
-	finalUrl := trimmedBaseUrl + targetPath
-
-	return finalUrl
-}
-
-func GetIp(ip string) (string, string) {
-	cityId := "110000"
+func GetIpRegion(ip string) string {
+	city := "局域网"
 	if !isPrivateIP(net.ParseIP(ip)) {
-		return ip, cityId
+		return city
 	}
-	url := "https://webapi-pc.meitu.com/common/ip_location"
+	url := "https://api.mir6.com/api/ip_json?ip=" + ip
 	jsonStr := GetUrlData(url)
 	var jsonMap map[string]interface{}
 	err := json.Unmarshal([]byte(jsonStr), &jsonMap)
 	if err != nil {
-		return ip, cityId
+		return city
 	}
 	if data, ok := jsonMap["data"].(map[string]interface{}); ok {
-		for resIp, info := range data {
-			ip = resIp
-			if infoMap, ok := info.(map[string]interface{}); ok {
-				if city, ok := infoMap["city_id"].(int); ok {
-					cityId = strconv.Itoa(city)
-				}
-			}
-			break
+		if cityStr, ok := data["location"].(string); ok && cityStr != "" {
+			city = cityStr
 		}
 	}
-	return ip, cityId
+	return city
 }
 
 func isPrivateIP(ip net.IP) bool {
@@ -172,7 +129,7 @@ func GetFileSize(filePath string) string {
 	// 获取文件信息
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
-		return "0"
+		return "0 MB"
 	}
 
 	// 获取文件大小（字节）
@@ -182,7 +139,7 @@ func GetFileSize(filePath string) string {
 	fileSizeMB := float64(fileSize) / (1024 * 1024)
 
 	// 输出文件大小（MB）
-	return fmt.Sprintf("%.2f", fileSizeMB)
+	return fmt.Sprintf("%.2f MB", fileSizeMB)
 }
 
 func Exists(path string) bool {
@@ -196,163 +153,38 @@ func Exists(path string) bool {
 	return false
 }
 
-func CheckDir(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		err = os.MkdirAll(path+"/apk", 0755)
-		if err != nil {
-			fmt.Printf("创建%s目录失败: %v\n", path, err)
-			return false
-		}
-		err = os.MkdirAll(path+"/list", 0755)
-		if err != nil {
-			fmt.Printf("创建%s目录失败: %v\n", path, err)
-			return false
-		}
-		err = os.MkdirAll(path+"/images", 0755)
-		if err != nil {
-			fmt.Printf("创建%s目录失败: %v\n", path, err)
-			return false
-		}
-		return true
+func CopyFile(from, to string) error {
+	// 打开源文件
+	src, err := os.Open(from)
+	if err != nil {
+		return err
 	}
-	return false
+	defer src.Close()
+
+	// 创建目标文件（如果存在会覆盖）
+	dst, err := os.Create(to)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	// 复制内容
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return err
+	}
+
+	// 同步写入磁盘
+	return dst.Sync()
 }
 
-func CheckBuild(filePath string) bool {
-	_, err := os.Stat(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err1 := os.MkdirAll(filePath, 0755)
-			if err1 != nil {
-				fmt.Printf("创建%s目录失败: %v\n", filePath, err1)
-				return false
-			} else {
-				CheckBuild(filePath)
-			}
-		} else {
-			fmt.Printf("error: %v\n", err)
-			return false
-		}
-	}
-
-	tarData, err := base64.StdEncoding.DecodeString(core.BUILD_DATA)
-	if err != nil {
-		fmt.Println("Base64解码失败:", err)
-		return false
-	}
-	tmpFile, err := os.CreateTemp("", "build.tar.gz")
-	if err != nil {
-		fmt.Println("创建临时文件失败:", err)
-		return false
-	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
-	_, err = tmpFile.Write(tarData)
-	if err != nil {
-		fmt.Println("写入临时文件失败:", err)
-		return false
-	}
-	err = extractTarGz(tmpFile.Name(), filePath)
-	if err != nil {
-		fmt.Println("解压 tar.gz 文件失败:", err)
-		return false
-	}
-	return true
-}
-
-func extractTarGz(src string, dest string) error {
-	// 打开 .tar.gz 文件
-	file, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("打开 tar.gz 文件失败: %w", err)
-	}
-	defer file.Close()
-
-	// 创建 gzip 解压读取器
-	gzipReader, err := gzip.NewReader(file)
-	if err != nil {
-		return fmt.Errorf("创建 gzip 解压读取器失败: %w", err)
-	}
-	defer gzipReader.Close()
-
-	// 创建 tar 归档读取器
-	tarReader := tar.NewReader(gzipReader)
-
-	// 创建目标目录
-	if err := os.MkdirAll(dest, 0755); err != nil {
-		return fmt.Errorf("创建目标目录失败: %w", err)
-	}
-
-	// 读取 tar 文件中的每个条目
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("读取 tar 条目失败: %w", err)
-		}
-
-		// 构建输出路径
-		targetPath := filepath.Join(dest, header.Name)
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			// 创建目录
-			if err := os.MkdirAll(targetPath, fs.FileMode(header.Mode)); err != nil {
-				return fmt.Errorf("创建目录失败: %w", err)
-			}
-		case tar.TypeReg:
-			// 创建文件并写入内容
-			outFile, err := os.Create(targetPath)
-			if err != nil {
-				return fmt.Errorf("创建文件失败: %w", err)
-			}
-			defer outFile.Close()
-
-			if _, err := io.Copy(outFile, tarReader); err != nil {
-				return fmt.Errorf("写入文件失败: %w", err)
-			}
-		default:
-			return fmt.Errorf("未知 tar 类型: %c", header.Typeflag)
-		}
-	}
-	return nil
-}
-
-func WriteFile(filePath string, content string) bool {
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return false
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(content)
-	if err != nil {
-		return err == nil
-	}
-	return true
-}
-
-func ExecCmd(cmd string) bool {
-	args := strings.Split(cmd, " ")
-	execCmd := exec.Command(args[0], args[1:]...)
-	_, err := execCmd.Output()
-	if err != nil {
-		fmt.Printf("Error executing command: %s\n", err)
-		return false
-	}
-	return true
-}
-
-func CheckJava(javaBin string) bool {
-	fmt.Println("检查Java版本...")
-	cmd := exec.Command(javaBin+"java", "-version")
+func CheckJava() bool {
+	log.Println("检查Java版本...")
+	cmd := exec.Command("java", "-version")
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		fmt.Println("Java版本检查失败:", err)
+		log.Println("Java版本检查失败:", err)
 		return false
 	}
 
@@ -363,29 +195,152 @@ func CheckJava(javaBin string) bool {
 	// 输出 Java 版本信息
 	if len(lines) > 0 {
 		javaVersion := lines[0]
-		fmt.Println("Java版本:", javaVersion)
+		log.Println("Java版本:", javaVersion)
 
 		// 判断 Java 版本是否为 1.8
 		if strings.Contains(javaVersion, "1.8") {
 			return true
 		} else {
-			fmt.Println("Java版本不是 1.8")
+			log.Println("Java版本不是 1.8")
 			return false
 		}
 	} else {
-		fmt.Println("无法确定 Java 版本")
+		log.Println("无法确定 Java 版本")
+		return false
+	}
+}
+
+func CheckApktool() bool {
+	log.Println("检查Apktool...")
+	cmd := exec.Command("apktool", "-version")
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Println("Apktool检查失败:", err)
+		return false
+	}
+
+	// 解析输出结果
+	outputStr := string(output)
+	lines := strings.Split(outputStr, "\n")
+
+	// 输出 Apktool 版本信息
+	if len(lines) > 0 {
+		apktoolVersion := lines[0]
+		log.Println("Apktool版本:", apktoolVersion)
+		return true
+	} else {
+		log.Println("无法确定 Apktool 版本")
 		return false
 	}
 }
 
 func CheckPort(port string) bool {
-	fmt.Println("检查端口占用...")
+	log.Println("检查端口占用...")
 	// 尝试监听给定端口
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
-		fmt.Println("端口" + port + "被占用...")
+		log.Println("端口" + port + "被占用...")
 		return false // 端口被占用
 	}
 	listener.Close() // 关闭监听器
 	return true      // 端口未被占用
+}
+
+func FilterEmoji(s string) string {
+	result := make([]rune, 0, len(s))
+	for _, r := range s {
+		if utf8.RuneLen(r) < 4 {
+			result = append(result, r)
+		}
+	}
+	return string(result)
+}
+
+func GetPngFileNames(dir string) ([]string, error) {
+	var names []string
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if strings.EqualFold(filepath.Ext(entry.Name()), ".png") {
+			name := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+			names = append(names, name)
+		}
+	}
+
+	return names, nil
+}
+
+func IsSafeImgName(inputPath string) bool {
+	// 清理输入路径
+	imgName := filepath.Clean(inputPath)
+
+	// 检查是否包含 ..
+	if strings.Contains(imgName, "..") {
+		return false
+	}
+
+	// 检查是否包含 .
+	if strings.Contains(imgName, ".") {
+		return false
+	}
+
+	// 检查是否是绝对路径
+	if filepath.IsAbs(imgName) {
+		return false
+	}
+
+	// 检查是否包含可疑字符
+	if strings.ContainsAny(imgName, `:*?"<>|'`) {
+		return false
+	}
+	pattern := `^[a-fA-F0-9]{32}$`
+	match, _ := regexp.MatchString(pattern, imgName)
+	return match
+}
+
+func IsSafe(input string) bool {
+
+	if input == "" {
+		return true
+	}
+
+	// 检查是否包含可疑字符
+	if strings.ContainsAny(input, `:*?"<>|'+`) {
+		return false
+	}
+
+	return true
+}
+
+func GetFileModTimeStr(filePath string) (string, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return "", err
+	}
+	// 使用自定义格式 YYYY.MM.DD
+	return info.ModTime().Format("2006.01.02"), nil
+}
+
+func DiffDays(ts1, ts2 int64) int {
+	// 转换为 time.Time
+	t1 := time.Unix(ts1, 0)
+	t2 := time.Unix(ts2, 0)
+
+	// 计算差值
+	diff := t2.Sub(t1)
+	if diff < 0 {
+		diff = -diff // 保证正数
+	}
+
+	days := diff.Hours() / 24
+
+	return int(math.Ceil(days))
 }

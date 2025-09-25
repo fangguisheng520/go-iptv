@@ -1,4 +1,4 @@
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/golang:1.22-alpine AS builder
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -9,16 +9,26 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o iptv .
+RUN GOOS=linux CGO_ENABLED=0 go build -o iptv main.go
 
 
 FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/iptv .
+COPY ./client /client
+COPY ./apktool/* /usr/bin/
+COPY ./static /app/static
+COPY ./database /app/database
+COPY ./images /app/images
+COPY ./config.yml /app/config.yml
+COPY ./README.md  /app/README.md
 
 RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories; \
-apk add --no-cache openjdk8-jre;\
-chmod +x ./iptv
+    apk add --no-cache openjdk8 bash curl tzdata sqlite;\
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
+    apk del tzdata ; \
+    rm -rf /var/cache/apk/* /tmp/* ; \
+    chmod 777 -R /app/iptv /usr/bin/apktool* 
 
-CMD ["./iptv","-port=8080","-conf=/config","-build=/build","-java=/usr/bin"]
+CMD ["./iptv"]
