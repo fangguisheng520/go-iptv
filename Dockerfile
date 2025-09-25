@@ -3,8 +3,6 @@ FROM golang:1.24-alpine AS builder
 WORKDIR /app
 
 COPY go.mod go.sum ./
-RUN go env -w GO111MODULE=on 
-RUN go env -w  GOPROXY=https://goproxy.cn,direct 
 RUN go mod download
 
 COPY . .
@@ -23,6 +21,7 @@ COPY ./database /app/database
 COPY ./config.yml /app/config.yml
 COPY ./README.md  /app/README.md
 
+ENV TZ=Asia/Shanghai
 RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
     apk del tzdata ; \
