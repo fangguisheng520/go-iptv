@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN GOOS=linux CGO_ENABLED=0 go build -o iptv main.go
+RUN  go build -o iptv main.go
 
 
 FROM alpine:latest
