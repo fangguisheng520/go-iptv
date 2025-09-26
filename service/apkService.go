@@ -110,7 +110,7 @@ func GetChannels(channel dto.DataReqDto) string {
 
 	var channelList []models.IptvChannel
 
-	if len(cList) > 1 {
+	if len(cList) > 0 && cList[0] != "" {
 		dao.DB.Model(&models.IptvChannel{}).Where("category in ?", cList).Order("id asc").Find(&channelList)
 	}
 

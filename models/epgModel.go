@@ -2,10 +2,10 @@ package models
 
 type IptvEpg struct {
 	ID      int    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name    string `gorm:"" json:"name"`
-	Content string `gorm:"" json:"content"`
-	Status  int    `gorm:"" json:"status"`
-	Remarks string `gorm:"" json:"remarks"`
+	Name    string `gorm:"column:name" json:"name"`
+	Content string `gorm:"column:content" json:"content"`
+	Status  int    `gorm:"column:status" json:"status"`
+	Remarks string `gorm:"column:remarks" json:"remarks"`
 }
 
 func (IptvEpg) TableName() string {

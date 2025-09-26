@@ -24,9 +24,9 @@ func ChangeMovieStatus(params url.Values) dto.ReturnJsonDto {
 	}
 
 	if epgData.State == 1 {
-		dao.DB.Model(&models.IptvMovie{}).Where("id = ?", id).Update("status", 0)
+		dao.DB.Model(&models.IptvMovie{}).Where("id = ?", id).Update("state", 0)
 	} else {
-		dao.DB.Model(&models.IptvMovie{}).Where("id = ?", id).Update("status", 1)
+		dao.DB.Model(&models.IptvMovie{}).Where("id = ?", id).Update("state", 1)
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "点播 " + epgData.Name + "状态修改成功", Type: "success"}
 }

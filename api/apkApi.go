@@ -6,6 +6,7 @@ import (
 	"go-iptv/dto"
 	"go-iptv/service"
 	"go-iptv/until"
+	"log"
 	"net/http"
 	"strings"
 
@@ -36,6 +37,7 @@ func ApkLogin(c *gin.Context) {
 	result := service.ApkLogin(dbUser)
 
 	resObj, _ := json.Marshal(result)
+	log.Println(string(resObj))
 
 	aes := until.NewAes(until.GetAesKey()[5:21], "AES-128-ECB", "")
 	reAes, _ := aes.Encrypt(string(resObj))
