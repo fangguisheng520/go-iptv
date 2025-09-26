@@ -140,6 +140,9 @@ func GetChannels(channel dto.DataReqDto) string {
 		sort.Slice(tmpData, func(i, j int) bool {
 			return tmpData[i].Num < tmpData[j].Num
 		})
+		if v == "" {
+			v = "该套餐无频道"
+		}
 
 		resList = append(resList, dto.ChannelListDto{
 			Name: v,

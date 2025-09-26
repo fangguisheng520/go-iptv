@@ -7,4 +7,5 @@ type IndexDto struct {
 	ApkSize    string `json:"apk_size"`
 	ApkName    string `json:"apk_name"`
 	Content    string `json:"content"`
+	Status     int64  `json:"status"`
 }

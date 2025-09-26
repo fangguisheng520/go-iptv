@@ -45,6 +45,22 @@ func InitRouter() *gin.Engine {
 	r.Static("/images", "./images/bj")
 	r.Static("/icon", "./images/icon")
 
+	r.Use(func(c *gin.Context) {
+		if !bootstrap.Installed {
+			path := c.Request.URL.Path
+			if path != "/" && path != "/install" &&
+				!strings.HasPrefix(path, "/app/") &&
+				!strings.HasPrefix(path, "/images/") &&
+				!strings.HasPrefix(path, "/static/") &&
+				!strings.HasPrefix(path, "/icon/") {
+				c.Redirect(http.StatusFound, "/")
+				c.Abort()
+				return
+			}
+		}
+		c.Next()
+	})
+
 	ApkRouter(r, "/apk")
 	AdminRouter(r, "/admin")
 
@@ -54,7 +70,7 @@ func InitRouter() *gin.Engine {
 
 		var pageData dto.IndexDto
 
-		if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
+		if !bootstrap.Installed {
 			data, _ := os.ReadFile("/app/README.md")
 			pageData.Content = string(data)
 			c.HTML(http.StatusOK, "install_1.html", pageData)
@@ -72,6 +88,7 @@ func InitRouter() *gin.Engine {
 		pageData.ApkVersion = cfg.Build.Version
 		pageData.ApkSize = until.GetFileSize("./app/" + cfg.Build.Name + ".apk")
 		pageData.ApkUrl = "/app/" + cfg.Build.Name + ".apk"
+		pageData.Status = bootstrap.GetBuildStatus()
 
 		ua := c.GetHeader("User-Agent")
 		templateName := "index.html" // 默认 PC 模板
@@ -82,7 +99,7 @@ func InitRouter() *gin.Engine {
 	})
 
 	r.GET("/install", func(c *gin.Context) {
-		if until.Exists("/config/iptv.db") && until.Exists("/config/config.yml") && until.Exists("/config/install.lock") {
+		if bootstrap.Installed {
 			c.HTML(http.StatusOK, "install_3.html", gin.H{})
 			return
 		}
@@ -114,7 +131,7 @@ func InitRouter() *gin.Engine {
 		}
 		password = until.HashPassword(password)
 
-		if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
+		if !bootstrap.Installed {
 			status, msg := bootstrap.Install()
 			if status {
 				dao.DB.Model(&models.IptvAdmin{}).Create(&models.IptvAdmin{
@@ -126,6 +143,7 @@ func InitRouter() *gin.Engine {
 				dao.SetConfig(cfg)
 				go bootstrap.BuildAPK()
 				go crontab.Crontab()
+				bootstrap.Installed = true
 				c.JSON(http.StatusOK, gin.H{
 					"code": 1,
 					"msg":  "安装成功,正在编译APK,请稍后访问" + cfg.ServerUrl + "查看...",

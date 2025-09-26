@@ -106,5 +106,8 @@
 			</div>
 		</div>
 	</div>
+	{{if lt .ChannelNum 1}}
+	<script>$.alert({title: '错误',content: '无频道信息，请先添加频道',type: 'red',buttons: {confirm: {text: '确定',btnClass: 'btn-primary',action: function(){loadPage("/admin/channels");}}}});</script>
+	{{end}}
 </main>
 {{ template "admin_footer" . }}

@@ -28,10 +28,13 @@ func main() {
 	}
 
 	if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
+		bootstrap.Installed = false
 		log.Println("检测到未安装，开始安装...")
 		log.Println("启动接口...")
 		router := router.InitRouter()
 		router.Run(":" + *port)
+	} else {
+		bootstrap.Installed = true
 	}
 
 	log.Println("加载数据库...")
@@ -47,7 +50,7 @@ func main() {
 
 	go crontab.Crontab()
 
-	if until.Exists("/config/install.lock") && until.Exists("/config/config.yml") && until.Exists("/config/iptv.db") {
+	if bootstrap.Installed {
 		if !bootstrap.BuildAPK() {
 			log.Println("APK编译错误")
 			return

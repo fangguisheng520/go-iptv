@@ -1,6 +1,3 @@
 package bootstrap
 
-func Init() {
-	// 初始化配置
-
-}
+var Installed bool = false
