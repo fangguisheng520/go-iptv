@@ -5,6 +5,7 @@ import (
 	"go-iptv/until"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,6 +23,8 @@ func About(c *gin.Context) {
 	}
 	data, _ := os.ReadFile("/app/README.md")
 	pageData.Content = string(data)
+	re := regexp.MustCompile(`\./static`)
+	pageData.Content = re.ReplaceAllString(pageData.Content, "/static")
 
 	c.HTML(http.StatusOK, "admin_about.html", pageData)
 }

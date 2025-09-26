@@ -49,10 +49,9 @@ func InitRouter() *gin.Engine {
 		if !bootstrap.Installed {
 			path := c.Request.URL.Path
 			if path != "/" && path != "/install" &&
-				!strings.HasPrefix(path, "/app/") &&
 				!strings.HasPrefix(path, "/images/") &&
-				!strings.HasPrefix(path, "/static/") &&
-				!strings.HasPrefix(path, "/icon/") {
+				!strings.HasPrefix(path, "/favicon.ico") &&
+				!strings.HasPrefix(path, "/static/") {
 				c.Redirect(http.StatusFound, "/")
 				c.Abort()
 				return
@@ -110,6 +109,7 @@ func InitRouter() *gin.Engine {
 
 		username := c.PostForm("username")
 		password := c.PostForm("password")
+		password2 := c.PostForm("password2")
 		apkApi := c.PostForm("apkapi")
 		if apkApi == "" {
 			c.JSON(http.StatusOK, gin.H{
@@ -120,7 +120,7 @@ func InitRouter() *gin.Engine {
 			return
 		}
 
-		if username == "" || password == "" {
+		if username == "" || password == "" || password2 == "" {
 			c.JSON(http.StatusOK, gin.H{
 				"code": 0,
 				"msg":  "用户名或密码不能为空",
@@ -129,6 +129,16 @@ func InitRouter() *gin.Engine {
 			return
 
 		}
+
+		if password != password2 {
+			c.JSON(http.StatusOK, gin.H{
+				"code": 0,
+				"msg":  "两次密码不一致",
+				"type": "danger",
+			})
+			return
+		}
+
 		password = until.HashPassword(password)
 
 		if !bootstrap.Installed {
