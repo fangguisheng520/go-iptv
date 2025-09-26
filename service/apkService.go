@@ -234,14 +234,11 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 		now := time.Now()
 		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 		result.Exps = todayZero.Add(time.Duration(days) * 24 * time.Hour).Unix()
-	} else if days > 0 {
+	} else if days >= 0 {
 		now := time.Now()
 		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 		result.Exps = user.Exp
 		result.Exp = int64(until.DiffDays(todayZero.Unix(), user.Exp))
-	} else {
-		result.Exp = 0
-		result.Exps = 0
 	}
 
 	var movie []models.IptvMovie
