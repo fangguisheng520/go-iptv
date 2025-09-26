@@ -29,19 +29,17 @@ func GetEpg(id string) dto.Response {
 	res.Code = 200
 	res.Msg = "请求成功!"
 
-	var epg models.IptvEpg
+	var epgs []models.IptvEpg
 	id = strings.ToLower(id)
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").First(&epg)
-	if epg.Content == "" {
-		return res
-	}
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").Find(&epgs)
 
 	var epgName string
-
-	for _, v := range strings.Split(epg.Content, ",") {
-		if id == strings.ToLower(v) {
-			epgName = epg.Name
-			break
+	for _, epg := range epgs {
+		for _, v := range strings.Split(epg.Content, ",") {
+			if id == strings.ToLower(v) {
+				epgName = epg.Name
+				break
+			}
 		}
 	}
 
