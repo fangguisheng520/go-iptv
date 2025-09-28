@@ -16,7 +16,7 @@ import (
 func Users(c *gin.Context) {
 	username, ok := until.GetAuthName(c)
 	if !ok {
-		c.Redirect(302, "/admin/login")
+		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
 	var pageData = dto.AdminUserDto{

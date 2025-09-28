@@ -12,7 +12,7 @@ function replaceContent(html) {
 	var $temp = $('<div>').html(html);
 	var $newMain = $temp.find('main');
 	if ($newMain.length) $('main').replaceWith($newMain);
-	$(".categorylist-btn").first().click();
+	// $(".categorylist-btn").first().click();
 
 	// var $newCopyright = $temp.find('p.copyright');
 	// if ($newCopyright.length) $('p.copyright').replaceWith($newCopyright);
@@ -48,23 +48,15 @@ function updateMenuActive(url) {
 }
 
 // 加载页面函数
-function loadPage(url, pushHistory = true) {
+function loadPage(url, pushHistory = true, showName = "") {
 	if (!url || url === "javascript:;" || url === "javascript:void(0)") return;
-
 	$.ajax({
 		url: url,
 		method: 'GET',
-		dataType: 'html',
-		success: function(res, textStatus, jqXHR) {
-			const status = jqXHR.status;
-
-			// 判断是否 30x
-			if (status >= 300 && status < 400) {
-				const redirectUrl = jqXHR.getResponseHeader('Location');
-				if (redirectUrl) {
-					window.location.href = redirectUrl; // 浏览器跳转
-					return;
-				}
+		success: function(res) {
+			if (res.redirect === true){
+				window.location.href = res.url;
+				return;
 			}
 			replaceContent(res);
 			if (url.hash === '#bottom') {
@@ -103,16 +95,20 @@ function loadPage(url, pushHistory = true) {
 
 			if (pushHistory) history.pushState(null, '', url);
 			updateMenuActive(url);
-			return true; // 返回 true 表示成功
+			if (showName !== "") {
+				showlist(showName);
+			}else{
+				$(".categorylist-btn").first().click();
+			}
 		},
-		error: function(err, textStatus, jqXHR) {
+		error: function(err) {
 			console.error('请求失败:', err);
 			return false; // 返回 false 表示失败
 		}
 	});
 }
 
-function submitFormPOST(btn) {
+function submitFormPOST(btn, showChannel = false) {
 
 	// 获取按钮所在的 form
 	var form = btn.closest("form");
@@ -122,6 +118,8 @@ function submitFormPOST(btn) {
 	}
 
 	var action = form.action || window.location.pathname; // 默认当前路径
+
+	let showName = "";
 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
@@ -133,6 +131,18 @@ function submitFormPOST(btn) {
 	});
 	params.append(btn.name, "");
 
+	if(showChannel && (btn.name === "submit_addtype" || 
+		btn.name  === "submit_modifytype" || 
+		btn.name  === "submit_moveup" ||
+		btn.name  === "submit_movedown" ||
+		btn.name  === "submit_movetop"
+	)){
+		showName = params.get("category");
+	}
+
+	if(showChannel && btn.name === "submitsave"){
+		showName = params.get("categoryname");
+	}
 	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
@@ -144,12 +154,12 @@ function submitFormPOST(btn) {
 	.then(response => response.json())
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
+		loadPage(action, true, showName);
 		if (data.type === "success") {
 			// 移除遮罩层
 			if ($('.modal-backdrop').length > 0) {
 				document.querySelector('.modal-backdrop').remove();
 			}
-			loadPage(action);
 		}
 	})
 	.catch(err => {
@@ -283,7 +293,6 @@ function checkboxAllName(a){
 }
 
 function showlist(name){
-	console.log(name);
 	$("#srclist").val("正在加载中...");
 	$.ajax({
 		url: "/admin/channels",
@@ -563,8 +572,6 @@ function uploadBj(event) {
 };
 
 function deleteBj(name) {
-	console.log(name);
-
 	const params = new URLSearchParams();
 	params.append("deleteBj", name);
 

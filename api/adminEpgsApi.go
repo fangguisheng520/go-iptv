@@ -11,7 +11,7 @@ import (
 func Epgs(c *gin.Context) {
 	_, ok := until.GetAuthName(c)
 	if !ok {
-		c.Redirect(302, "/admin/login")
+		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
 	c.Request.ParseForm()
@@ -34,8 +34,8 @@ func Epgs(c *gin.Context) {
 			res = service.BindChannel()
 		case "clearbind":
 			res = service.ClearBind()
-			// case "saveepgapi_chk":
-			// 	res = service.SaveEpgApi(params)
+		case "clearcache":
+			res = service.ClearCache()
 		}
 
 	}

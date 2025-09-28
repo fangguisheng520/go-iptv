@@ -2,9 +2,9 @@ package router
 
 import (
 	"go-iptv/api"
+	"go-iptv/dto"
 	"go-iptv/html"
 	"go-iptv/until"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -64,7 +64,8 @@ func JWTMiddleware(r *gin.RouterGroup) gin.HandlerFunc {
 		// 从 Cookie 获取 token
 		tokenString, err := c.Cookie("token")
 		if err != nil {
-			c.Redirect(http.StatusFound, r.BasePath()+"/login") // 重定向到登录页面
+			c.JSON(200, dto.NewAdminRedirectDto())
+			// c.Redirect(http.StatusFound, r.BasePath()+"/login") // 重定向到登录页面
 			c.Abort()
 			return
 		}
@@ -72,7 +73,8 @@ func JWTMiddleware(r *gin.RouterGroup) gin.HandlerFunc {
 		// 调用 VerifyJWT 验证 token
 		claims, err, update := until.VerifyJWT(tokenString)
 		if err != nil {
-			c.Redirect(http.StatusFound, r.BasePath()+"/login") // 重定向到登录页面
+			c.JSON(200, dto.NewAdminRedirectDto())
+			// c.Redirect(http.StatusFound, r.BasePath()+"/login") // 重定向到登录页面
 			c.Abort()
 			return
 		}

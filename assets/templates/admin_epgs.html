@@ -45,7 +45,7 @@
 													<button class="btn btn-default" type="button" data-toggle="modal" data-target="#addepg">增加EPG</button>
 													<button class="btn btn-default" type="button" onclick="submitFormPOST(this)" name="bindchannel">绑定频道</button>
 													<button class="btn btn-default" type="button" onclick="confirmAndSubmit(this,'确定要清空绑定的频道列表吗？')" name="clearbind">清空绑定</button>
-													<!-- <button class="btn btn-default" type="button" onclick="submitFormPOST(this)" name="clearcache" onclick="confirmAndSubmit(this,'确定要清空EPG缓存吗？')">清空EPG缓存</button> -->
+													<button class="btn btn-default" type="button" name="clearcache" onclick="confirmAndSubmit(this,'确定要清空EPG缓存吗？')">清空EPG缓存</button>
 													<!-- <button class="btn btn-default" type="button" data-toggle="modal" data-target="#epgset">EPG接口设置</button> -->
 												</form>
 											</td>
@@ -101,12 +101,12 @@
 															<select class="form-control btn btn-default dropdown-toggle" id="epg" name="epg">
 																<option value="">请选EPG来源</option>
 																<option value="cntv">CCTV官网</option>
-																<option value="jisu">极速数据</option>
+																<!-- <option value="jisu">极速数据</option>
 																<option value="tvming">天脉聚源</option>
 																<option value="tvmao">电视猫</option>
-																<option value="tvsou">搜视网</option>
+																<option value="tvsou">搜视网</option> -->
 																<option value="51zmt">51zmt</option>
-																<option value="112114">112114</option>
+																<!-- <option value="112114">112114</option> -->
 															</select>
 														</div>
 													</div>

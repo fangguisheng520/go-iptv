@@ -27,6 +27,14 @@ func main() {
 		return
 	}
 
+	log.Println("初始化EPG缓存...")
+	cache, err := dao.NewFileCache("/config/cache/", true)
+	if err != nil {
+		log.Println("初始化缓存失败")
+		return
+	}
+	dao.Cache = cache
+
 	if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
 		bootstrap.Installed = false
 		log.Println("检测到未安装，开始安装...")

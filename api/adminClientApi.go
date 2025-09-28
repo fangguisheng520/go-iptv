@@ -11,7 +11,7 @@ import (
 func Client(c *gin.Context) {
 	_, ok := until.GetAuthName(c)
 	if !ok {
-		c.Redirect(302, "/admin/login")
+		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
 	c.Request.ParseForm()
@@ -42,7 +42,7 @@ func Client(c *gin.Context) {
 func ClientUploadIcon(c *gin.Context) {
 	_, ok := until.GetAuthName(c)
 	if !ok {
-		c.Redirect(302, "/admin/login")
+		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
 	c.JSON(200, service.UploadFile(c, "icon"))
@@ -51,7 +51,7 @@ func ClientUploadIcon(c *gin.Context) {
 func ClientUploadBj(c *gin.Context) {
 	_, ok := until.GetAuthName(c)
 	if !ok {
-		c.Redirect(302, "/admin/login")
+		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
 	c.JSON(200, service.UploadFile(c, "bj"))

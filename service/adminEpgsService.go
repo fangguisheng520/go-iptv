@@ -175,6 +175,11 @@ func ClearBind() dto.ReturnJsonDto {
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除绑定成功", Type: "success"}
 }
 
+func ClearCache() dto.ReturnJsonDto {
+	dao.Cache.Clear()
+	return dto.ReturnJsonDto{Code: 1, Msg: "清除缓存成功", Type: "success"}
+}
+
 // func SaveEpgApi(params url.Values) dto.ReturnJsonDto {
 // 	err1000 := params.Get("tipepgerror_1000")
 // 	err1001 := params.Get("tipepgerror_1001")

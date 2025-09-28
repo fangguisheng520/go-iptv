@@ -399,29 +399,12 @@ func SubmitSave(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	}
 
-	srcList := strings.Split(srclistStr, "\n")
+	// srcList := strings.Split(srclistStr, "\n")
 
 	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type = ?", categoryName, "add").First(&models.IptvCategory{}).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
-	dao.DB.Model(&models.IptvChannel{}).Where("category = ? ", categoryName).Delete(&models.IptvChannel{})
-
-	for _, src := range srcList {
-
-		src = strings.TrimSpace(src)
-		if src == "" {
-			continue
-		}
-
-		tmpList := strings.Split(src, ",")
-
-		channel := models.IptvChannel{
-			Name:     tmpList[0],
-			Url:      tmpList[1],
-			Category: categoryName,
-		}
-		dao.DB.Create(&channel)
-	}
+	AddChannelList(categoryName, srclistStr)
 	go BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "保存成功", Type: "success"}
 }

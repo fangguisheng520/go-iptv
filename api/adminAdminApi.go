@@ -1,6 +1,7 @@
 package api
 
 import (
+	"go-iptv/dto"
 	"go-iptv/service"
 	"go-iptv/until"
 
@@ -10,7 +11,7 @@ import (
 func Admins(c *gin.Context) {
 	_, ok := until.GetAuthName(c)
 	if !ok {
-		c.Redirect(302, "/admin/login")
+		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
 	c.Request.ParseForm()

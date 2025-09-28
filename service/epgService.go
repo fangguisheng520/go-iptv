@@ -41,25 +41,26 @@ func GetEpg(id string) dto.Response {
 				break
 			}
 		}
+		if epgName != "" {
+			break
+		}
 	}
 
 	if epgName == "" {
 		return res
 	}
+	epgFrom := strings.Split(epgName, "-")[0]
 	epgName = strings.Split(epgName, "-")[1]
 
-	if strings.Contains(epgName, "cctv") {
+	if strings.Contains(epgFrom, "cntv") {
 		res = getEpgCntv(epgName)
 		if len(res.Data) <= 0 {
-			epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-			res = getEpg51Zmt(epgUrl, epgName)
+			res = getEpg51Zmt(epgName)
 		}
-	} else if strings.Contains(epgName, "卫视") || strings.Contains(epgName, "金鹰") || strings.Contains(epgName, "卡酷") || strings.Contains(epgName, "哈哈") {
-		epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-		res = getEpg51Zmt(epgUrl, epgName)
+	} else if strings.Contains(epgFrom, "51zmt") {
+		res = getEpg51Zmt(epgName)
 	} else {
-		epgUrl := "http://epg.51zmt.top:8000/e.xml"
-		res = getEpg51Zmt(epgUrl, epgName)
+		res = getEpg51Zmt(epgName)
 	}
 	return res
 }
@@ -70,44 +71,44 @@ func GetSimpleEpg(id string) dto.SimpleResponse {
 	res.Code = 200
 	res.Msg = "请求成功!"
 
-	var epg models.IptvEpg
+	var epgs []models.IptvEpg
 	id = strings.ToLower(id)
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").First(&epg)
-	if epg.Content == "" {
-		return res
-	}
-
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").Find(&epgs)
 	var epgName string
+	for _, epg := range epgs {
 
-	for _, v := range strings.Split(epg.Content, ",") {
-		if id == strings.ToLower(v) {
-			epgName = epg.Name
+		for _, v := range strings.Split(epg.Content, ",") {
+			if id == strings.ToLower(v) {
+				epgName = epg.Name
+				break
+			}
+		}
+		if epgName != "" {
 			break
 		}
 	}
-
 	if epgName == "" {
 		return res
 	}
+	epgFrom := strings.Split(epgName, "-")[0]
 	epgName = strings.Split(epgName, "-")[1]
 
 	if strings.Contains(epgName, "cctv") {
 		res = getSimpleEpgCntv(epgName)
 		if res.Data != (dto.Program{}) {
-			epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-			res = getSimpleEpg51Zmt(epgUrl, epgName)
+			res = getSimpleEpg51Zmt(epgName)
 		}
-	} else if strings.Contains(epgName, "卫视") || strings.Contains(epgName, "金鹰") || strings.Contains(epgName, "卡酷") || strings.Contains(epgName, "哈哈") {
-		epgUrl := "http://epg.51zmt.top:8000/cc.xml"
-		res = getSimpleEpg51Zmt(epgUrl, epgName)
+	} else if strings.Contains(epgFrom, "51zmt") {
+		res = getSimpleEpg51Zmt(epgName)
 	} else {
-		epgUrl := "http://epg.51zmt.top:8000/e.xml"
-		res = getSimpleEpg51Zmt(epgUrl, epgName)
+		res = getSimpleEpg51Zmt(epgName)
 	}
 	return res
 }
 
 func getEpgCntv(id string) dto.Response {
+
+	var cacheKey = "cntv_" + id
 
 	var res dto.Response
 	res.Code = 200
@@ -117,15 +118,31 @@ func getEpgCntv(id string) dto.Response {
 		res.Data = []dto.Program{}
 		return res
 	}
+
 	epgUrl := "https://api.cntv.cn/epg/epginfo?c=" + id + "&serviceId=channel&d="
 
 	var jsonMap map[string]map[string]interface{}
-	jsonStr := until.GetUrlData(epgUrl)
-	err := json.Unmarshal([]byte(jsonStr), &jsonMap)
-	if err != nil {
-		res.Data = []dto.Program{}
-		return res
+
+	readCacheOk := false
+	if dao.Cache.Exists(cacheKey) {
+		err := dao.Cache.GetJSON(cacheKey, jsonMap)
+		if err == nil {
+			readCacheOk = true
+		}
 	}
+
+	if !readCacheOk {
+		jsonStr := until.GetUrlData(epgUrl)
+		err := json.Unmarshal([]byte(jsonStr), &jsonMap)
+		if err != nil {
+			res.Data = []dto.Program{}
+			return res
+		}
+		if dao.Cache.SetJSON(cacheKey, jsonMap) != nil {
+			dao.Cache.Delete(cacheKey)
+		}
+	}
+
 	if _, ok := jsonMap["errcode"]; ok {
 		res.Data = []dto.Program{}
 		return res
@@ -171,6 +188,7 @@ func getEpgCntv(id string) dto.Response {
 
 func getSimpleEpgCntv(id string) dto.SimpleResponse {
 
+	cacheKey := "simpleEpgCntv_" + id
 	var simpleRes dto.SimpleResponse
 	simpleRes.Code = 200
 	simpleRes.Msg = "请求成功!"
@@ -182,12 +200,26 @@ func getSimpleEpgCntv(id string) dto.SimpleResponse {
 	epgUrl := "https://api.cntv.cn/epg/epginfo?c=" + id + "&serviceId=channel&d="
 
 	var jsonMap map[string]map[string]interface{}
-	jsonStr := until.GetUrlData(epgUrl)
-	err := json.Unmarshal([]byte(jsonStr), &jsonMap)
-	if err != nil {
-		simpleRes.Data = dto.Program{}
-		return simpleRes
+	readCacheOk := false
+	if dao.Cache.Exists(cacheKey) {
+		err := dao.Cache.GetJSON(cacheKey, jsonMap)
+		if err == nil {
+			readCacheOk = true
+		}
 	}
+
+	if !readCacheOk {
+		jsonStr := until.GetUrlData(epgUrl)
+		err := json.Unmarshal([]byte(jsonStr), &jsonMap)
+		if err != nil {
+			simpleRes.Data = dto.Program{}
+			return simpleRes
+		}
+		if dao.Cache.SetJSON(cacheKey, jsonMap) != nil {
+			dao.Cache.Delete(cacheKey)
+		}
+	}
+
 	if _, ok := jsonMap["errcode"]; ok {
 		simpleRes.Data = dto.Program{}
 		return simpleRes
@@ -206,7 +238,9 @@ func getSimpleEpgCntv(id string) dto.SimpleResponse {
 	return simpleRes
 }
 
-func getEpg51Zmt(epgUrl string, id string) dto.Response {
+func getEpg51Zmt(id string) dto.Response {
+	epgUrl := "http://epg.51zmt.top:8000/e.xml"
+	cacheKey := "epg51Zmt_" + id
 	res := dto.Response{}
 	res.Code = 200
 	res.Msg = "请求成功!"
@@ -214,7 +248,26 @@ func getEpg51Zmt(epgUrl string, id string) dto.Response {
 		res.Data = []dto.Program{}
 		return res
 	}
-	zmtTV := zmtXmlToType(epgUrl)
+	// zmtTV := zmtXmlToType(epgUrl)
+	var zmtTV dto.ZmtTV
+	var xmlByte []byte
+	readCacheOk := false
+	if dao.Cache.Exists(cacheKey) {
+		tmpByte, err := dao.Cache.Get(cacheKey)
+		if err == nil {
+			xmlByte = tmpByte
+			readCacheOk = true
+		}
+	}
+
+	if !readCacheOk {
+		xmlByte = []byte(until.GetUrlData(epgUrl))
+		if dao.Cache.Set(cacheKey, xmlByte) != nil {
+			dao.Cache.Delete(cacheKey)
+		}
+	}
+
+	xml.Unmarshal(xmlByte, &zmtTV)
 
 	if isZmtTVEmpty(zmtTV) {
 		res.Data = []dto.Program{}
@@ -258,7 +311,9 @@ func getEpg51Zmt(epgUrl string, id string) dto.Response {
 	return res
 }
 
-func getSimpleEpg51Zmt(epgUrl string, id string) dto.SimpleResponse {
+func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
+	epgUrl := "http://epg.51zmt.top:8000/e.xml"
+	cacheKey := "simpleEpg51zmt_" + id
 	res := dto.SimpleResponse{}
 	res.Code = 200
 	res.Msg = "请求成功!"
@@ -266,7 +321,26 @@ func getSimpleEpg51Zmt(epgUrl string, id string) dto.SimpleResponse {
 		res.Data = dto.Program{}
 		return res
 	}
-	zmtTV := zmtXmlToType(epgUrl)
+	// zmtTV := zmtXmlToType(epgUrl)
+	var zmtTV dto.ZmtTV
+	var xmlByte []byte
+	readCacheOk := false
+	if dao.Cache.Exists(cacheKey) {
+		tmpByte, err := dao.Cache.Get(cacheKey)
+		if err == nil {
+			xmlByte = tmpByte
+			readCacheOk = true
+		}
+	}
+
+	if !readCacheOk {
+		xmlByte = []byte(until.GetUrlData(epgUrl))
+		if dao.Cache.Set(cacheKey, xmlByte) != nil {
+			dao.Cache.Delete(cacheKey)
+		}
+	}
+
+	xml.Unmarshal(xmlByte, &zmtTV)
 
 	if isZmtTVEmpty(zmtTV) {
 		res.Data = dto.Program{}
@@ -306,13 +380,6 @@ func getSimpleEpg51Zmt(epgUrl string, id string) dto.SimpleResponse {
 	}
 	res.Data = dto.Program{}
 	return res
-}
-
-func zmtXmlToType(url string) dto.ZmtTV {
-	var zmtTV dto.ZmtTV
-	xmlStr := until.GetUrlData(url)
-	xml.Unmarshal([]byte(xmlStr), &zmtTV)
-	return zmtTV
 }
 
 func isZmtTVEmpty(tv dto.ZmtTV) bool {
