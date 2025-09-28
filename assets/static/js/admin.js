@@ -54,8 +54,9 @@ function loadPage(url, pushHistory = true, showName = "") {
 		url: url,
 		method: 'GET',
 		success: function(res) {
-			if (res.redirect === true){
-				window.location.href = res.url;
+			let resStr = typeof res === 'string' ? res : JSON.stringify(res);
+			if (resStr.includes('/admin/login')) {
+				window.location.href = "/admin/login";
 				return;
 			}
 			replaceContent(res);
@@ -628,4 +629,50 @@ function confirmAndSubmit(btn ,msg) {
             }
         }
     });
+}
+
+function getCategory(btn) {
+	var action = window.location.pathname;
+
+	const params = new URLSearchParams();
+
+	if (btn.name && btn.value) {
+		params.append(btn.name, btn.value);
+	}else if (btn.name) {
+		params.append(btn.name, "");
+	}else{
+		lightyear.notify("表单提交失败", "danger", 3000);
+		return ;
+	}
+
+	if (btn.name === "editCategory") {
+		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+		var cname = $tr.find(".c-name").data("value");
+		var curl = $tr.find(".c-url").data("value");
+		var ca = $tr.find(".c-a").data("value");
+		
+		$("#listname").val(cname);
+		$("#listurl").val(curl);
+		$("#autocategory").val(ca);
+	}
+
+	// 使用 fetch AJAX 提交
+	fetch(action, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded"
+		},
+		body: params.toString()
+	})
+	.then(response => response.json())
+	.then(res => {
+		if (res.type === "success") {
+			if ($('.modal-backdrop').length > 0) {
+				document.querySelector('.modal-backdrop').remove();
+			}
+			loadPage(action);
+		}else{
+			lightyear.notify(res.msg, res.type, 3000);
+		}
+	})
 }
