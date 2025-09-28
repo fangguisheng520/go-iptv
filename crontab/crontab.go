@@ -13,19 +13,36 @@ import (
 	"time"
 )
 
+var CrontabStatus bool = false
+var StopChan = make(chan struct{})
+
 func Crontab() {
-	log.Println("定时任务服务启动...")
+	if CrontabStatus {
+		log.Println("定时任务服务已启动，请勿重复启动")
+		return
+	}
 	cfg := dao.GetConfig()
 	autoUpdate := cfg.Channel.Auto
 	upInterval := cfg.Channel.Interval
 	if autoUpdate == 1 && upInterval > 0 {
+		log.Println("定时任务服务启动...")
+		CrontabStatus = true
 		interval := time.Duration(upInterval) * time.Minute
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
-		for t := range ticker.C {
-			log.Println("开始执行更新频道任务：", t.Format("2006-01-02 15:04:05"))
-			UpdateList()
+		for {
+			select {
+			case t := <-ticker.C:
+				log.Println("开始执行更新频道任务：", t.Format("2006-01-02 15:04:05"))
+				UpdateList()
+			case <-StopChan:
+				log.Println("收到停止信号，停止更新频道任务")
+				ticker.Stop()
+				return
+			}
 		}
+	} else {
+		log.Println("定时任务服务未开启...")
 	}
 }
 

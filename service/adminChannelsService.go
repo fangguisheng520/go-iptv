@@ -73,7 +73,12 @@ func UpdateInterval(params url.Values) dto.ReturnJsonDto {
 	dao.SetConfig(cfg)
 
 	if autoInt == 1 && interval > 0 {
+		crontab.StopChan = make(chan struct{})
 		go crontab.Crontab()
+	}
+	if autoInt == 0 {
+		close(crontab.StopChan)
+		crontab.CrontabStatus = false
 	}
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "更新成功", Type: "success"}

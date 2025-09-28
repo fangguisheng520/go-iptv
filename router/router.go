@@ -21,7 +21,7 @@ import (
 
 func InitRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	r := gin.New()
 
 	r.SetTrustedProxies([]string{
 		"10.0.0.0/8",
@@ -151,6 +151,7 @@ func InitRouter() *gin.Engine {
 				cfg := dao.GetConfig()
 				cfg.ServerUrl = strings.TrimSuffix(apkApi, "/")
 				dao.SetConfig(cfg)
+				crontab.StopChan = make(chan struct{})
 				go bootstrap.BuildAPK()
 				go crontab.Crontab()
 				bootstrap.Installed = true
