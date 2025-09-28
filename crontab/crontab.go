@@ -14,9 +14,11 @@ import (
 )
 
 var CrontabStatus bool = false
+var UpdateStatus bool = false
 var StopChan = make(chan struct{})
 
 func Crontab() {
+	defer func() { CrontabStatus = false }()
 	if CrontabStatus {
 		log.Println("定时任务服务已启动，请勿重复启动")
 		return
@@ -33,6 +35,10 @@ func Crontab() {
 		for {
 			select {
 			case t := <-ticker.C:
+				if UpdateStatus {
+					log.Println("正在更新频道，请稍后...")
+					continue
+				}
 				log.Println("开始执行更新频道任务：", t.Format("2006-01-02 15:04:05"))
 				UpdateList()
 			case <-StopChan:
@@ -47,6 +53,8 @@ func Crontab() {
 }
 
 func UpdateList() {
+	UpdateStatus = true
+	defer func() { UpdateStatus = false }()
 	// TODO: 定时任务
 	var lists []models.IptvCategory
 	res := dao.DB.Model(&models.IptvCategory{}).Where("url != ?", "").Find(&lists)

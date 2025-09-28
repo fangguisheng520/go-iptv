@@ -41,7 +41,7 @@ func VerifyJWT(tokenString string) (jwt.MapClaims, error, bool) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		exp := int64(claims["exp"].(float64))
 		now := time.Now().Unix()
-		if exp-now < 600 {
+		if exp-now < 1800 {
 			return claims, nil, true
 		}
 		return claims, nil, false
