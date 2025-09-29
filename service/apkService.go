@@ -229,7 +229,7 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 	var cfg = dao.GetConfig()
 	days := cfg.App.TrialDays
 
-	if days < 0 {
+	if cfg.App.NeedAuthor == 0 {
 		days = 3
 		result.Exp = 3
 		now := time.Now()
@@ -240,6 +240,12 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 		result.Exps = user.Exp
 		result.Exp = int64(until.DiffDays(todayZero.Unix(), user.Exp))
+	} else {
+		days = 3
+		result.Exp = 3
+		now := time.Now()
+		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		result.Exps = todayZero.Add(time.Duration(days) * 24 * time.Hour).Unix()
 	}
 
 	var movie []models.IptvMovie
@@ -260,10 +266,14 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 			result.ProvList = strings.Split(v.Content, "_")
 		}
 	}
+	if cfg.App.NeedAuthor == 0 || days < 0 {
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s 剩余时间: 无限期 \n", result.ID, result.IP, user.DeviceID, result.MealName)
+	} else {
+		now := time.Now()
+		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s 剩余时间: %d天 \n", result.ID, result.IP, user.DeviceID, result.MealName, until.DiffDays(todayZero.Unix(), user.Exp))
+	}
 
-	now := time.Now()
-	todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s 剩余时间: %d天 \n", result.ID, result.IP, user.DeviceID, result.MealName, until.DiffDays(todayZero.Unix(), user.Exp))
 	return result
 }
 

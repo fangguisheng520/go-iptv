@@ -59,12 +59,12 @@ func main() {
 
 	go crontab.Crontab()
 
-	// if bootstrap.Installed {
-	// 	if !bootstrap.BuildAPK() {
-	// 		log.Println("APK编译错误")
-	// 		return
-	// 	}
-	// }
+	if bootstrap.Installed {
+		if !bootstrap.BuildAPK() {
+			log.Println("APK编译错误")
+			return
+		}
+	}
 
 	log.Println("启动接口...")
 	router := router.InitRouter()

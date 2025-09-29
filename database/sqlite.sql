@@ -261,8 +261,7 @@ CREATE TABLE iptv_users (
     status INTEGER NOT NULL DEFAULT -1,
     lasttime BIGINT NOT NULL,
     marks TEXT DEFAULT NULL,
-    meal INTEGER NOT NULL DEFAULT 1000, 
-    UNIQUE(mac, deviceid)
+    meal INTEGER NOT NULL DEFAULT 1000
 );
 CREATE TABLE IF NOT EXISTS "iptv_movie"  (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,`name` text,api TEXT DEFAULT NULL,`state` integer);
 COMMIT;
