@@ -24,8 +24,6 @@ COPY ./README.md  /app/README.md
 ENV TZ=Asia/Shanghai
 RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
-    apk del tzdata ; \
-    rm -rf /var/cache/apk/* /tmp/* ; \
     mkdir -p /app/images/icon ; \
     mkdir -p /app/images/bj ; \
     chmod 777 -R /app/iptv /usr/bin/apktool* 

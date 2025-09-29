@@ -9,7 +9,6 @@ app:
     buff_time_out: 10
     decoder: 0
     trialdays: 7
-    epgapi_chk: 0
     max_sameip_user: 10
     ipcount: 2
     update:

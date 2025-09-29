@@ -25,30 +25,40 @@
 													<span>自动更新</span>
 												</label>
 												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="update_interval">保存设定</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="updatelistall">更新全部</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addlist">导入列表</button>
 											</form>
 										</td>
 									</tr>
-									<tr>
-									<td>
-										<form class="form-inline" method="post" action="/admin/channels">
-											<label>外部列表：</label>
-											<div class="input-group">
-												<div class="input-group-btn">
-													<select class="btn btn-sm btn-default dropdown-toggle" name="listname">
-														<option selected="selected" value="">请选列表</option>
-													{{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
-                                                    {{if .Url }}
-														<option value="{{ .Name }}">{{ .Name }}</option>
-													{{ end }}{{ end }}{{end}}
-													</select>
-													<button id="updatelist" class="btn btn-sm btn-default" style="width: 85px;height: 26.5px;" type="button" onclick="submitFormPOST(this)" name="updatelist">更新列表</button>
-												<button class="btn btn-sm btn-default" style="width: 85px;height: 26.5px;" type="button" data-toggle="modal" data-target="#addlist">导入列表</button>
-												<button class="btn btn-sm btn-default" style="width: 85px;height: 26.5px;" type="button" onclick="submitFormPOST(this)" name="dellist">删除列表</button>
-												</div>
-											</div>
-										</form>
-									</td>
+									</table>
+									<table class="table table-hover">
+									<tr align="center">
+										<td class="w-5">名称</td>
+										<td class="w-15">url</td>
+										<td class="w-10">最后更新时间</td>
+										<td class="w-5">DIYP</td>
+										<td class="w-5">状态</td>
+										<td class="w-10">操作</td>
 									</tr>
+									<tbody>
+									{{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
+									{{if .Url }}
+									<tr>
+										<td style="display:none;" class="c-id" data-value="{{ .ID }}">{{ .ID }}</td>
+										<td align="center" class="c-name" data-value="{{ .Name }}">{{ .Name }}</td>
+										<td align="center" class="c-url" data-value="{{ .Url }}">{{ .Url }}</td>
+										<td align="center">{{ .LatestTime }}</td>
+										<td align="center" class="c-a" data-value="{{ .AutoCategory }}">{{if eq .AutoCategory 1 }}启用{{else}}关闭{{ end }}</td>
+										<td align="center" style="font-size:12px;font-weight: bold;">{{if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
+										<td>
+											<button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.Name}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
+											<button class="btn btn-xs btn-info" type="button" name="updatelist" value="{{.Name}}" onclick="tdBtnPOST(this)">更新</button>
+											<button class="btn btn-xs btn-info" type="button" name="editCategory" value="{{.Name}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addlist">编辑</button>
+											<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="{{.Name}}">删除</button>
+										</td>
+									</tr>
+									{{ end }}{{ end }}{{end}}
+									</tbody>
 								</table>
 								<div class="modal fade" id="addlist" tabindex="-1" role="dialog">
 									<div class="modal-dialog" role="document">
@@ -61,14 +71,15 @@
 												<div class="modal-body">
 													<div class="form-group">
 														<label for="recipient-name" class="control-label">分类名称：</label>
-														<input type="text" class="form-control" name="listname" placeholder="分类名称">
+														<input type="text" class="form-control" id="listname" name="listname" placeholder="分类名称">
 													</div>
 													<div class="form-group">
+														<input type="hidden" name="cId" id="cId" value="">
 														<label for="message-text" class="control-label">列表链接：</label>
-														<input class="form-control" name="listurl" placeholder="请输入列表链接"></input>
+														<input class="form-control" id="listurl" name="listurl" placeholder="请输入列表链接"></input>
 													</div>
 													<div class="form-group">
-   														<input type="checkbox" name="autocategory" value="on"></input>
+   														<input type="checkbox" id="autocategory" name="autocategory" value="on"></input>
    														<label for="message-text" class="control-label">启用DIYP格式自动分类</label>
 													</div>
 												</div>

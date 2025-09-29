@@ -28,6 +28,8 @@ func Client(c *gin.Context) {
 			res = service.DecoderSelect(params)
 		case "buffTimeOut":
 			res = service.SetBuffTimeOut(params)
+		case "needauthor":
+			res = service.SetNeedAuthor(params)
 		case "submittrialdays":
 			res = service.SetTrialDays(params)
 		case "submitappinfo":

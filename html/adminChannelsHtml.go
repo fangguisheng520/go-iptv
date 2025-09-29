@@ -29,8 +29,9 @@ func Channels(c *gin.Context) {
 	}
 
 	pageData.UpdateInterval = cfg.Channel.Interval
+	dao.DB.AutoMigrate(&models.IptvCategory{})
 
-	dao.DB.Model(&models.IptvCategory{}).Select("id, name, url, enable, autocategory, sort, type").Order("sort ASC").Find(&pageData.CategoryList)
+	dao.DB.Model(&models.IptvCategory{}).Select("id, name, url, enable, autocategory, latesttime, sort, type").Order("sort ASC").Find(&pageData.CategoryList)
 
 	c.HTML(200, "admin_channels.html", pageData)
 }

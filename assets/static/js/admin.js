@@ -115,6 +115,9 @@ function submitFormPOST(btn, showChannel = false) {
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 		return;
 	}
 
@@ -127,10 +130,12 @@ function submitFormPOST(btn, showChannel = false) {
 		if (key === "iconfile") {
 			return;
 		}
-
 		params.append(key, value);
 	});
 	params.append(btn.name, "");
+	if (params.has("submitappinfo") && !params.has("up_sets")) {
+		params.append("up_sets", 0);
+	}
 
 	if(showChannel && (btn.name === "submit_addtype" || 
 		btn.name  === "submit_modifytype" || 
@@ -152,20 +157,32 @@ function submitFormPOST(btn, showChannel = false) {
 		},
 		body: params.toString()
 	})
-	.then(response => response.json())
+	.then(async response => {
+		const text = await response.text(); // 先拿到响应内容
+		if (text.includes('/admin/login')) {
+			window.location.href = "/admin/login";
+			throw text;
+		}
+		return JSON.parse(text); // 或 response.json()
+	})
+	// .then(response => response.json())
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
-		loadPage(action, true, showName);
 		if (data.type === "success") {
-			// 移除遮罩层
+			loadPage(action, true, showName);
 			if ($('.modal-backdrop').length > 0) {
 				document.querySelector('.modal-backdrop').remove();
+				document.body.classList.remove('modal-open');
+				document.body.style.overflow = ''; // 恢复滚动条
 			}
 		}
 	})
 	.catch(err => {
-		console.error("提交失败:", err);
+		// console.error("提交失败:", err);
 		lightyear.notify("提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 	});
 }
 
@@ -174,7 +191,9 @@ function submitFormGET(btn) {
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
-		return;
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 	}
 
 	// 获取 form 的 action，默认当前路径
@@ -326,7 +345,12 @@ function tdBtnPOST(btn) {
 
 	var params = new URLSearchParams();
 
-	params.append(btn.name, btn.value);
+	
+	if ($(btn).is(":checkbox")) {
+		params.append(btn.name, btn.checked ? 1 : 0);
+	}else{
+		params.append(btn.name, btn.value);
+	}
 
 	// 使用 fetch AJAX 提交
 	fetch(action, {
@@ -336,19 +360,31 @@ function tdBtnPOST(btn) {
 		},
 		body: params.toString()
 	})
-	.then(response => response.json())
+	.then(async response => {
+		const text = await response.text(); // 先拿到响应内容
+		if (text.includes('/admin/login')) {
+			window.location.href = "/admin/login";
+			throw text;
+		}
+		return JSON.parse(text); // 或 response.json()
+	})
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
 			if ($('.modal-backdrop').length > 0) {
 				document.querySelector('.modal-backdrop').remove();
+				document.body.classList.remove('modal-open');
+				document.body.style.overflow = ''; // 恢复滚动条
 			}
 			loadPage(action);
 		}
 	})
 	.catch(err => {
-		console.error("提交失败:", err);
+		// console.error("提交失败:", err);
 		lightyear.notify("提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 	});
 }
 
@@ -365,6 +401,9 @@ function mealsGetCategory(btn) {
 		params.append(btn.name, "");
 	}else{
 		lightyear.notify("表单提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 		return ;
 	}
 
@@ -387,7 +426,14 @@ function mealsGetCategory(btn) {
 		},
 		body: params.toString()
 	})
-	.then(response => response.json())
+	.then(async response => {
+		const text = await response.text(); // 先拿到响应内容
+		if (text.includes('/admin/login')) {
+			window.location.href = "/admin/login";
+			throw text;
+		}
+		return JSON.parse(text); // 或 response.json()
+	})
 	.then(res => {
 		
 		if (res.type === "success") {
@@ -426,6 +472,9 @@ function epgsGetChannel(btn) {
 		params.append(btn.name, "");
 	}else{
 		lightyear.notify("表单提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 		return ;
 	}
 
@@ -452,7 +501,14 @@ function epgsGetChannel(btn) {
 		},
 		body: params.toString()
 	})
-	.then(response => response.json())
+	.then(async response => {
+		const text = await response.text(); // 先拿到响应内容
+		if (text.includes('/admin/login')) {
+			window.location.href = "/admin/login";
+			throw text;
+		}
+		return JSON.parse(text); // 或 response.json()
+	})
 	.then(res => {
 		// lightyear.notify(res.msg, res.type, 3000);
 		if (res.type === "success") {
@@ -642,37 +698,22 @@ function getCategory(btn) {
 		params.append(btn.name, "");
 	}else{
 		lightyear.notify("表单提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
 		return ;
 	}
 
 	if (btn.name === "editCategory") {
 		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+		var cid = $tr.find(".c-id").data("value");
 		var cname = $tr.find(".c-name").data("value");
 		var curl = $tr.find(".c-url").data("value");
 		var ca = $tr.find(".c-a").data("value");
-		
+
+		$("#cId").val(cid);
 		$("#listname").val(cname);
 		$("#listurl").val(curl);
-		$("#autocategory").val(ca);
+		$("#autocategory").prop("checked", ca === 1);
 	}
-
-	// 使用 fetch AJAX 提交
-	fetch(action, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded"
-		},
-		body: params.toString()
-	})
-	.then(response => response.json())
-	.then(res => {
-		if (res.type === "success") {
-			if ($('.modal-backdrop').length > 0) {
-				document.querySelector('.modal-backdrop').remove();
-			}
-			loadPage(action);
-		}else{
-			lightyear.notify(res.msg, res.type, 3000);
-		}
-	})
 }

@@ -24,6 +24,8 @@ func Channels(c *gin.Context) {
 			res = service.UpdateInterval(params)
 		case "updatelist":
 			res = service.UpdateList(params)
+		case "updatelistall":
+			res = service.UpdateListAll()
 		case "addlist":
 			res = service.AddList(params)
 		case "dellist":
@@ -47,6 +49,8 @@ func Channels(c *gin.Context) {
 			res = service.SubmitMoveTop(params)
 		case "submitsave":
 			res = service.SubmitSave(params)
+		case "change_status":
+			res = service.CategoryChangeStatus(params)
 		}
 	}
 

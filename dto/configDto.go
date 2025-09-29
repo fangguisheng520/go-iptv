@@ -14,11 +14,11 @@ type AppUpdate struct {
 }
 
 type App struct {
-	NeedAuthor    int64     `mapstructure:"needauthor" json:"needauthor" yaml:"needauthor"`
-	BuffTimeout   int64     `mapstructure:"buff_time_out" json:"buff_time_out" yaml:"buff_time_out"`
-	Decoder       int64     `mapstructure:"decoder" json:"decoder" yaml:"decoder"`
-	TrialDays     int64     `mapstructure:"trialdays" json:"trialdays" yaml:"trialdays"`
-	EPGApiChk     int64     `mapstructure:"epgapi_chk" json:"epgapi_chk" yaml:"epgapi_chk"`
+	NeedAuthor  int64 `mapstructure:"needauthor" json:"needauthor" yaml:"needauthor"`
+	BuffTimeout int64 `mapstructure:"buff_time_out" json:"buff_time_out" yaml:"buff_time_out"`
+	Decoder     int64 `mapstructure:"decoder" json:"decoder" yaml:"decoder"`
+	TrialDays   int64 `mapstructure:"trialdays" json:"trialdays" yaml:"trialdays"`
+	// EPGApiChk     int64     `mapstructure:"epgapi_chk" json:"epgapi_chk" yaml:"epgapi_chk"`
 	MaxSameIPUser int64     `mapstructure:"max_sameip_user" json:"max_sameip_user" yaml:"max_sameip_user"`
 	IPCount       int64     `mapstructure:"ipcount" json:"ipcount" yaml:"ipcount"`
 	Update        AppUpdate `mapstructure:"update" json:"update" yaml:"update"`

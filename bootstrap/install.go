@@ -8,6 +8,8 @@ import (
 	"os/exec"
 )
 
+var Installed bool = false
+
 func Install() (bool, string) {
 
 	if !until.Exists("/config") {

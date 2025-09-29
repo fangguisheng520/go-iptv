@@ -47,6 +47,7 @@ func main() {
 
 	log.Println("加载数据库...")
 	dao.InitDB("/config/iptv.db")
+	bootstrap.InitDB()
 
 	dao.CONFIG_PATH = "/config/config.yml"
 	dao.LoadConfigFile()
@@ -58,12 +59,12 @@ func main() {
 
 	go crontab.Crontab()
 
-	if bootstrap.Installed {
-		if !bootstrap.BuildAPK() {
-			log.Println("APK编译错误")
-			return
-		}
-	}
+	// if bootstrap.Installed {
+	// 	if !bootstrap.BuildAPK() {
+	// 		log.Println("APK编译错误")
+	// 		return
+	// 	}
+	// }
 
 	log.Println("启动接口...")
 	router := router.InitRouter()

@@ -9,11 +9,13 @@ import (
 	"go-iptv/models"
 	"go-iptv/until"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -102,8 +104,6 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 		iptvCategory.AutoCategory = 1
 	}
 
-	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Delete(&models.IptvCategory{})
-
 	resp, err := http.Get(url)
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败", Type: "danger"}
@@ -120,10 +120,14 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 	}
 
 	urlData := until.FilterEmoji(string(body))
+	log.Println(urlData)
+	log.Println(iptvCategory.AutoCategory)
 
 	if !strings.Contains(urlData, "#genre#") && iptvCategory.AutoCategory == 1 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "列表并非DIYP格式,请勿启用DIYP格式自动分类", Type: "danger"}
 	}
+
+	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Delete(&models.IptvCategory{})
 
 	var maxSort int
 	dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
@@ -133,14 +137,20 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 		res := GenreChannels(listName, urlData)
 		if res.Code != 0 {
 			iptvCategory.Type = "import"
+			iptvCategory.LatestTime = time.Now().Format("2006-01-02 15:04:05")
 			dao.DB.Model(&models.IptvCategory{}).Create(&iptvCategory)
 		}
 		return res
 	} else {
+		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Updates(map[string]interface{}{
+			"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+		})
 		repeat, err := AddChannelList(listName, urlData)
 		if err == nil && repeat != -1 {
 			iptvCategory.Type = "add"
+			iptvCategory.LatestTime = time.Now().Format("2006-01-02 15:04:05")
 			dao.DB.Model(&models.IptvCategory{}).Create(&iptvCategory)
+			log.Println(iptvCategory.LatestTime)
 			return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("更新列表 %s 成功，重复 %d 条\n", listName, repeat), Type: "success"}
 		} else {
 			return dto.ReturnJsonDto{Code: 0, Msg: fmt.Sprintf("更新列表 %s 失败\n", listName), Type: "danger"}
@@ -149,10 +159,13 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 }
 
 func UpdateList(params url.Values) dto.ReturnJsonDto {
-	listName := params.Get("listname")
+	listName := params.Get("updatelist")
 	if listName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "请输入频道列表", Type: "danger"}
 	}
+
+	crontab.UpdateStatus = true
+	defer func() { crontab.UpdateStatus = false }()
 
 	var iptvCategory models.IptvCategory
 	res := dao.DB.Model(&models.IptvCategory{}).Select("url, autocategory").Where("name = ?", listName).First(&iptvCategory)
@@ -180,9 +193,15 @@ func UpdateList(params url.Values) dto.ReturnJsonDto {
 
 	if iptvCategory.AutoCategory == 1 {
 		if !strings.Contains(urlData, "#genre#") {
-			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Update("autocategory", 0)
+			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Updates(map[string]interface{}{
+				"latesttime":   time.Now().Format("2006-01-02 15:04:05"),
+				"autocategory": 0,
+			})
 			repeat, err := AddChannelList(listName, urlData)
 			if err == nil && repeat != -1 {
+				dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Updates(map[string]interface{}{
+					"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+				})
 				return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("更新列表 %s 成功，重复 %d 条\n", listName, repeat), Type: "success"}
 			} else {
 				return dto.ReturnJsonDto{Code: 0, Msg: fmt.Sprintf("更新列表 %s 失败\n", listName), Type: "danger"}
@@ -190,6 +209,9 @@ func UpdateList(params url.Values) dto.ReturnJsonDto {
 		}
 		return GenreChannels(listName, urlData)
 	} else {
+		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Updates(map[string]interface{}{
+			"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+		})
 		repeat, err := AddChannelList(listName, urlData)
 		if err == nil && repeat != -1 {
 			return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("更新列表 %s 成功，重复 %d 条\n", listName, repeat), Type: "success"}
@@ -200,7 +222,7 @@ func UpdateList(params url.Values) dto.ReturnJsonDto {
 }
 
 func DelList(params url.Values) dto.ReturnJsonDto {
-	listName := params.Get("listname")
+	listName := params.Get("dellist")
 	if listName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "请输入频道列表", Type: "danger"}
 	}
@@ -409,6 +431,9 @@ func SubmitSave(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type = ?", categoryName, "add").First(&models.IptvCategory{}).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
+	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", categoryName).Updates(map[string]interface{}{
+		"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+	})
 	AddChannelList(categoryName, srclistStr)
 	go BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "保存成功", Type: "success"}
@@ -434,14 +459,18 @@ func GenreChannels(listName, srclist string) dto.ReturnJsonDto {
 		}
 
 		if count > 0 {
+			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).Updates(map[string]interface{}{
+				"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+			})
 			AddChannelList(categoryName, genreList)
 		} else {
 			var maxSort int
 			dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
 			newCategory := models.IptvCategory{
-				Name: categoryName,
-				Sort: maxSort + 1,
-				Type: "add",
+				LatestTime: time.Now().Format("2006-01-02 15:04:05"),
+				Name:       categoryName,
+				Sort:       maxSort + 1,
+				Type:       "add",
 			}
 
 			if err := dao.DB.Create(&newCategory).Error; err != nil {
@@ -544,4 +573,37 @@ func AddChannelList(cname, srclist string) (int, error) {
 	go BindChannel()
 
 	return repetNum, nil
+}
+
+func CategoryChangeStatus(params url.Values) dto.ReturnJsonDto {
+	name := params.Get("change_status")
+	if name == "" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "Category name不能为空", Type: "danger"}
+	}
+
+	var cateData models.IptvCategory
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).First(&cateData).Error; err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "查询Category失败", Type: "danger"}
+	}
+
+	if cateData.Enable == 1 {
+		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).Update("enable", 0)
+		dao.DB.Model(&models.IptvCategory{}).Where("name like ?", "%("+name+")").Update("enable", 0)
+	} else {
+		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).Update("enable", 1)
+		dao.DB.Model(&models.IptvCategory{}).Where("name like ?", "%("+name+")").Update("enable", 1)
+	}
+	return dto.ReturnJsonDto{Code: 1, Msg: "Category " + cateData.Name + "状态修改成功", Type: "success"}
+}
+
+func UpdateListAll() dto.ReturnJsonDto {
+	if crontab.UpdateStatus {
+		return dto.ReturnJsonDto{Code: 0, Msg: "后台更新中", Type: "danger"}
+	}
+
+	crontab.UpdateStatus = true
+	defer func() { crontab.UpdateStatus = false }()
+
+	go crontab.UpdateList() // 更新所有频道列表
+	return dto.ReturnJsonDto{Code: 1, Msg: "开始后台更新", Type: "success"}
 }

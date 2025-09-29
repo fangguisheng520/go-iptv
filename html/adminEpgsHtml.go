@@ -82,10 +82,10 @@ func Epgs(c *gin.Context) {
 		log.Println("查询epg失败:", err)
 	}
 
-	cfg := dao.GetConfig()
+	// cfg := dao.GetConfig()
 
 	// pageData.EpgErr = cfg.EPGErrors
-	pageData.EPGApiChk = cfg.App.EPGApiChk
+	// pageData.EPGApiChk = cfg.App.EPGApiChk
 
 	c.HTML(200, "admin_epgs.html", pageData)
 }

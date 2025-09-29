@@ -13,6 +13,7 @@ CREATE TABLE iptv_category (
     type TEXT NOT NULL DEFAULT 'add',
     url TEXT DEFAULT NULL,
     autocategory TEXT DEFAULT NULL,
+    latesttime TEXT DEFAULT NULL,
     sort INTEGER
 );
 CREATE TABLE iptv_channels (

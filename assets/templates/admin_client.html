@@ -144,6 +144,14 @@
                                     <option value='30' {{if eq .App.BuffTimeout 30}}selected{{end}} >30 秒</option>
                                 </select>
                             </div>
+
+                            <div class="form-group" style="margin-right: 15px;">
+                                <label>客户端授权:</label>
+                                <label class="lyear-switch switch-primary">
+                                    <input type="checkbox" name="needauthor" onchange="tdBtnPOST(this)" {{if eq .App.NeedAuthor 1}}checked{{end}}/>
+                                    <span></span>
+                                </label>
+                            </div>
                             
                             <div class="form-group" style="margin-right: 15px;">
                                 <form method="post" id="appsetform">

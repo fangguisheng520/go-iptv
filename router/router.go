@@ -20,8 +20,10 @@ import (
 )
 
 func InitRouter() *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
+	// gin.SetMode(gin.ReleaseMode)
+	// r := gin.New()
+
+	r := gin.Default()
 
 	r.SetTrustedProxies([]string{
 		"10.0.0.0/8",

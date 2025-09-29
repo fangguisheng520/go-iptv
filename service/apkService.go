@@ -334,8 +334,14 @@ func AddUser(user dto.ApkUser, ip string) models.IptvUser {
 		dbData.Marks = "免费"
 	}
 
+	if cfg.App.NeedAuthor == 1 {
+		dbData.Status = 999
+		dbData.Marks = "无需授权,默认试用套餐"
+		dbData.Exp = 0
+	}
+
 	dao.DB.Model(&models.IptvUser{}).Create(&dbData)
-	if days > 0 {
+	if days > 0 && cfg.App.NeedAuthor == 0 {
 		dbData.Status = 1
 	}
 	return dbData

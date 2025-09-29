@@ -86,11 +86,17 @@ func UpdateList() {
 
 		if v.AutoCategory == 1 {
 			if !strings.Contains(urlData, "#genre#") {
-				dao.DB.Model(&models.IptvCategory{}).Where("name = ?", v.Name).Update("autocategory", 0)
+				dao.DB.Model(&models.IptvCategory{}).Where("name = ?", v.Name).Updates(map[string]interface{}{
+					"latesttime":   time.Now().Format("2006-01-02 15:04:05"),
+					"autocategory": 0,
+				})
 				AddChannelList(v.Name, urlData)
 			}
 			GenreChannels(v.Name, urlData)
 		} else {
+			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", v.Name).Updates(map[string]interface{}{
+				"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+			})
 			AddChannelList(v.Name, urlData)
 		}
 	}
@@ -117,14 +123,18 @@ func GenreChannels(listName, srclist string) {
 		}
 
 		if count > 0 {
+			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", categoryName).Updates(map[string]interface{}{
+				"latesttime": time.Now().Format("2006-01-02 15:04:05"),
+			})
 			AddChannelList(categoryName, genreList)
 		} else {
 			var maxSort int
 			dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
 			newCategory := models.IptvCategory{
-				Name: categoryName,
-				Sort: maxSort + 1,
-				Type: "add",
+				LatestTime: time.Now().Format("2006-01-02 15:04:05"),
+				Name:       categoryName,
+				Sort:       maxSort + 1,
+				Type:       "add",
 			}
 
 			if err := dao.DB.Create(&newCategory).Error; err != nil {

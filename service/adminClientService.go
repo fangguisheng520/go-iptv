@@ -93,6 +93,22 @@ func SetBuffTimeOut(params url.Values) dto.ReturnJsonDto {
 	}
 }
 
+func SetNeedAuthor(params url.Values) dto.ReturnJsonDto {
+	needauthor := params.Get("needauthor")
+	if needauthor != "1" && needauthor != "0" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
+	} else {
+		cfg := dao.GetConfig()
+		needauthorInt, err := strconv.ParseInt(needauthor, 10, 64)
+		if err != nil {
+			return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
+		}
+		cfg.App.NeedAuthor = needauthorInt
+		dao.SetConfig(cfg)
+		return dto.ReturnJsonDto{Code: 1, Msg: "授权设置成功", Type: "success"}
+	}
+}
+
 func SetTrialDays(params url.Values) dto.ReturnJsonDto {
 	trialdays := params.Get("trialdays")
 
@@ -138,14 +154,16 @@ func SetAppInfo(params url.Values) dto.ReturnJsonDto {
 			return dto.ReturnJsonDto{Code: 0, Msg: "签名参数超过范围", Type: "danger"}
 		}
 
-		if upSet == "on" {
+		if upSet == "on" || upSet == "1" || upSet == "true" {
 			cfg.App.Update.Set = 1
+		} else {
+			cfg.App.Update.Set = 0
 		}
 		cfg.App.Update.Text = upText
 		cfg.Build.Sign = appSignInt
 		// cfg.App.Update.Url = strings.TrimSuffix(cfg.ServerUrl, "/") + "/app/" + cfg.Build.Name + ".apk"
 		dao.SetConfig(cfg)
-		go bootstrap.BuildAPK() // 启动编译
+		// go bootstrap.BuildAPK() // 启动编译
 		return dto.ReturnJsonDto{Code: 1, Msg: "APK编译中...", Type: "success"}
 	}
 }
