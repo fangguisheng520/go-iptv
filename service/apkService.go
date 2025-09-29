@@ -9,6 +9,7 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"log"
 	"math/rand"
 	"path/filepath"
 	"sort"
@@ -259,6 +260,10 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 			result.ProvList = strings.Split(v.Content, "_")
 		}
 	}
+
+	now := time.Now()
+	todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s 剩余时间: %d天 \n", result.ID, result.IP, user.DeviceID, result.MealName, until.DiffDays(todayZero.Unix(), user.Exp))
 	return result
 }
 
