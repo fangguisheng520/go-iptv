@@ -53,7 +53,7 @@ func EditMovie(params url.Values) dto.ReturnJsonDto {
 	if movieName == "" || movieApi == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	}
-	if !until.IsSafe(movieId) || !until.IsSafe(movieName) || !until.IsSafe(movieApi) {
+	if !until.IsSafe(movieId) || !until.IsSafe(movieName) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数不合法，请勿输入特殊字符", Type: "danger"}
 	}
 
