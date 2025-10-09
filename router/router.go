@@ -44,8 +44,8 @@ func InitRouter() *gin.Engine {
 	})
 
 	r.Static("/app", "./app")
-	r.Static("/images", "./images/bj")
-	r.Static("/icon", "./images/icon")
+	r.Static("/images", "/config/images/bj")
+	r.Static("/icon", "/config/images/icon")
 
 	r.Use(func(c *gin.Context) {
 		if !bootstrap.Installed {

@@ -399,7 +399,7 @@ func UpdateChannelsId() {
 
 func GetBg() string {
 	// 获取指定目录下的所有png文件
-	dir := "/app/images/bj"
+	dir := "/config/images/bj"
 	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
 	if err != nil {
 		return ""

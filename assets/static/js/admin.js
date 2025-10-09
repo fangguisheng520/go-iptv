@@ -594,7 +594,7 @@ function uploadBj(event) {
 	const file = event.target.files[0];
 	if (!file) return;
 
-	const formData = new FormData($('#bj_form')[0]);
+	const formData = new FormData($('#appform')[0]);
 	$.ajax({
 		url: '/admin/client/uploadBj',  // ✅ 上传接口
 		type: 'POST',

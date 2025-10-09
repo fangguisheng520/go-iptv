@@ -27,11 +27,11 @@ func Client(c *gin.Context) {
 		BuildStatus: bootstrap.GetBuildStatus(), // 获取APK编译状态
 	}
 
-	if until.Exists("images/icon/icon.png") {
+	if until.Exists("/config/images/icon/icon.png") {
 		pageData.IconUrl = "/icon/icon.png"
 	}
 
-	pageData.BjUrl, _ = until.GetPngFileNames("images/bj")
+	pageData.BjUrl, _ = until.GetPngFileNames("/config/images/bj")
 
 	c.HTML(200, "admin_client.html", pageData)
 }

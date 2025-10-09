@@ -39,7 +39,7 @@ func BuildAPK() bool {
 	apkName := cfg.Build.Name
 	apkPackage := cfg.Build.Package
 	apkVersion := cfg.Build.Version
-	iconFile := "/app/images/icon/icon.png"
+	iconFile := "/config/images/icon/icon.png"
 
 	clientSource := "/client"
 	outputDir := "/app/app"
@@ -81,7 +81,7 @@ func BuildAPK() bool {
 	}
 
 	if until.GetBg() != "" {
-		err := until.CopyFile("/app/images/bj/"+until.GetBg(), buildSourceDir+"/res/drawable-hdpi/ez_bg.png")
+		err := until.CopyFile("/config/images/bj/"+until.GetBg(), buildSourceDir+"/res/drawable-hdpi/ez_bg.png")
 		if err != nil {
 			log.Println("复制背景文件失败:", err)
 			return false
