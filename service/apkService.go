@@ -108,8 +108,6 @@ func GetChannels(channel dto.DataReqDto) string {
 	cList := strings.Split(meal.Content, "_")
 
 	var channelList []models.IptvChannel
-	log.Println(cList)
-	log.Println(len(cList))
 
 	if len(cList) > 1 || (len(cList) == 1 && cList[0] != "") {
 		dao.DB.Model(&models.IptvChannel{}).Where("category in ?", cList).Order("id asc").Find(&channelList)
@@ -207,7 +205,6 @@ func GetChannels(channel dto.DataReqDto) string {
 	})
 	jsonData, _ := json.Marshal(resList)
 	jsonStr := until.DecodeUnicode(string(jsonData))
-	log.Println(jsonStr)
 
 	return encrypt(jsonStr, channel.Rand)
 }
