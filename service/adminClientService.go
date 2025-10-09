@@ -150,7 +150,7 @@ func SetAppInfo(params url.Values) dto.ReturnJsonDto {
 		cfg.Build.Sign = appSignInt
 		// cfg.App.Update.Url = strings.TrimSuffix(cfg.ServerUrl, "/") + "/app/" + cfg.Build.Name + ".apk"
 		dao.SetConfig(cfg)
-		// go bootstrap.BuildAPK() // 启动编译
+		go bootstrap.BuildAPK() // 启动编译
 		return dto.ReturnJsonDto{Code: 1, Msg: "APK编译中...", Type: "success"}
 	}
 }

@@ -58,7 +58,7 @@ type MovieEngine struct {
 }
 
 type ChannelListDto struct {
-	ID   int64         `json:"id"`
+	ID   int64         `json:"-"`
 	Name string        `json:"name"`
 	Psw  string        `json:"psw"`
 	Data []ChannelData `json:"data"`
