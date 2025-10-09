@@ -2,6 +2,8 @@ package until
 
 import (
 	"fmt"
+	"go-iptv/dao"
+	"go-iptv/models"
 	"regexp"
 	"strings"
 )
@@ -77,4 +79,68 @@ func ConvertDataToMap(data string) map[string]string {
 	return result
 }
 
-// AddOrUpdateGenreChannels 根据 map 更新或新增分类及频道
+func GetCCTVChannelList(rebuild bool) string {
+	var res string
+	var channelCache = "cctv_channel_list"
+	if dao.Cache.ChannelExists(channelCache) && !rebuild {
+		data, err := dao.Cache.Get(channelCache)
+		if err == nil {
+			return string(data)
+		}
+	}
+
+	var epgs []models.IptvEpg
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "cntv-%").Find(&epgs).Error; err != nil {
+		return res
+	}
+	var channelList []models.IptvChannel
+	if err := dao.DB.Model(&models.IptvChannel{}).Find(&channelList).Error; err != nil {
+		return res
+	}
+
+	for _, epg := range epgs {
+		nameList := strings.Split(epg.Remarks, "|")
+		for _, channel := range channelList {
+			for _, name := range nameList {
+				if strings.EqualFold(channel.Name, name) {
+					res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
+				}
+			}
+		}
+	}
+	go dao.Cache.Set(channelCache, []byte(res))
+	return res
+}
+
+func GetProvinceChannelList(rebuild bool) string {
+	var res string
+	var channelCache = "province_channel_list"
+	if dao.Cache.ChannelExists(channelCache) && !rebuild {
+		data, err := dao.Cache.Get(channelCache)
+		if err == nil {
+			return string(data)
+		}
+	}
+
+	var epgs []models.IptvEpg
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "51zmt-%卫视").Find(&epgs).Error; err != nil {
+		return res
+	}
+	var channelList []models.IptvChannel
+	if err := dao.DB.Model(&models.IptvChannel{}).Find(&channelList).Error; err != nil {
+		return res
+	}
+
+	for _, epg := range epgs {
+		nameList := strings.Split(epg.Remarks, "|")
+		for _, channel := range channelList {
+			for _, name := range nameList {
+				if strings.EqualFold(channel.Name, name) {
+					res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
+				}
+			}
+		}
+	}
+	go dao.Cache.Set(channelCache, []byte(res))
+	return res
+}

@@ -80,6 +80,14 @@ func BuildAPK() bool {
 		}
 	}
 
+	if until.GetBg() != "" {
+		err := until.CopyFile("/app/images/bj/"+until.GetBg(), buildSourceDir+"/res/drawable-hdpi/ez_bg.png")
+		if err != nil {
+			log.Println("复制背景文件失败:", err)
+			return false
+		}
+	}
+
 	cmd = exec.Command(
 		"keytool", "-genkey", "-v",
 		"-keystore", buildKey,

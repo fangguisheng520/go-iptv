@@ -58,6 +58,7 @@ type MovieEngine struct {
 }
 
 type ChannelListDto struct {
+	ID   int64         `json:"id"`
 	Name string        `json:"name"`
 	Psw  string        `json:"psw"`
 	Data []ChannelData `json:"data"`
@@ -68,11 +69,6 @@ type ChannelData struct {
 	Num    int64    `json:"num"`
 	Name   string   `json:"name"`
 	Source []string `json:"source"`
-}
-
-type ConfigChannel struct {
-	Class   string `mapstructure:"class"`
-	ListURL string `mapstructure:"list_url"`
 }
 
 type DataReqDto struct {

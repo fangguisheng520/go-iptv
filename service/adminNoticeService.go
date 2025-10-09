@@ -9,7 +9,6 @@ import (
 
 func Notice(params url.Values) dto.ReturnJsonDto {
 	adtext := params.Get("adtext")
-	adinfo := params.Get("adinfo")
 	showtime := params.Get("showtime")
 	showinterval := params.Get("showinterval")
 
@@ -25,7 +24,6 @@ func Notice(params url.Values) dto.ReturnJsonDto {
 
 	cfg := dao.GetConfig()
 
-	cfg.Ad.AdInfo = adinfo
 	cfg.Ad.AdText = adtext
 	cfg.Ad.ShowInterval = showintervalNum
 	cfg.Ad.ShowTime = showtimeNum

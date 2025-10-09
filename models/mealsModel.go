@@ -3,7 +3,6 @@ package models
 type IptvMeals struct {
 	ID      int64  `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	Name    string `gorm:"column:name" json:"name"`
-	Days    int64  `gorm:"column:days" json:"days"`
 	Content string `gorm:"column:content" json:"content"`
 	Status  int64  `gorm:"column:status" json:"status"`
 }

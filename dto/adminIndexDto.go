@@ -6,9 +6,7 @@ type AdminIndexDto struct {
 	LoginUser        string        `json:"loginuser"`
 	Title            string        `json:"title"`
 	UserTotal        int64         `json:"usertotal"`
-	UserUNormal      int64         `json:"userunormal"`
 	UserToday        int64         `json:"usertoday"`
-	UserTodayAuth    int64         `json:"usertodayauth"`
 	ChannelTypeCount int64         `json:"channeltypecount"`
 	MealsCount       int64         `json:"mealscount"`
 	EpgCount         int64         `json:"epgcount"`

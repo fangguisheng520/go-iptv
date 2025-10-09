@@ -17,11 +17,11 @@ type App struct {
 	NeedAuthor  int64 `mapstructure:"needauthor" json:"needauthor" yaml:"needauthor"`
 	BuffTimeout int64 `mapstructure:"buff_time_out" json:"buff_time_out" yaml:"buff_time_out"`
 	Decoder     int64 `mapstructure:"decoder" json:"decoder" yaml:"decoder"`
-	TrialDays   int64 `mapstructure:"trialdays" json:"trialdays" yaml:"trialdays"`
+	// TrialDays   int64 `mapstructure:"trialdays" json:"trialdays" yaml:"trialdays"`
 	// EPGApiChk     int64     `mapstructure:"epgapi_chk" json:"epgapi_chk" yaml:"epgapi_chk"`
-	MaxSameIPUser int64     `mapstructure:"max_sameip_user" json:"max_sameip_user" yaml:"max_sameip_user"`
-	IPCount       int64     `mapstructure:"ipcount" json:"ipcount" yaml:"ipcount"`
-	Update        AppUpdate `mapstructure:"update" json:"update" yaml:"update"`
+	// MaxSameIPUser int64     `mapstructure:"max_sameip_user" json:"max_sameip_user" yaml:"max_sameip_user"`
+	// IPCount       int64     `mapstructure:"ipcount" json:"ipcount" yaml:"ipcount"`
+	Update AppUpdate `mapstructure:"update" json:"update" yaml:"update"`
 }
 
 type Tips struct {
@@ -34,7 +34,6 @@ type Tips struct {
 type Ad struct {
 	ShowTime     int64  `mapstructure:"showtime" json:"showtime" yaml:"showtime"`
 	ShowInterval int64  `mapstructure:"showinterval" json:"showinterval" yaml:"showinterval"`
-	AdInfo       string `mapstructure:"adinfo" json:"adinfo" yaml:"adinfo"`
 	AdText       string `mapstructure:"adtext" json:"adtext" yaml:"adtext"`
 }
 
@@ -53,7 +52,7 @@ type Ad struct {
 // 	APIKey  string `mapstructure:"api_key" json:"api_key" yaml:"api_key"`
 // }
 
-type Channel struct {
+type ConfigChannel struct {
 	Interval int64 `mapstructure:"interval" json:"interval" yaml:"interval"`
 	Auto     int64 `mapstructure:"auto" json:"auto" yaml:"auto"`
 }
@@ -70,12 +69,12 @@ type Redis struct {
 }
 
 type Config struct {
-	ServerUrl string  `mapstructure:"server_url" json:"server_url" yaml:"server_url"`
-	Build     Build   `mapstructure:"build" json:"build" yaml:"build"`
-	App       App     `mapstructure:"app" json:"app" yaml:"app"`
-	Tips      Tips    `mapstructure:"tips" json:"tips" yaml:"tips"`
-	Ad        Ad      `mapstructure:"ad" json:"ad" yaml:"ad"`
-	Channel   Channel `mapstructure:"channel" json:"channel" yaml:"channel"`
+	ServerUrl string        `mapstructure:"server_url" json:"server_url" yaml:"server_url"`
+	Build     Build         `mapstructure:"build" json:"build" yaml:"build"`
+	App       App           `mapstructure:"app" json:"app" yaml:"app"`
+	Tips      Tips          `mapstructure:"tips" json:"tips" yaml:"tips"`
+	Ad        Ad            `mapstructure:"ad" json:"ad" yaml:"ad"`
+	Channel   ConfigChannel `mapstructure:"channel" json:"channel" yaml:"channel"`
 	// Weather   Weather   `mapstructure:"weather" json:"weather" yaml:"weather"`
 	// Cache     Cache     `mapstructure:"cache" json:"cache" yaml:"cache"`
 	// EPGErrors EPGErrors `mapstructure:"epg_errors" json:"epg_errors" yaml:"epg_errors"`

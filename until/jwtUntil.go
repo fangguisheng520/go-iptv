@@ -7,7 +7,22 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte("test")
+var JwtKey = []byte("test")
+var RssJwtKey = []byte("rss")
+
+// ----------------------
+// 验证 JWT
+// ----------------------
+func ParseJWT(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return JwtKey, nil
+	})
+	return token, err
+}
+
+// ----------------------
+// 验证 JWT
+// ----------------------
 
 // ----------------------
 // 生成 JWT
@@ -19,7 +34,7 @@ func GenerateJWT(username string, duration time.Duration) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secretKey)
+	return token.SignedString(JwtKey)
 }
 
 // ----------------------
@@ -31,7 +46,7 @@ func VerifyJWT(tokenString string) (jwt.MapClaims, error, bool) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenSignatureInvalid
 		}
-		return secretKey, nil
+		return JwtKey, nil
 	})
 
 	if err != nil || !token.Valid {
@@ -67,4 +82,33 @@ func GetAuthName(c *gin.Context) (string, bool) {
 
 func GetAuthExp(claims jwt.MapClaims) int64 {
 	return int64(claims["exp"].(float64))
+}
+
+func GenerateJWTRss(username string) (string, error) {
+	claims := jwt.MapClaims{
+		"username": username,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(RssJwtKey)
+}
+
+func VerifyJWTRss(tokenString string) (string, int64, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// 验证签名算法
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenSignatureInvalid
+		}
+		return RssJwtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		return "", 0, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		return claims["username"].(string), claims["id"].(int64), nil
+	}
+
+	return "", 0, jwt.ErrTokenMalformed
 }

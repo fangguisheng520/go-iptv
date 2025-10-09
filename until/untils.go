@@ -5,9 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go-iptv/dao"
+	"go-iptv/models"
 	"io"
 	"log"
 	"math"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -20,6 +23,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func Md5(str string) (retMd5 string) {
@@ -343,4 +347,71 @@ func DiffDays(ts1, ts2 int64) int {
 	days := diff.Hours() / 24
 
 	return int(math.Ceil(days))
+}
+
+func GetContainerID() (string, error) {
+	hostname, err := os.ReadFile("/etc/hostname")
+	if err != nil {
+		return "", err
+	}
+	id := strings.TrimSpace(string(hostname))
+	return id, nil
+}
+
+func UpdateChannelsId() {
+	var channels []models.IptvChannel
+
+	// 先获取所有记录并按 id 排序
+	if err := dao.DB.Model(&models.IptvChannel{}).Order("id").Find(&channels).Error; err != nil {
+		log.Fatal("查询失败:", err)
+	}
+
+	if len(channels) == 0 {
+		return
+	}
+
+	// 生成 CASE WHEN 批量更新语句
+	var cases []string
+	var ids []string
+	for i, ch := range channels {
+		newID := i + 1
+		cases = append(cases, fmt.Sprintf("WHEN %d THEN %d", ch.ID, newID))
+		ids = append(ids, fmt.Sprintf("%d", ch.ID))
+	}
+
+	sql := fmt.Sprintf(`
+		UPDATE %s
+		SET id = CASE id
+			%s
+		END
+		WHERE id IN (%s)
+	`, models.IptvChannel{}.TableName(), strings.Join(cases, " "), strings.Join(ids, ","))
+
+	// 执行事务
+	if err := dao.DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Exec(sql).Error
+	}); err != nil {
+		log.Fatal("更新失败:", err)
+	}
+
+	log.Println("ID 重新编号完成")
+}
+
+func GetBg() string {
+	// 获取指定目录下的所有png文件
+	dir := "/app/images/bj"
+	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
+	if err != nil {
+		return ""
+	}
+	if len(files) == 0 {
+		return ""
+	}
+
+	pngs := make([]string, len(files))
+	for i, file := range files {
+		pngs[i] = filepath.Base(file)
+	}
+	randomIndex := rand.Intn(len(pngs))
+	return pngs[randomIndex]
 }

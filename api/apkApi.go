@@ -22,11 +22,6 @@ func ApkLogin(c *gin.Context) {
 
 	ip := c.ClientIP() //获取ip
 
-	if !service.CheckIpMax(ip) {
-		c.AbortWithStatus(http.StatusForbidden)
-		return
-	}
-
 	if strings.Contains(user.Mac, "获取地址失败") {
 		user.Mac = user.DeviceID
 	}

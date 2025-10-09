@@ -5,13 +5,11 @@
 			<div class="row">
 				<div class="col-lg-12">
 					<div class="card">
-						<div class="card-header"><h4>已授权用户列表</h4></div>
+						<div class="card-header"><h4>已授权客户端列表</h4></div>
 						<div class="card-toolbar clearfix">
 							<div class="btn-block" >
-								<label>用户总数：{{ .UserTotal }}</label>
+								<label>客户端总数：{{ .UserTotal }}</label>
 								<label>今日上线：{{ .UserToday }}</label>
-								<label>今日授权：{{ .UserTodayAuth }}</label>
-								<label>过期用户：{{ .ExpiredCount }}</label>
 							</div>
 							<form class="pull-right search-bar" method="GET" action="/admin/users">
 								<div class="input-group">
@@ -52,14 +50,14 @@
 															</label>
 														</th>
 														<th class="w-5"><a href="?order=name" class="loaduser">账号</a></th>
-														<th class="w-10"><a href="?order=meal" class="loaduser">套餐</a></th>
+														<th class="w-10"><a href="?order=meal" class="loaduser">分组</a></th>
 														<th class="w-15"><a href="?order=deviceid" class="loaduser">设备ID</a></th>
 														<th class="w-10"><a href="?order=model" class="loaduser">型号</a></th>
 														<th class="w-10"><a href="?order=ip" class="loaduser">IP</a></th>
-														<th class="w-15"><a href="?order=region" class="loaduser">地区</a></th>
+														<th class="w-10"><a href="?order=region" class="loaduser">地区</a></th>
 														<th class="w-15"><a href="?order=lasttime" class="loaduser">最后登陆</a></th>
 														<th class="w-5"><a href="?order=exp" class="loaduser">状态</a></th>
-														<th class="w-5"><a href="?order=author" class="loaduser">授权人</a></th>
+														<th class="w-10"><a href="?order=author" class="loaduser">授权人</a></th>
 														<th class="w-10"><a href="?order=marks" class="loaduser">备注</a></th>
 													</tr>
 												</thead>
@@ -87,29 +85,24 @@
 														{{ end }}
 													{{ else }}
 														<tr>
-															<td align='center' colspan='12' style="color:red;">对不起，当前未有已授权的用户数据</td>
+															<td align='center' colspan='12' style="color:red;">对不起，当前未有已授权的客户端数据</td>
 														</tr>
 													{{ end }}
 												</tbody>
 											</table>
 
 											<select class="btn btn-sm btn-default dropdown-toggle" style="width: 115px;height: 30px;" name="s_meals">
-												<option value="">请选择套餐</option>
+												<option value="">请选择分组</option>
 												{{ range .Meals }}
 												<option value="{{ .ID }}">{{ .Name }}</option>
 												{{ end }}
 											</select>
 											<!-- 操作按钮 -->
-											<button class="btn btn-sm btn-primary m-r-10" type="button" name="e_meals" onclick="submitFormPOST(this)">修改套餐</button>
-											<input class="btn btn-default" style="width: 115px;height: 30px;" type="text" name="marks" size="3" placeholder="请输入备注">
+											<button class="btn btn-sm btn-primary m-r-10" type="button" name="e_meals" onclick="submitFormPOST(this)">修改分组</button>
+											<input class="btn btn-default" style="width: 200px;height: 30px;" type="text" name="marks" size="3" placeholder="请输入备注">
 											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitmodifymarks" onclick="submitFormPOST(this)">修改备注</button>
-											<input class="btn btn-default" style="width: 85px;height: 30px;" type="text" name="exp" size="3" placeholder="授权天数">
-											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitmodify" onclick="submitFormPOST(this)">修改天数</button>
-											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitNotExpired" onclick="submitFormPOST(this)">设为永不到期</button>
-											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitCancelNotExpired" onclick="submitFormPOST(this)">取消永不到期</button>
 											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitforbidden" onclick="submitFormPOST(this)">取消授权</button>
-											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitdel" onclick="confirmAndSubmit(this,'确定删除选中用户吗？')">删除选中用户</button>
-											<button class="btn btn-sm btn-primary" type="button" name="submitdelall" onclick="confirmAndSubmit(this,'确认删除所有已过期授权信息？')">清空过期用户</button>
+											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitdel" onclick="confirmAndSubmit(this,'确定删除选中客户端吗？')">删除选中客户端</button>
 										</div>
 										<nav> 
 											<ul class="pager">

@@ -35,8 +35,8 @@ func Exception(c *gin.Context) {
 		Title:     "异常用户",
 	}
 
-	cfg := dao.GetConfig()
-	pageData.MaxSameipUser = int(cfg.App.MaxSameIPUser)
+	// cfg := dao.GetConfig()
+	// pageData.MaxSameipUser = int(cfg.App.MaxSameIPUser)
 
 	dao.DB.Model(&models.IptvUser{}).Select("status,name,model,vpn,idchange,marks,exp").Where("vpn>0 or idchange>0").Find(&pageData.Users)
 

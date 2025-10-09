@@ -67,8 +67,6 @@ func Users(c *gin.Context) {
 
 	// dao.DB.Model(&models.IptvUser{}).Count(&pageData.UserTotal)
 	dao.DB.Model(&models.IptvUser{}).Where("lasttime > ?", today).Count(&pageData.UserToday)
-	dao.DB.Model(&models.IptvUser{}).Where("status > ? AND authortime > ?", 0, today).Count(&pageData.UserTodayAuth)
-	dao.DB.Model(&models.IptvUser{}).Where("status = ? AND exp < ?", 1, time.Now().Unix()).Count(&pageData.ExpiredCount)
 
 	recStart := recCounts * (pageData.Page - 1)
 	keywords := "%" + pageData.Keywords + "%"

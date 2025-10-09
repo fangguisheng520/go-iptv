@@ -4,6 +4,7 @@ import (
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
+	"go-iptv/until"
 	"net/url"
 	"strings"
 )
@@ -134,8 +135,8 @@ func DeleteEpg(params url.Values) dto.ReturnJsonDto {
 
 func BindChannel() dto.ReturnJsonDto {
 	ClearBind() // 清空绑定
-	var channeList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channeList).Error; err != nil {
+	var channelList []models.IptvChannel
+	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败", Type: "danger"}
 	}
 
@@ -146,7 +147,7 @@ func BindChannel() dto.ReturnJsonDto {
 
 	for _, epgData := range epgList {
 		var tmpList []string
-		for _, channelData := range channeList {
+		for _, channelData := range channelList {
 
 			if strings.EqualFold(channelData.Name, epgData.Name) {
 				tmpList = append(tmpList, channelData.Name)
@@ -166,7 +167,8 @@ func BindChannel() dto.ReturnJsonDto {
 			dao.DB.Save(&epgData)
 		}
 	}
-
+	go until.GetCCTVChannelList(true)
+	go until.GetProvinceChannelList(true)
 	return dto.ReturnJsonDto{Code: 1, Msg: "绑定成功", Type: "success"}
 }
 

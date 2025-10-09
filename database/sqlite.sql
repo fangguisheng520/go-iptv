@@ -16,6 +16,8 @@ CREATE TABLE iptv_category (
     latesttime TEXT DEFAULT NULL,
     sort INTEGER
 );
+INSERT INTO iptv_category VALUES(1,'中央台',1,'add','',0,'',-2);
+INSERT INTO iptv_category VALUES(2,'地方卫视',1,'add','',0,'',-1);
 CREATE TABLE iptv_channels (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
@@ -239,12 +241,11 @@ INSERT INTO iptv_epg VALUES(206,'51zmt-中国教育4台','','1','中国教育4�
 CREATE TABLE iptv_meals (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
-    days INTEGER NOT NULL DEFAULT 0,
     content TEXT DEFAULT NULL,
     status INTEGER NOT NULL DEFAULT 1
 );
-INSERT INTO iptv_meals VALUES(1000,'试看套餐',30,'',1);
-INSERT INTO iptv_meals VALUES(1001,'会员套餐',999,'',1);
+INSERT INTO iptv_meals VALUES(1000,'默认分组','中央台_地方卫视',1);
+INSERT INTO iptv_meals VALUES(1001,'卧室分组','',1);
 CREATE TABLE iptv_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name BIGINT NOT NULL,

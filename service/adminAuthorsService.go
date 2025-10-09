@@ -6,49 +6,8 @@ import (
 	"go-iptv/models"
 	"go-iptv/until"
 	"net/url"
-	"strconv"
 	"time"
 )
-
-func SubmitAuthor(params url.Values, username string) dto.ReturnJsonDto {
-	ids := params["ids[]"]
-	meal := params["meal"][0]
-	exp := params["exp"][0]
-
-	if len(ids) == 0 {
-		return dto.ReturnJsonDto{Code: 0, Msg: "请选择用户", Type: "danger"}
-	}
-	if meal == "" || meal == "0" {
-		return dto.ReturnJsonDto{Code: 0, Msg: "请选择套餐", Type: "danger"}
-	}
-	if exp == "" {
-		return dto.ReturnJsonDto{Code: 0, Msg: "请选择过期时间(天)", Type: "danger"}
-	}
-
-	if !until.IsSafe(meal) || !until.IsSafe(exp) {
-		return dto.ReturnJsonDto{Code: 0, Msg: "输入不合法", Type: "danger"}
-	}
-
-	expDays, err := strconv.ParseInt(exp, 10, 64)
-	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "过期时间格式不正确", Type: "danger"}
-	}
-
-	dao.DB.Model(&models.IptvUser{}).Where("name IN (?)", ids).Updates(map[string]interface{}{
-		"meal":       meal,
-		"status":     1,
-		"exp":        time.Now().Unix() + 86400*int64(expDays),
-		"author":     username,
-		"authortime": time.Now().Unix(),
-		"marks":      username + "已授权",
-	})
-
-	return dto.ReturnJsonDto{
-		Code: 1,
-		Msg:  "操作成功",
-		Type: "success",
-	}
-}
 
 func SubmitAuthorForever(params url.Values, username string) dto.ReturnJsonDto {
 	ids := params["ids[]"]

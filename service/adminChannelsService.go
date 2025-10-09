@@ -29,6 +29,19 @@ func AdminGetChannels(params url.Values) string {
 		return res
 	}
 
+	var categoryDb models.IptvCategory
+
+	if err := dao.DB.Where("name = ?", category).First(&categoryDb).Error; err != nil {
+		return res
+	}
+
+	if categoryDb.Sort == -2 {
+		return until.GetCCTVChannelList(false)
+	}
+	if categoryDb.Sort == -1 {
+		return until.GetProvinceChannelList(false)
+	}
+
 	var channels []models.IptvChannel
 
 	dao.DB.Model(&models.IptvChannel{}).Where("category = ?", category).Order("id ASC").Find(&channels)
@@ -97,6 +110,12 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 
 	if !until.IsSafe(listName) || !until.IsSafe(autocategory) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "输入不合法", Type: "danger"}
+	}
+
+	var category models.IptvCategory
+	dao.DB.Model(&models.IptvCategory{}).Where("(name = ? and url !='') or url = ?", listName, url).Find(&category)
+	if category.Name != "" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "该列表名称或url已存在", Type: "danger"}
 	}
 
 	iptvCategory := models.IptvCategory{Name: listName, Url: url}
@@ -280,6 +299,15 @@ func SubmitDelType(params url.Values) dto.ReturnJsonDto {
 	if name == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	}
+
+	var category models.IptvCategory
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).First(&category); err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "该频道不存在", Type: "danger"}
+	}
+	if category.ID == 1 || category.ID == 2 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "该频道不能删除", Type: "danger"}
+	}
+
 	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).Delete(&models.IptvCategory{})
 	dao.DB.Model(&models.IptvChannel{}).Where("category = ?", name).Delete(&models.IptvChannel{})
 	go BindChannel()
@@ -317,6 +345,11 @@ func SubmitMoveUp(params url.Values) dto.ReturnJsonDto {
 		First(&prev).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到可交换的记录", Type: "danger"}
 	}
+
+	if prev.Sort < 0 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "已在自定义分类最上", Type: "danger"}
+	}
+
 	err := dao.DB.Transaction(func(tx *gorm.DB) error {
 		// 交换 sort
 		if err := tx.Model(&models.IptvCategory{}).
@@ -491,23 +524,28 @@ func AddChannelList(cname, srclist string) (int, error) {
 	// 转换为 "频道,URL" 格式
 	srclist = until.ConvertListFormat(srclist)
 
-	// 删除旧的分类数据
-	err := dao.DB.Model(&models.IptvChannel{}).Where("category = ?", cname).Delete(&models.IptvChannel{}).Error
-	if err != nil {
+	// 获取 cname 分类下已有的频道
+	var oldChannels []models.IptvChannel
+	if err := dao.DB.Model(&models.IptvChannel{}).Where("category = ?", cname).Find(&oldChannels).Error; err != nil {
 		return 0, err
 	}
 
-	// 取已有的 URL，用 map 去重
-	existUrls := make(map[string]struct{})
-	var iptvs []models.IptvChannel
-	err = dao.DB.Model(&models.IptvChannel{}).Find(&iptvs).Error
-	if err != nil {
+	// 获取数据库中所有 URL，用于跨分类去重
+	var allChannels []models.IptvChannel
+	if err := dao.DB.Model(&models.IptvChannel{}).Where("category != ?", cname).Find(&allChannels).Error; err != nil {
 		return 0, err
 	}
 
-	for _, iptv := range iptvs {
-		if iptv.Url != "" { // 假设 struct 里字段是 Url
-			existUrls[iptv.Url] = struct{}{}
+	allUrls := make(map[string]string)               // url -> category
+	existUrls := make(map[string]models.IptvChannel) // 当前分类已有 URL
+	for _, ch := range allChannels {
+		if ch.Url != "" {
+			allUrls[ch.Url] = ch.Category
+		}
+	}
+	for _, ch := range oldChannels {
+		if ch.Url != "" {
+			existUrls[ch.Url] = ch
 		}
 	}
 
@@ -519,6 +557,8 @@ func AddChannelList(cname, srclist string) (int, error) {
 	reBbsok := regexp.MustCompile(`https(.*)www\.bbsok\.cf[^>]*`)
 
 	lines := strings.Split(srclist, "\n")
+	srclistUrls := make(map[string]struct{}) // 记录新列表 URL
+	var newChannels []models.IptvChannel     // 待批量新增
 	repetNum := 0
 
 	for _, line := range lines {
@@ -538,39 +578,57 @@ func AddChannelList(cname, srclist string) (int, error) {
 		channelName := parts[0]
 		source := parts[1]
 
-		// 多个源分割 #
 		srcList := strings.Split(source, "#")
 
 		for _, src := range srcList {
-			src2 := strings.NewReplacer(
-				`"`, "",
-				"'", "",
-				"}", "",
-				"{", "",
-			).Replace(src)
-
+			src2 := strings.NewReplacer(`"`, "", "'", "", "}", "", "{", "").Replace(src)
 			if src2 == "" || channelName == "" {
 				continue
 			}
 
-			if _, exists := existUrls[src2]; exists {
+			srclistUrls[src2] = struct{}{}
+
+			// 如果 URL 已在其它分类中存在，则跳过
+			if cat, ok := allUrls[src2]; ok && cat != cname {
 				repetNum++
 				continue
 			}
 
-			channel := models.IptvChannel{
+			// 如果 URL 已在当前分类中，则保留
+			if _, exists := existUrls[src2]; exists {
+				continue
+			}
+
+			// 新增数据
+			newChannels = append(newChannels, models.IptvChannel{
 				Name:     channelName,
 				Url:      src2,
 				Category: cname,
-			}
-
-			if err := dao.DB.Model(&models.IptvChannel{}).Create(&channel).Error; err != nil {
-				continue
-			}
-			existUrls[src2] = struct{}{}
+			})
+			existUrls[src2] = models.IptvChannel{Name: channelName, Url: src2, Category: cname}
 		}
 	}
+
+	// 批量新增
+	if len(newChannels) > 0 {
+		if err := dao.DB.Model(&models.IptvChannel{}).Create(&newChannels).Error; err != nil {
+			return repetNum, err
+		}
+	}
+
+	// 批量删除：删除 cname 分类下不在 srclistUrls 中的旧数据
+	var delIDs []int64
+	for url, ch := range existUrls {
+		if _, ok := srclistUrls[url]; !ok {
+			delIDs = append(delIDs, ch.ID)
+		}
+	}
+	if len(delIDs) > 0 {
+		dao.DB.Delete(&models.IptvChannel{}, delIDs)
+	}
+
 	go BindChannel()
+	go until.UpdateChannelsId()
 
 	return repetNum, nil
 }

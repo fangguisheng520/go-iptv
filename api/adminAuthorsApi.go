@@ -20,8 +20,6 @@ func Authors(c *gin.Context) {
 
 	for k := range params {
 		switch k {
-		case "submitauthor":
-			res = service.SubmitAuthor(params, username)
 		case "submitauthorforever":
 			res = service.SubmitAuthorForever(params, username)
 		case "submitforbidden":

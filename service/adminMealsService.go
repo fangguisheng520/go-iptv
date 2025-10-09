@@ -5,7 +5,6 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"net/url"
-	"strconv"
 	"strings"
 )
 
@@ -98,23 +97,17 @@ func MealsDel(params url.Values) dto.ReturnJsonDto {
 func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 	mealId := params.Get("mealId")
 	mealName := params.Get("mealName")
-	mealDays := params.Get("mealDays")
 	namesList := params["names[]"]
 
 	if mealName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "套餐名称不能为空", Type: "danger"}
 	}
-	if mealDays == "" {
-		return dto.ReturnJsonDto{Code: 0, Msg: "套餐天数不能为空", Type: "danger"}
-	}
 	if len(namesList) == 0 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "请选择频道", Type: "danger"}
 	}
-	mealDaysInt, _ := strconv.ParseInt(mealDays, 10, 64)
 
 	iptvMeals := models.IptvMeals{
 		Name:    mealName,
-		Days:    mealDaysInt,
 		Content: strings.Join(namesList, "_"),
 	}
 

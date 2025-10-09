@@ -11,7 +11,6 @@
 						<div class="btn-block" >
 							<label>待授权用户：{{.UnAuthorUserTotal}}</label>
 							<label>今日上线：{{.NewUserToday}}</label>
-							<label>今日授权：{{.UserTodayAuthor}}</label>
 						</div>
 						<form class="pull-right search-bar" method="GET" action="/admin/authors">
 							<div class="input-group">
@@ -97,10 +96,11 @@
 																{{ end }}
 															{{ else }}
 																	<option value="1000" selected>默认/测试套餐</option>
-																</select>
+																
 															{{ end }}
-															<input class="form-control" style="width:85px;height:30px;" type="text" name="exp" size="3" placeholder="授权天数">
-															<button class="btn btn-sm btn-primary m-r-5" type="button" onclick="submitFormPOST(this)" name="submitauthor">授权</button>
+															</select>
+
+
 															<button class="btn btn-sm btn-primary m-r-5" type="button" onclick="submitFormPOST(this)" name="submitauthorforever">永久授权</button>
 															<button class="btn btn-sm btn-primary m-r-5" type="button" onclick="submitFormPOST(this)" name="submitforbidden">禁止试用</button>
 															<button class="btn btn-sm btn-primary m-r-5" type="button" onclick="confirmAndSubmit(this,'确定删除选中用户吗？')" name="submitdel">删除记录</button>

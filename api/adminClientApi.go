@@ -30,8 +30,6 @@ func Client(c *gin.Context) {
 			res = service.SetBuffTimeOut(params)
 		case "needauthor":
 			res = service.SetNeedAuthor(params)
-		case "submittrialdays":
-			res = service.SetTrialDays(params)
 		case "submitappinfo":
 			res = service.SetAppInfo(params)
 		case "submittipset":

@@ -28,9 +28,6 @@ func AdminRouter(r *gin.Engine, path string) {
 			router.GET("/authors", html.Authors)
 			router.POST("/authors", api.Authors)
 
-			router.GET("/exception", html.Exception)
-			router.POST("/exception", api.Exception)
-
 			router.GET("/meals", html.Meals)
 			router.POST("/meals", api.Meals)
 

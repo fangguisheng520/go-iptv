@@ -127,7 +127,7 @@ function submitFormPOST(btn, showChannel = false) {
 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
-		if (key === "iconfile") {
+		if (key === "iconfile" || key === "bjfile") {
 			return;
 		}
 		params.append(key, value);
@@ -411,11 +411,9 @@ function mealsGetCategory(btn) {
 		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
 		var mealid = $tr.find(".meal-id").data("value");
 		var mealname = $tr.find(".meal-name").data("value");
-		var mealdays = $tr.find(".meal-days").data("value");
 		
 		$("#mealId").val(mealid);
 		$("#mealName").val(mealname);
-		$("#mealDays").val(mealdays);
 	}
 
 	// 使用 fetch AJAX 提交

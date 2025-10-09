@@ -109,19 +109,6 @@ func SetNeedAuthor(params url.Values) dto.ReturnJsonDto {
 	}
 }
 
-func SetTrialDays(params url.Values) dto.ReturnJsonDto {
-	trialdays := params.Get("trialdays")
-
-	trialdaysInt, err := strconv.ParseInt(trialdays, 10, 64)
-	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
-	}
-	cfg := dao.GetConfig()
-	cfg.App.TrialDays = trialdaysInt
-	dao.SetConfig(cfg)
-	return dto.ReturnJsonDto{Code: 1, Msg: "试用设置成功", Type: "success"}
-}
-
 func SetAppInfo(params url.Values) dto.ReturnJsonDto {
 
 	buildStatus := bootstrap.GetBuildStatus()

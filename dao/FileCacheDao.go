@@ -72,6 +72,13 @@ func (fc *FileCache) Exists(key string) bool {
 	return true
 }
 
+// 判断缓存是否存在
+func (fc *FileCache) ChannelExists(key string) bool {
+	path := filepath.Join(fc.Dir, key)
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 // 删除缓存
 func (fc *FileCache) Delete(key string) error {
 	path := filepath.Join(fc.Dir, key)

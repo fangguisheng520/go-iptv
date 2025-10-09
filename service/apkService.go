@@ -16,8 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func Getver() dto.GetverRes {
@@ -78,7 +76,7 @@ func ApkLogin(user models.IptvUser) dto.LoginRes {
 	result.TipUserNoReg = "当前账号 " + strconv.FormatInt(user.Name, 10) + " " + cfg.Tips.UserNoReg
 	result.TipUserExpired = "当前账号 " + strconv.FormatInt(user.Name, 10) + " " + cfg.Tips.UserExpired
 	result.TipUserForbidden = "当前账号 " + strconv.FormatInt(user.Name, 10) + " " + cfg.Tips.UserForbidden
-	result.AdInfo = cfg.Ad.AdInfo
+	result.AdInfo = "作者博客: www.qingh.xyz"
 	result.RandKey = until.Md5(time.Now().Format("20060102150405") + strconv.FormatInt(user.Name, 10))
 
 	return getUserInfo(user, result)
@@ -110,22 +108,78 @@ func GetChannels(channel dto.DataReqDto) string {
 	cList := strings.Split(meal.Content, "_")
 
 	var channelList []models.IptvChannel
+	log.Println(cList)
+	log.Println(len(cList))
 
-	if len(cList) > 0 && cList[0] != "" {
+	if len(cList) > 1 || (len(cList) == 1 && cList[0] != "") {
 		dao.DB.Model(&models.IptvChannel{}).Where("category in ?", cList).Order("id asc").Find(&channelList)
+	} else {
+		resList = append(resList, dto.ChannelListDto{
+			Name: "该套餐无频道",
+		})
+
+		jsonData, _ := json.Marshal(resList)
+		jsonStr := until.DecodeUnicode(string(jsonData))
+		return encrypt(jsonStr, channel.Rand)
 	}
 
-	for _, v := range cList {
+	var categoryList []models.IptvCategory
+	dao.DB.Model(&models.IptvCategory{}).Where("name in ? and enable = ? and type = ?", cList, 1, "add").Order("sort asc").Find(&categoryList)
+
+	for _, v := range categoryList {
 		var tmpData []dto.ChannelData
 		var i int64 = 1
 		var dataMap = make(map[string][]string)
 		var tmpMap = make(map[string]int64)
-		for _, channel := range channelList {
-			if v == channel.Category {
-				dataMap[channel.Name] = append(dataMap[channel.Name], strings.TrimSpace(channel.Url))
-				if _, ok := tmpMap[channel.Name]; !ok {
-					tmpMap[channel.Name] = i
+
+		if v.Sort == -2 {
+			text := until.GetCCTVChannelList(false)
+			text = strings.TrimSpace(text)     // 去掉结尾多余换行
+			parts := strings.Split(text, "\n") // 按换行符分割
+			if len(parts) == 1 && parts[0] == "" {
+				resList = append(resList, dto.ChannelListDto{
+					ID:   int64(v.Sort + 3),
+					Name: v.Name,
+					Data: tmpData,
+				})
+				continue
+			}
+			for _, part := range parts {
+				data := strings.Split(part, ",")
+				dataMap[data[0]] = append(dataMap[data[0]], strings.TrimSpace(data[1]))
+				if _, ok := tmpMap[data[0]]; !ok {
+					tmpMap[data[0]] = i
 					i++
+				}
+			}
+		} else if v.Sort == -1 {
+			text := until.GetProvinceChannelList(false)
+			text = strings.TrimSpace(text)     // 去掉结尾多余换行
+			parts := strings.Split(text, "\n") // 按换行符分割
+			if len(parts) == 1 && parts[0] == "" {
+				resList = append(resList, dto.ChannelListDto{
+					ID:   int64(v.Sort + 3),
+					Name: v.Name,
+					Data: tmpData,
+				})
+				continue
+			}
+			for _, part := range parts {
+				data := strings.Split(part, ",")
+				dataMap[data[0]] = append(dataMap[data[0]], strings.TrimSpace(data[1]))
+				if _, ok := tmpMap[data[0]]; !ok {
+					tmpMap[data[0]] = i
+					i++
+				}
+			}
+		} else {
+			for _, channel := range channelList {
+				if v.Name == channel.Category {
+					dataMap[channel.Name] = append(dataMap[channel.Name], strings.TrimSpace(channel.Url))
+					if _, ok := tmpMap[channel.Name]; !ok {
+						tmpMap[channel.Name] = i
+						i++
+					}
 				}
 			}
 		}
@@ -141,17 +195,19 @@ func GetChannels(channel dto.DataReqDto) string {
 		sort.Slice(tmpData, func(i, j int) bool {
 			return tmpData[i].Num < tmpData[j].Num
 		})
-		if v == "" {
-			v = "该套餐无频道"
-		}
 
 		resList = append(resList, dto.ChannelListDto{
-			Name: v,
+			ID:   int64(v.Sort + 3),
+			Name: v.Name,
 			Data: tmpData,
 		})
 	}
+	sort.Slice(resList, func(i, j int) bool {
+		return resList[i].ID < resList[j].ID
+	})
 	jsonData, _ := json.Marshal(resList)
 	jsonStr := until.DecodeUnicode(string(jsonData))
+	log.Println(jsonStr)
 
 	return encrypt(jsonStr, channel.Rand)
 }
@@ -215,38 +271,8 @@ func CompressString(input string) (string, error) {
 	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
 
-func CheckIpMax(ip string) bool {
-	var cfg = dao.GetConfig()
-	var num int64
-	if err := dao.DB.Model(&models.IptvUser{}).Where("ip = ?", ip).Count(&num).Error; err != nil {
-		return false
-	}
-
-	return num < cfg.App.MaxSameIPUser
-}
-
 func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 	var cfg = dao.GetConfig()
-	days := cfg.App.TrialDays
-
-	if cfg.App.NeedAuthor == 0 {
-		days = 3
-		result.Exp = 3
-		now := time.Now()
-		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		result.Exps = todayZero.Add(time.Duration(days) * 24 * time.Hour).Unix()
-	} else if days >= 0 {
-		now := time.Now()
-		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		result.Exps = user.Exp
-		result.Exp = int64(until.DiffDays(todayZero.Unix(), user.Exp))
-	} else {
-		days = 3
-		result.Exp = 3
-		now := time.Now()
-		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		result.Exps = todayZero.Add(time.Duration(days) * 24 * time.Hour).Unix()
-	}
 
 	var movie []models.IptvMovie
 	dao.DB.Model(&models.IptvMovie{}).Where("state = ?", 1).Order("id desc").Find(&movie)
@@ -266,12 +292,12 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 			result.ProvList = strings.Split(v.Content, "_")
 		}
 	}
-	if cfg.App.NeedAuthor == 0 || days < 0 {
-		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s 剩余时间: 无限期 \n", result.ID, result.IP, user.DeviceID, result.MealName)
+	if cfg.App.NeedAuthor == 0 {
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s \n", result.ID, result.IP, user.DeviceID, result.MealName)
+	} else if cfg.App.NeedAuthor == 1 && user.Status != -1 {
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s\n", result.ID, result.IP, user.DeviceID, result.MealName)
 	} else {
-		now := time.Now()
-		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s 剩余时间: %d天 \n", result.ID, result.IP, user.DeviceID, result.MealName, until.DiffDays(todayZero.Unix(), user.Exp))
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 未授权 \n", result.ID, result.IP, user.DeviceID)
 	}
 
 	return result
@@ -284,45 +310,21 @@ func CheckUserDb(user dto.ApkUser, ip string) models.IptvUser {
 		return AddUser(user, ip)
 	}
 
-	if dbUser.DeviceID != user.DeviceID {
-		user = checkUserVpn(user, ip)
-		dao.DB.Model(&models.IptvUser{}).Where("mac = ?", user.Mac).UpdateColumn("idchange", gorm.Expr("idchange + ?", 1))
-	}
-
-	user.IP = ip
-
 	dbUser.LastTime = time.Now().Unix()
-	dbUser.IP = user.IP
+	dbUser.IP = ip
 	dbUser.Region = until.GetIpRegion(user.IP)
 	dbUser.NetType = user.NetType
+	dbUser.DeviceID = user.DeviceID
 
 	dao.DB.Model(&models.IptvUser{}).Where("mac = ?", user.Mac).Updates(dbUser)
 
-	if dbUser.Status == -1 && dbUser.Exp > time.Now().Unix() {
-		dbUser.Status = 1
-	}
-
-	if dbUser.Status == 999 {
-		dbUser.Exp = time.Now().Unix() + 86400
-	}
-
 	return dbUser
-}
-
-func checkUserVpn(user dto.ApkUser, ip string) dto.ApkUser {
-	if user.IP != ip {
-		dao.DB.Model(&models.IptvUser{}).Where("mac = ?", user.Mac).UpdateColumn("vpn", gorm.Expr("vpn + ?", 1))
-	}
-	user.IP = ip
-	return user
 }
 
 func AddUser(user dto.ApkUser, ip string) models.IptvUser {
 	user.IP = ip
 	user.Region = until.GetIpRegion(ip)
 	var cfg = dao.GetConfig()
-
-	days := cfg.App.TrialDays
 
 	dbData := models.IptvUser{
 		Name:     int64(genName()),
@@ -335,30 +337,18 @@ func AddUser(user dto.ApkUser, ip string) models.IptvUser {
 		Meal:     1000,
 	}
 
-	if days > 0 {
-		dbData.Status = -1
-		dbData.Marks = "试用" + strconv.FormatInt(days, 10) + "天"
-		now := time.Now()
-		todayZero := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		dbData.Exp = todayZero.Add(time.Duration(days) * 24 * time.Hour).Unix()
-	} else if days == 0 {
-		dbData.Status = -1
-		dbData.Marks = "未授权"
-	} else {
-		dbData.Status = 1
-		dbData.Marks = "免费"
-	}
-
-	if cfg.App.NeedAuthor == 1 {
+	switch cfg.App.NeedAuthor {
+	case 0:
 		dbData.Status = 999
 		dbData.Marks = "无需授权,默认试用套餐"
+		dbData.Exp = 0
+	case 1:
+		dbData.Status = -1
+		dbData.Marks = "未授权"
 		dbData.Exp = 0
 	}
 
 	dao.DB.Model(&models.IptvUser{}).Create(&dbData)
-	if days > 0 && cfg.App.NeedAuthor == 0 {
-		dbData.Status = 1
-	}
 	return dbData
 }
 
