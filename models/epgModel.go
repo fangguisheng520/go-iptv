@@ -6,6 +6,7 @@ type IptvEpg struct {
 	Content string `gorm:"column:content" json:"content"`
 	Status  int    `gorm:"column:status" json:"status"`
 	Remarks string `gorm:"column:remarks" json:"remarks"`
+	Logo    string `gorm:"-" json:"logo"`
 }
 
 func (IptvEpg) TableName() string {

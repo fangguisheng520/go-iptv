@@ -113,11 +113,11 @@
                                         <input type="hidden" id="typename0" name="old_name" value=""/>
 										<input class="form-control" style="width: 108px;height: 30px;" id="typename" type="text" size="10" name="category" value="" placeholder="分类名称"/>
 										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_addtype">增加分类</button>
-										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this)" name="submit_deltype">删除分类</button>
+										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this)" name="submit_deltype">删除分类</button>
 										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_modifytype">修改分类</button>
-										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_moveup">上移分类</button>
-										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_movedown">下移分类</button>
-										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_movetop">移至最上</button>
+										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this,true)" name="submit_moveup">上移分类</button>
+										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this,true)" name="submit_movedown">下移分类</button>
+										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this,true)" name="submit_movetop">移至最上</button>
 									</div>
 								</div>
 							</form>
@@ -130,7 +130,7 @@
 									<label class="btn-block">分类列表</label>
                                     {{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
                                     {{if eq .Type "add" }}
-                                        <button class="btn btn-default categorylist-btn" onclick="showlist('{{.Name}}')">
+                                        <button class="btn btn-default categorylist-btn" onclick="showlist({{.Sort}},'{{.Name}}')">
                                             <div style='text-align:left;padding: 5px;'>
                                                 <label class="lyear-checkbox checkbox-inline checkbox-cyan">
                                                     <input type="checkbox" {{if eq .Enable 1}}checked="checked"{{end}} value="{{.Name}}" name="category" id="category" onclick='categorycheck("{{.Name}}")'>
@@ -148,7 +148,7 @@
 										<div class="input-group-btn">
 											<div class="col-xs-12" style="padding: 15px;">
 												<input type="hidden" id="categoryname" name="categoryname" value=""/>
-												<button class="btn btn-sm btn-default" id="updatesrc" style="width:100%;" type="button" onclick="submitFormPOST(this, true)" name="submitsave">保存</button>
+												<button class="btn btn-sm btn-default showlist" id="updatesrc" style="width:100%;" type="button" onclick="submitFormPOST(this, true)" name="submitsave">保存</button>
 											</div>
 											<div class="col-xs-12">
 												<textarea class="form-control" id="srclist" name="srclist" rows="35" placeholder="节目列表"></textarea>

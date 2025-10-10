@@ -7,16 +7,38 @@ import (
 	"log"
 	"os"
 	"os/exec"
+
+	"gorm.io/gorm"
 )
 
-func InitDB() {
+func InitDB() bool {
 	dao.DB.AutoMigrate(&models.IptvAdmin{})
 	dao.DB.AutoMigrate(&models.IptvUser{})
-	dao.DB.AutoMigrate(&models.IptvChannel{})
+
+	has := dao.DB.Migrator().HasColumn(&models.IptvChannel{}, "sort")
+	if !has {
+		dao.DB.AutoMigrate(&models.IptvChannel{})
+		if err := dao.DB.Transaction(func(tx *gorm.DB) error {
+			var channels []models.IptvChannel
+			if err := tx.Model(&models.IptvChannel{}).Order("id").Find(&channels).Error; err != nil {
+				return err
+			}
+
+			for _, ch := range channels {
+				if err := tx.Model(&models.IptvChannel{}).Where("id = ?", ch.ID).Update("sort", ch.ID).Error; err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			return false
+		}
+	}
 	dao.DB.AutoMigrate(&models.IptvCategory{})
 	dao.DB.AutoMigrate(&models.IptvEpg{})
 	dao.DB.AutoMigrate(&models.IptvMeals{})
 	dao.DB.AutoMigrate(&models.IptvMovie{})
+	return true
 }
 
 func InitLogo() bool {

@@ -49,7 +49,9 @@ func main() {
 
 	log.Println("加载数据库...")
 	dao.InitDB("/config/iptv.db")
-	bootstrap.InitDB()
+	if !bootstrap.InitDB() {
+		log.Println("数据库初始化失败,请删除/config/iptv.db重新安装")
+	}
 
 	dao.CONFIG_PATH = "/config/config.yml"
 	dao.LoadConfigFile()

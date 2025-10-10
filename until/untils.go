@@ -452,3 +452,21 @@ func CheckLogo(path string) (bool, error) {
 
 	return false, nil
 }
+
+func GetLogs() []string {
+	// 获取指定目录下的所有png文件
+	dir := "/config/logo"
+	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
+	if err != nil {
+		return []string{}
+	}
+	if len(files) == 0 {
+		return []string{}
+	}
+
+	pngs := make([]string, len(files))
+	for i, file := range files {
+		pngs[i] = filepath.Base(file)
+	}
+	return pngs
+}

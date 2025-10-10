@@ -62,15 +62,15 @@ func getTxt(id int64) string {
 	}
 
 	for _, category := range categoryList {
-		switch category.ID {
-		case 1:
+		switch category.Sort {
+		case -2:
 			data := until.GetCCTVChannelList(false)
 			if data != "" {
 				res += category.Name + ",#genre#\n"
 				res += data
 
 			}
-		case 2:
+		case -1:
 			data := until.GetProvinceChannelList(false)
 			if data != "" {
 				res += category.Name + ",#genre#\n"
@@ -81,7 +81,7 @@ func getTxt(id int64) string {
 			var channels []models.IptvChannel
 			if err := dao.DB.Model(&models.IptvChannel{}).
 				Where("category = ?", category.Name).
-				Order("id asc").Find(&channels).Error; err != nil {
+				Order("sort asc").Find(&channels).Error; err != nil {
 				continue
 			}
 			if len(channels) == 0 {

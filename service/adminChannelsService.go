@@ -44,7 +44,7 @@ func AdminGetChannels(params url.Values) string {
 
 	var channels []models.IptvChannel
 
-	dao.DB.Model(&models.IptvChannel{}).Where("category = ?", category).Order("id ASC").Find(&channels)
+	dao.DB.Model(&models.IptvChannel{}).Where("category = ?", category).Order("sort ASC").Find(&channels)
 
 	for _, channel := range channels {
 		res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
@@ -455,15 +455,21 @@ func SubmitSave(params url.Values) dto.ReturnJsonDto {
 	srclistStr := params.Get("srclist")
 	categoryName := params.Get("categoryname")
 
-	if categoryName == "" || srclistStr == "" {
+	if categoryName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	}
 
 	// srcList := strings.Split(srclistStr, "\n")
 
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type = ?", categoryName, "add").First(&models.IptvCategory{}).Error; err != nil {
+	var category models.IptvCategory
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type = ?", categoryName, "add").First(&category).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
+
+	if category.Sort < 0 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "默认分类不允许修改", Type: "danger"}
+	}
+
 	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", categoryName).Updates(map[string]interface{}{
 		"latesttime": time.Now().Format("2006-01-02 15:04:05"),
 	})
@@ -517,8 +523,21 @@ func GenreChannels(listName, srclist string) dto.ReturnJsonDto {
 }
 
 func AddChannelList(cname, srclist string) (int, error) {
-	if cname == "" || srclist == "" {
+	log.Println("源数据:", srclist)
+
+	if cname == "" {
 		return 0, errors.New("参数不能为空")
+	}
+	if srclist == "" {
+		// 如果 srclist 为空，删除当前分类下所有数据
+		if err := dao.DB.Transaction(func(tx *gorm.DB) error {
+			return tx.Delete(&models.IptvChannel{}, "category = ?", cname).Error
+		}); err != nil {
+			return 0, err
+		}
+		go BindChannel()
+		go until.UpdateChannelsId()
+		return 0, nil
 	}
 
 	// 转换为 "频道,URL" 格式
@@ -536,20 +555,22 @@ func AddChannelList(cname, srclist string) (int, error) {
 		return 0, err
 	}
 
-	allUrls := make(map[string]string)               // url -> category
-	existUrls := make(map[string]models.IptvChannel) // 当前分类已有 URL
+	allUrls := make(map[string]string) // url -> category
 	for _, ch := range allChannels {
 		if ch.Url != "" {
 			allUrls[ch.Url] = ch.Category
 		}
 	}
+
+	// 当前分类已有 URL -> channelName（大小写敏感）
+	existMap := make(map[string]string)
 	for _, ch := range oldChannels {
-		if ch.Url != "" {
-			existUrls[ch.Url] = ch
+		if ch.Url != "" && ch.Name != "" {
+			existMap[ch.Url] = ch.Name
 		}
 	}
 
-	// 预处理正则清洗
+	// 正则清洗
 	reSpaces := regexp.MustCompile(`\s+`)
 	reGenre := regexp.MustCompile(`#genre#`)
 	reVer := regexp.MustCompile(`ver\..*?\.m3u8`)
@@ -557,10 +578,13 @@ func AddChannelList(cname, srclist string) (int, error) {
 	reBbsok := regexp.MustCompile(`https(.*)www\.bbsok\.cf[^>]*`)
 
 	lines := strings.Split(srclist, "\n")
-	srclistUrls := make(map[string]struct{}) // 记录新列表 URL
-	var newChannels []models.IptvChannel     // 待批量新增
+	newChannels := make([]models.IptvChannel, 0)
+	srclistUrls := make(map[string]struct{})
 	repetNum := 0
+	delIDs := make([]int64, 0)
+	var sortIndex int64 = 0
 
+	// 先处理循环，准备新增和标记要删除的旧数据
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, " ,", ",")
 		line = strings.ReplaceAll(line, "\r", "")
@@ -579,7 +603,6 @@ func AddChannelList(cname, srclist string) (int, error) {
 		source := parts[1]
 
 		srcList := strings.Split(source, "#")
-
 		for _, src := range srcList {
 			src2 := strings.NewReplacer(`"`, "", "'", "", "}", "", "{", "").Replace(src)
 			if src2 == "" || channelName == "" {
@@ -588,15 +611,35 @@ func AddChannelList(cname, srclist string) (int, error) {
 
 			srclistUrls[src2] = struct{}{}
 
-			// 如果 URL 已在其它分类中存在，则跳过
+			// URL 已在其它分类 → 跳过
 			if cat, ok := allUrls[src2]; ok && cat != cname {
 				repetNum++
 				continue
 			}
 
-			// 如果 URL 已在当前分类中，则保留
-			if _, exists := existUrls[src2]; exists {
-				continue
+			if oldName, exists := existMap[src2]; exists {
+				if oldName != channelName {
+					// URL 相同但 channelName 不同 → 删除旧数据
+					for _, ch := range oldChannels {
+						if ch.Url == src2 {
+							delIDs = append(delIDs, ch.ID)
+						}
+					}
+				} else {
+					log.Println("检查顺序")
+					// URL + channelName 相同 → 检查顺序
+					for _, ch := range oldChannels {
+						if ch.Url == src2 && ch.Name == channelName && ch.Sort != sortIndex {
+							ch.Sort = sortIndex
+							if err := dao.DB.Model(&models.IptvChannel{}).Where("id = ?", ch.ID).Update("sort", sortIndex).Error; err != nil {
+								log.Println("更新顺序失败:", err)
+							}
+							break
+						}
+					}
+					sortIndex++
+					continue
+				}
 			}
 
 			// 新增数据
@@ -604,31 +647,42 @@ func AddChannelList(cname, srclist string) (int, error) {
 				Name:     channelName,
 				Url:      src2,
 				Category: cname,
+				Sort:     sortIndex,
 			})
-			existUrls[src2] = models.IptvChannel{Name: channelName, Url: src2, Category: cname}
+			existMap[src2] = channelName
+			sortIndex++
 		}
 	}
 
-	// 批量新增
-	if len(newChannels) > 0 {
-		if err := dao.DB.Model(&models.IptvChannel{}).Create(&newChannels).Error; err != nil {
-			return repetNum, err
-		}
-	}
-
-	// 批量删除：删除 cname 分类下不在 srclistUrls 中的旧数据
-	var delIDs []int64
-	for url, ch := range existUrls {
-		if _, ok := srclistUrls[url]; !ok {
+	// 批量删除数据库中当前分类但新列表中没有的 URL
+	for _, ch := range oldChannels {
+		if _, ok := srclistUrls[ch.Url]; !ok {
 			delIDs = append(delIDs, ch.ID)
 		}
 	}
-	if len(delIDs) > 0 {
-		dao.DB.Delete(&models.IptvChannel{}, delIDs)
+
+	// 在事务中执行删除和新增
+	if err := dao.DB.Transaction(func(tx *gorm.DB) error {
+		if len(delIDs) > 0 {
+			if err := tx.Delete(&models.IptvChannel{}, delIDs).Error; err != nil {
+				return err
+			}
+		}
+		if len(newChannels) > 0 {
+			if err := tx.Create(&newChannels).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return repetNum, err
 	}
 
-	go BindChannel()
-	go until.UpdateChannelsId()
+	// 只有当有新增或删除时才执行异步更新
+	if len(newChannels) > 0 || len(delIDs) > 0 {
+		go BindChannel()
+		go until.UpdateChannelsId()
+	}
 
 	return repetNum, nil
 }

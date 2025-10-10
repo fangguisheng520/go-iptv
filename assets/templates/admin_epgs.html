@@ -56,6 +56,7 @@
 											<td class="w-5">备注</td>
 											<td class="w-5">来源</td>
 											<td class="w-5">状态</td>
+											<td class="w-5">logo</td>
 											<td class="w-10">绑定频道</td>
 											<td class="w-10">操作</td>
 										</tr>
@@ -68,6 +69,7 @@
                                             <td align="center" class="epg-remarks" data-value="{{.Remarks}}"><font color="red">{{.Remarks}}</font></td>
                                             <td align="center"><font color="red">{{ EpgName .Name }}</font></td>
                                             <td align="center">{{ if eq .Status 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
+											<td align="center"><img src="{{.Logo}}" style="background-color: black; height:100%; width:auto; display:block; margin:0 auto;"></td>
                                             <td align="left">{{.Content}}</td>
                                             <td align="center">
                                                 <button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.ID}}" class="btn btn-xs {{if eq .Status 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>&nbsp;
@@ -135,11 +137,11 @@
                                                                             <select class="form-control btn btn-default dropdown-toggle" style="width: 150px;" id="editepgselect" name="epg" >
                                                                                 <option value="">请选EPG来源</option>
                                                                                 <option value="cntv">CCTV官网</option>
-                                                                                <option value="tvming">天脉聚源</option>
+                                                                                <!-- <option value="tvming">天脉聚源</option>
                                                                                 <option value="tvmao">电视猫</option>
-                                                                                <option value="tvsou">搜视网</option>
+                                                                                <option value="tvsou">搜视网</option> -->
                                                                                 <option value="51zmt">51zmt</option>
-                                                                                <option value="112114">112114</option>
+                                                                                <!-- <option value="112114">112114</option> -->
                                                                             </select>&nbsp;&nbsp;
                                                                             <input class="form-control" type="text" id="epgName" name="name" style="width: 125px;" placeholder="EPG名称" value="">
                                                                             <input class="form-control" type="text" id="epgRemarks" name="remarks" style="width: 185px;" placeholder="多个备注请用 | 分隔开" value="">

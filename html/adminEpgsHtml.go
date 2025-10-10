@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -80,6 +81,22 @@ func Epgs(c *gin.Context) {
 	err = dbQuery.Offset(int(recStart)).Limit(int(recCounts)).Find(&pageData.Epgs).Error
 	if err != nil {
 		log.Println("查询epg失败:", err)
+	}
+
+	logoList := until.GetLogs() // 获取logo列表
+
+	cfg := dao.GetConfig()
+
+	for k, v := range pageData.Epgs {
+		epgName := strings.Split(v.Name, "-")[1]
+		log.Println("epgName", epgName)
+		for _, logo := range logoList {
+			logoName := strings.Split(logo, ".")[0]
+			log.Println("logoName", logoName)
+			if strings.EqualFold(epgName, logoName) {
+				pageData.Epgs[k].Logo = cfg.ServerUrl + "/logo/" + logo
+			}
+		}
 	}
 
 	// cfg := dao.GetConfig()

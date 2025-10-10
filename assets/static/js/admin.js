@@ -312,7 +312,7 @@ function checkboxAllName(a){
 	}
 }
 
-function showlist(name){
+function showlist(sort,name){
 	$("#srclist").val("正在加载中...");
 	$.ajax({
 		url: "/admin/channels",
@@ -326,6 +326,13 @@ function showlist(name){
 	$("#typename").val(name);
 	$("#typename0").val(name);
 	$("#categoryname").val(name);
+
+	var $btn = $(".showlist");
+	if (sort == -1 || sort == -2){
+		$btn.prop("disabled", true); // 禁用按钮
+	} else {
+		$btn.prop("disabled", false); // 启用按钮（可选）
+	}
 }
 
 function categorycheck(name){
