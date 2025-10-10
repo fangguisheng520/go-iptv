@@ -110,7 +110,7 @@ func GetChannels(channel dto.DataReqDto) string {
 	var channelList []models.IptvChannel
 
 	if len(cList) > 1 || (len(cList) == 1 && cList[0] != "") {
-		dao.DB.Model(&models.IptvChannel{}).Where("category in ?", cList).Order("id asc").Find(&channelList)
+		dao.DB.Model(&models.IptvChannel{}).Where("category in ?", cList).Order("sort asc").Find(&channelList)
 	} else {
 		resList = append(resList, dto.ChannelListDto{
 			Name: "该套餐无频道",

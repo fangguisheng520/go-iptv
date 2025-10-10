@@ -139,8 +139,6 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 	}
 
 	urlData := until.FilterEmoji(string(body))
-	log.Println(urlData)
-	log.Println(iptvCategory.AutoCategory)
 
 	if !strings.Contains(urlData, "#genre#") && iptvCategory.AutoCategory == 1 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "列表并非DIYP格式,请勿启用DIYP格式自动分类", Type: "danger"}
@@ -169,7 +167,6 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 			iptvCategory.Type = "add"
 			iptvCategory.LatestTime = time.Now().Format("2006-01-02 15:04:05")
 			dao.DB.Model(&models.IptvCategory{}).Create(&iptvCategory)
-			log.Println(iptvCategory.LatestTime)
 			return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("更新列表 %s 成功，重复 %d 条\n", listName, repeat), Type: "success"}
 		} else {
 			return dto.ReturnJsonDto{Code: 0, Msg: fmt.Sprintf("更新列表 %s 失败\n", listName), Type: "danger"}
@@ -523,8 +520,6 @@ func GenreChannels(listName, srclist string) dto.ReturnJsonDto {
 }
 
 func AddChannelList(cname, srclist string) (int, error) {
-	log.Println("源数据:", srclist)
-
 	if cname == "" {
 		return 0, errors.New("参数不能为空")
 	}
@@ -536,7 +531,7 @@ func AddChannelList(cname, srclist string) (int, error) {
 			return 0, err
 		}
 		go BindChannel()
-		go until.UpdateChannelsId()
+		// go until.UpdateChannelsId()
 		return 0, nil
 	}
 
@@ -547,19 +542,6 @@ func AddChannelList(cname, srclist string) (int, error) {
 	var oldChannels []models.IptvChannel
 	if err := dao.DB.Model(&models.IptvChannel{}).Where("category = ?", cname).Find(&oldChannels).Error; err != nil {
 		return 0, err
-	}
-
-	// 获取数据库中所有 URL，用于跨分类去重
-	var allChannels []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Where("category != ?", cname).Find(&allChannels).Error; err != nil {
-		return 0, err
-	}
-
-	allUrls := make(map[string]string) // url -> category
-	for _, ch := range allChannels {
-		if ch.Url != "" {
-			allUrls[ch.Url] = ch.Category
-		}
 	}
 
 	// 当前分类已有 URL -> channelName（大小写敏感）
@@ -582,7 +564,7 @@ func AddChannelList(cname, srclist string) (int, error) {
 	srclistUrls := make(map[string]struct{})
 	repetNum := 0
 	delIDs := make([]int64, 0)
-	var sortIndex int64 = 0
+	var sortIndex int64 = 1
 
 	// 先处理循环，准备新增和标记要删除的旧数据
 	for _, line := range lines {
@@ -611,12 +593,6 @@ func AddChannelList(cname, srclist string) (int, error) {
 
 			srclistUrls[src2] = struct{}{}
 
-			// URL 已在其它分类 → 跳过
-			if cat, ok := allUrls[src2]; ok && cat != cname {
-				repetNum++
-				continue
-			}
-
 			if oldName, exists := existMap[src2]; exists {
 				if oldName != channelName {
 					// URL 相同但 channelName 不同 → 删除旧数据
@@ -626,7 +602,6 @@ func AddChannelList(cname, srclist string) (int, error) {
 						}
 					}
 				} else {
-					log.Println("检查顺序")
 					// URL + channelName 相同 → 检查顺序
 					for _, ch := range oldChannels {
 						if ch.Url == src2 && ch.Name == channelName && ch.Sort != sortIndex {
@@ -681,7 +656,7 @@ func AddChannelList(cname, srclist string) (int, error) {
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
 		go BindChannel()
-		go until.UpdateChannelsId()
+		// go until.UpdateChannelsId()
 	}
 
 	return repetNum, nil

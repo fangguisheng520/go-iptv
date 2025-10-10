@@ -55,18 +55,18 @@ func BuildAPK() bool {
 	keyAlias := "iptvkey"
 
 	if err := os.MkdirAll(buildBaseDir, 0755); err != nil {
-		log.Println(err)
+		log.Println("编译目录创建失败:", err)
 		return false
 	}
 
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		log.Println(err)
+		log.Println("apk输出目录创建失败:", err)
 		return false
 	}
 
 	cmd := exec.Command("cp", "-r", "-f", clientSource, buildBaseDir)
 	if err := cmd.Run(); err != nil {
-		log.Println("cp error:", err)
+		log.Println("编译环境复制失败:", err)
 		return false
 	}
 
@@ -101,7 +101,7 @@ func BuildAPK() bool {
 	)
 
 	if err := cmd.Run(); err != nil {
-		log.Println("keytool error:", err)
+		log.Println("keytool 生成签名失败:", err)
 		return false
 	}
 

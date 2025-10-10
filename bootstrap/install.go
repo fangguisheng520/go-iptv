@@ -24,7 +24,7 @@ func Install() (bool, string) {
 
 	os.RemoveAll("/config")
 	if err := os.MkdirAll("/config", 0755); err != nil {
-		log.Println(err)
+		log.Println("创建/config文件夹失败:", err)
 		return false, err.Error()
 	}
 

@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go-iptv/dao"
-	"go-iptv/models"
 	"io"
 	"io/fs"
 	"log"
@@ -24,7 +22,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func Md5(str string) (retMd5 string) {
@@ -216,7 +213,7 @@ func CheckJava() bool {
 }
 
 func CheckApktool() bool {
-	log.Println("检查Apktool...")
+	log.Println("检查Apktool版本...")
 	cmd := exec.Command("apktool", "-version")
 	output, err := cmd.CombinedOutput()
 
@@ -357,45 +354,6 @@ func GetContainerID() (string, error) {
 	}
 	id := strings.TrimSpace(string(hostname))
 	return id, nil
-}
-
-func UpdateChannelsId() {
-	var channels []models.IptvChannel
-
-	// 先获取所有记录并按 id 排序
-	if err := dao.DB.Model(&models.IptvChannel{}).Order("id").Find(&channels).Error; err != nil {
-		log.Fatal("查询失败:", err)
-	}
-
-	if len(channels) == 0 {
-		return
-	}
-
-	// 生成 CASE WHEN 批量更新语句
-	var cases []string
-	var ids []string
-	for i, ch := range channels {
-		newID := i + 1
-		cases = append(cases, fmt.Sprintf("WHEN %d THEN %d", ch.ID, newID))
-		ids = append(ids, fmt.Sprintf("%d", ch.ID))
-	}
-
-	sql := fmt.Sprintf(`
-		UPDATE %s
-		SET id = CASE id
-			%s
-		END
-		WHERE id IN (%s)
-	`, models.IptvChannel{}.TableName(), strings.Join(cases, " "), strings.Join(ids, ","))
-
-	// 执行事务
-	if err := dao.DB.Transaction(func(tx *gorm.DB) error {
-		return tx.Exec(sql).Error
-	}); err != nil {
-		log.Fatal("更新失败:", err)
-	}
-
-	log.Println("ID 重新编号完成")
 }
 
 func GetBg() string {

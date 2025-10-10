@@ -48,7 +48,7 @@ func InitLogo() bool {
 		os.MkdirAll("/config/logo", os.ModePerm) // 创建文件夹
 		cmd := exec.Command("cp", "-r", "-f", "./logo", "/config/logo")
 		if err := cmd.Run(); err != nil {
-			log.Println("cp error:", err)
+			log.Println("复制logo失败:", err)
 			return false
 		}
 	}
