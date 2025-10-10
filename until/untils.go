@@ -8,6 +8,7 @@ import (
 	"go-iptv/dao"
 	"go-iptv/models"
 	"io"
+	"io/fs"
 	"log"
 	"math"
 	"math/rand"
@@ -414,4 +415,40 @@ func GetBg() string {
 	}
 	randomIndex := rand.Intn(len(pngs))
 	return pngs[randomIndex]
+}
+
+func CheckLogo(path string) (bool, error) {
+	// 检查路径是否存在
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false, nil // 不存在
+	}
+	if err != nil {
+		return false, err // 其他错误
+	}
+
+	// 判断是否是目录
+	if !info.IsDir() {
+		return false, fmt.Errorf("%s 不是目录", path)
+	}
+
+	// 打开目录
+	dir, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer dir.Close()
+
+	// 读取目录内容（最多读一个即可判断是否为空）
+	entries, err := dir.ReadDir(1)
+	if err != nil && err != fs.ErrClosed {
+		return false, err
+	}
+
+	// 如果有内容返回 true，否则 false
+	if len(entries) > 0 {
+		return true, nil
+	}
+
+	return false, nil
 }

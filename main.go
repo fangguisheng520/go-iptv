@@ -59,6 +59,11 @@ func main() {
 		return
 	}
 
+	if !bootstrap.InitLogo() {
+		log.Println("logo目录初始化错误")
+		return
+	}
+
 	go crontab.Crontab()
 
 	if bootstrap.Installed {

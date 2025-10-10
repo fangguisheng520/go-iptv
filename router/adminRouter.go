@@ -52,6 +52,8 @@ func AdminRouter(r *gin.Engine, path string) {
 			router.POST("/movie", api.Movie)
 
 			router.GET("/about", html.About)
+
+			router.POST("/getRssUrl", api.GetRssUrl)
 		}
 	}
 }

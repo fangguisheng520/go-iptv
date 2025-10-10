@@ -16,8 +16,8 @@ CREATE TABLE iptv_category (
     latesttime TEXT DEFAULT NULL,
     sort INTEGER
 );
-INSERT INTO iptv_category VALUES(1,'中央台',1,'add','',0,'',-2);
-INSERT INTO iptv_category VALUES(2,'地方卫视',1,'add','',0,'',-1);
+INSERT INTO iptv_category VALUES(1,'央视频道',1,'add','',0,'',-2);
+INSERT INTO iptv_category VALUES(2,'卫视频道',1,'add','',0,'',-1);
 CREATE TABLE iptv_channels (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
@@ -31,24 +31,24 @@ CREATE TABLE iptv_epg (
     status INTEGER NOT NULL DEFAULT 1,
     remarks TEXT DEFAULT NULL
 );
-INSERT INTO iptv_epg VALUES(1,'cntv-cctv1','CCTV1',1,'CCTV1|CCTV-1');
-INSERT INTO iptv_epg VALUES(2,'cntv-cctv2','CCTV2',1,'CCTV2|CCTV-2');
-INSERT INTO iptv_epg VALUES(3,'cntv-cctv3','CCTV3',1,'CCTV3|CCTV-3');
-INSERT INTO iptv_epg VALUES(4,'cntv-cctv4','CCTV4',1,'CCTV4|CCTV-4');
-INSERT INTO iptv_epg VALUES(5,'cntv-cctv5','CCTV5',1,'CCTV5|CCTV-5');
-INSERT INTO iptv_epg VALUES(6,'cntv-cctv5plus','CCTV5+',1,'CCTV5+|CCTV-5+');
-INSERT INTO iptv_epg VALUES(7,'cntv-cctv6','CCTV6',1,'CCTV6|CCTV-6');
-INSERT INTO iptv_epg VALUES(8,'cntv-cctv7','CCTV7',1,'CCTV7|CCTV-7');
-INSERT INTO iptv_epg VALUES(9,'cntv-cctv8','CCTV8',1,'CCTV8|CCTV-8');
-INSERT INTO iptv_epg VALUES(10,'cntv-cctvjilu','CCTV9',1,'CCTV9|CCTV-9');
-INSERT INTO iptv_epg VALUES(11,'cntv-cctv10','CCTV10',1,'CCTV10|CCTV-10');
-INSERT INTO iptv_epg VALUES(12,'cntv-cctv11','CCTV11',1,'CCTV11|CCTV-11');
-INSERT INTO iptv_epg VALUES(13,'cntv-cctv12','CCTV12',1,'CCTV12|CCTV-12');
-INSERT INTO iptv_epg VALUES(14,'cntv-cctv13','CCTV13',1,'CCTV13|CCTV-13');
-INSERT INTO iptv_epg VALUES(15,'cntv-cctvchild','CCTV14',1,'CCTV14|CCTV-14');
-INSERT INTO iptv_epg VALUES(16,'cntv-cctv15','CCTV15',1,'CCTV15|CCTV-15');
-INSERT INTO iptv_epg VALUES(17,'cntv-cctv16','CCTV16',1,'CCTV16|CCTV-16');
-INSERT INTO iptv_epg VALUES(18,'cntv-cctv17','CCTV17',1,'CCTV17|CCTV-17');
+INSERT INTO iptv_epg VALUES(1,'cntv-CCTV1','CCTV1',1,'CCTV1|CCTV-1');
+INSERT INTO iptv_epg VALUES(2,'cntv-CCTV2','CCTV2',1,'CCTV2|CCTV-2');
+INSERT INTO iptv_epg VALUES(3,'cntv-CCTV3','CCTV3',1,'CCTV3|CCTV-3');
+INSERT INTO iptv_epg VALUES(4,'cntv-CCTV4','CCTV4',1,'CCTV4|CCTV-4');
+INSERT INTO iptv_epg VALUES(5,'cntv-CCTV5','CCTV5',1,'CCTV5|CCTV-5');
+INSERT INTO iptv_epg VALUES(6,'cntv-CCTV5+','CCTV5+',1,'CCTV5+|CCTV-5+');
+INSERT INTO iptv_epg VALUES(7,'cntv-CCTV6','CCTV6',1,'CCTV6|CCTV-6');
+INSERT INTO iptv_epg VALUES(8,'cntv-CCTV7','CCTV7',1,'CCTV7|CCTV-7');
+INSERT INTO iptv_epg VALUES(9,'cntv-CCTV8','CCTV8',1,'CCTV8|CCTV-8');
+INSERT INTO iptv_epg VALUES(10,'cntv-CCTV9','CCTV9',1,'CCTV9|CCTV-9');
+INSERT INTO iptv_epg VALUES(11,'cntv-CCTV10','CCTV10',1,'CCTV10|CCTV-10');
+INSERT INTO iptv_epg VALUES(12,'cntv-CCTV11','CCTV11',1,'CCTV11|CCTV-11');
+INSERT INTO iptv_epg VALUES(13,'cntv-CCTV12','CCTV12',1,'CCTV12|CCTV-12');
+INSERT INTO iptv_epg VALUES(14,'cntv-CCTV13','CCTV13',1,'CCTV13|CCTV-13');
+INSERT INTO iptv_epg VALUES(15,'cntv-CCTV14','CCTV14',1,'CCTV14|CCTV-14');
+INSERT INTO iptv_epg VALUES(16,'cntv-CCTV15','CCTV15',1,'CCTV15|CCTV-15');
+INSERT INTO iptv_epg VALUES(17,'cntv-CCTV16','CCTV16',1,'CCTV16|CCTV-16');
+INSERT INTO iptv_epg VALUES(18,'cntv-CCTV17','CCTV17',1,'CCTV17|CCTV-17');
 INSERT INTO iptv_epg VALUES(19,'51zmt-CCTV1','','1','CCTV1|CCTV-1');
 INSERT INTO iptv_epg VALUES(20,'51zmt-CCTV2','','1','CCTV2|CCTV-2');
 INSERT INTO iptv_epg VALUES(21,'51zmt-CCTV3','','1','CCTV3|CCTV-3');
@@ -244,8 +244,8 @@ CREATE TABLE iptv_meals (
     content TEXT DEFAULT NULL,
     status INTEGER NOT NULL DEFAULT 1
 );
-INSERT INTO iptv_meals VALUES(1000,'默认分组','中央台_地方卫视',1);
-INSERT INTO iptv_meals VALUES(1001,'卧室分组','',1);
+INSERT INTO iptv_meals VALUES(1000,'默认套餐','央视频道_卫视频道',1);
+INSERT INTO iptv_meals VALUES(1001,'卧室套餐','',1);
 CREATE TABLE iptv_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name BIGINT NOT NULL,

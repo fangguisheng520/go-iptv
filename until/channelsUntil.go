@@ -1,9 +1,11 @@
 package until
 
 import (
+	"bufio"
 	"fmt"
 	"go-iptv/dao"
 	"go-iptv/models"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -143,4 +145,85 @@ func GetProvinceChannelList(rebuild bool) string {
 	}
 	go dao.Cache.Set(channelCache, []byte(res))
 	return res
+}
+
+func Txt2M3u8(txtData string) string {
+
+	cfg := dao.GetConfig()
+
+	epgURL := "https://epg.51zmt.top:8000/e.xml" // ✅ 可自行修改 EPG 地址
+	logoBase := cfg.ServerUrl + "/logo/"         // ✅ 可自行修改 logo 前缀
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
+
+	scanner := bufio.NewScanner(strings.NewReader(txtData))
+	currentGroup := "未分组"
+	lineNum := 0
+
+	for scanner.Scan() {
+		lineNum++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		// 检查是否为分组行（如 “中央台,#genre#”）
+		if strings.HasSuffix(line, "#genre#") {
+			group := strings.TrimSuffix(line, ",#genre#")
+			currentGroup = strings.TrimSpace(group)
+			continue
+		}
+
+		// 普通频道行
+		parts := strings.SplitN(line, ",", 2)
+		if len(parts) != 2 {
+			fmt.Printf("Txt2M3u8: 第 %d 行格式错误: %s\n", lineNum, line)
+			continue
+		}
+
+		name := strings.TrimSpace(parts[0])
+		url := strings.TrimSpace(parts[1])
+		epgName := GetEpgName(name)
+		var logo string
+		if epgName != "" {
+			logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", epgName)
+		}
+
+		// ✅ 生成 #EXTINF 信息
+		extinf := fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s",%s`,
+			name, name, logo, currentGroup, name)
+		builder.WriteString(extinf + "\n")
+		builder.WriteString(url + "\n\n")
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Txt2M3u8: m3u8解析出错:", err)
+	}
+
+	return builder.String()
+}
+
+func GetEpgName(name string) string {
+	var epgs []models.IptvEpg
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+name+"%").Find(&epgs)
+
+	var epgName string
+	for _, epg := range epgs {
+		for _, v := range strings.Split(epg.Content, ",") {
+			if strings.EqualFold(name, v) {
+				epgName = epg.Name
+				break
+			}
+		}
+		if epgName != "" {
+			break
+		}
+	}
+
+	if epgName == "" {
+		return epgName
+	}
+
+	return strings.Split(epgName, "-")[1]
 }

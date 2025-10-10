@@ -334,7 +334,7 @@ function categorycheck(name){
 		type: "POST",
 		data: { category: name, forbiddenchannels: "" },
 		success: function(data) {
-			lightyear.notify(data.msg, data.type, 3000); // success, warning, danger, info
+			lightyear.notify(data.msg, data.type, 1000); // success, warning, danger, info
 		}
 	});
 }
@@ -369,7 +369,7 @@ function tdBtnPOST(btn) {
 		return JSON.parse(text); // 或 response.json()
 	})
 	.then(data => {
-		lightyear.notify(data.msg, data.type, 3000);
+		lightyear.notify(data.msg, data.type, 1000);
 		if (data.type === "success") {
 			if ($('.modal-backdrop').length > 0) {
 				document.querySelector('.modal-backdrop').remove();
@@ -508,7 +508,7 @@ function epgsGetChannel(btn) {
 		return JSON.parse(text); // 或 response.json()
 	})
 	.then(res => {
-		// lightyear.notify(res.msg, res.type, 3000);
+		lightyear.notify(res.msg, res.type, 1000);
 		if (res.type === "success") {
 			// if ($('.modal-backdrop').length > 0) {
 			// 	document.querySelector('.modal-backdrop').remove();
@@ -547,7 +547,7 @@ function uploadIcon(event) {
 		processData: false,
 		success: function(res) {
 			$('#iconInput').val(''); // ✅ 清空文件输入框
-			lightyear.notify(res.msg, res.type, 3000); // ✅ 上传成功后，显示提示信息
+			lightyear.notify(res.msg, res.type, 1000); // ✅ 上传成功后，显示提示信息
 			if (res.code === 1) {
 				$('#iconImg').attr('src', res.data.url);
 				$('#iconContainer').show();
@@ -579,7 +579,7 @@ function deleteIcon() {
 		data: params.toString(),
 		contentType: 'application/x-www-form-urlencoded',
 		success: function(res) {
-			lightyear.notify(res.msg, res.type, 3000); 
+			lightyear.notify(res.msg, res.type, 1000); 
 			$('#iconContainer').hide();
 			$('#iconImg').attr('src', '');
 			$('#iconInput').val('');
@@ -603,7 +603,7 @@ function uploadBj(event) {
 		processData: false,
 		success: function(res) {
 			$('#bjInput').val(''); // ✅ 清空文件输入框
-			lightyear.notify(res.msg, res.type, 3000); // ✅ 上传成功后，显示提示信息
+			lightyear.notify(res.msg, res.type, 1000); // ✅ 上传成功后，显示提示信息
 			if (res.code === 1) {
 				imgName = res.data.name;
 					$('.reload-bj').append(`
@@ -636,7 +636,7 @@ function deleteBj(name) {
 		data: params.toString(),
 		contentType: 'application/x-www-form-urlencoded',
 		success: function(res) {
-			lightyear.notify(res.msg, res.type, 3000);
+			lightyear.notify(res.msg, res.type, 1000);
 			if (res.code === 1) {
 				$('#bj_'+name).remove();
 				$('#bjInput').val('');
@@ -715,3 +715,53 @@ function getCategory(btn) {
 		$("#autocategory").prop("checked", ca === 1);
 	}
 }
+function rssPOST(btn) {
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var mealid = $tr.find(".meal-id").data("value");
+
+	const params = new URLSearchParams();
+	params.append("id", mealid);
+
+	fetch("/admin/getRssUrl", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded"
+		},
+		body: params.toString()
+	})
+	.then(async response => {
+		const text = await response.text(); // 先拿到响应内容
+		if (text.includes('/admin/login')) {
+			window.location.href = "/admin/login";
+			throw text;
+		}
+		return JSON.parse(text); // 或 response.json()
+	})
+	.then(res => {
+		
+		if (res.type === "success") {
+			lightyear.notify(res.msg, res.type, 1000);
+			res.data.forEach(function (item, index) {
+				if (item.type === 'txt'){
+					$("#rsstxt").val(item.url);
+				}else if (item.type === 'm3u8'){
+					$("#rssm3u").val(item.url);
+				}
+			});
+		}else{
+			lightyear.notify(res.msg, res.type, 3000);
+		}
+	})
+}
+
+$("#rssm3u").on("dblclick", function() {
+    $(this).select(); // 选中内容
+    document.execCommand("copy"); // 执行复制
+    lightyear.notify("✅ 已复制到剪贴板！", "success", 1000);
+});
+
+$("#rsstxt").on("dblclick", function() {
+    $(this).select(); // 选中内容
+    document.execCommand("copy"); // 执行复制
+    lightyear.notify("✅ 已复制到剪贴板！", "success", 1000);
+});

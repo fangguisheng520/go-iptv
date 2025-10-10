@@ -64,7 +64,7 @@ func EditUsers(c *gin.Context) {
 
 			dao.DB.Model(&models.IptvUser{}).Where("name in (?)", ids).Updates(map[string]interface{}{
 				"meal":   meal.ID,
-				"status": 1,
+				"status": 999,
 			})
 			c.JSON(200, gin.H{"code": 1, "msg": "已修改选中的用户账号的套餐", "type": "success"})
 			return

@@ -46,6 +46,7 @@ func InitRouter() *gin.Engine {
 	r.Static("/app", "./app")
 	r.Static("/images", "/config/images/bj")
 	r.Static("/icon", "/config/images/icon")
+	r.Static("/logo", "/config/logo")
 
 	r.Use(func(c *gin.Context) {
 		if !bootstrap.Installed {
@@ -64,6 +65,7 @@ func InitRouter() *gin.Engine {
 
 	ApkRouter(r, "/apk")
 	AdminRouter(r, "/admin")
+	RssRouter(r, "/")
 
 	loadTemplates(r)
 

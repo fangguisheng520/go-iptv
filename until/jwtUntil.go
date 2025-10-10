@@ -1,6 +1,7 @@
 package until
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -84,9 +85,10 @@ func GetAuthExp(claims jwt.MapClaims) int64 {
 	return int64(claims["exp"].(float64))
 }
 
-func GenerateJWTRss(username string) (string, error) {
+func GenerateJWTRss(rssType, id string) (string, error) {
 	claims := jwt.MapClaims{
-		"username": username,
+		"type": rssType,
+		"id":   id,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -107,7 +109,16 @@ func VerifyJWTRss(tokenString string) (string, int64, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		return claims["username"].(string), claims["id"].(int64), nil
+		userType := claims["type"].(string)
+
+		// claims["id"] 实际是 string
+		idStr := claims["id"].(string)
+		userID, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return "", 0, err
+		}
+
+		return userType, userID, nil
 	}
 
 	return "", 0, jwt.ErrTokenMalformed

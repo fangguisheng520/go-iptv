@@ -50,7 +50,7 @@
 															</label>
 														</th>
 														<th class="w-5"><a href="?order=name" class="loaduser">账号</a></th>
-														<th class="w-10"><a href="?order=meal" class="loaduser">分组</a></th>
+														<th class="w-10"><a href="?order=meal" class="loaduser">套餐</a></th>
 														<th class="w-15"><a href="?order=deviceid" class="loaduser">设备ID</a></th>
 														<th class="w-10"><a href="?order=model" class="loaduser">型号</a></th>
 														<th class="w-10"><a href="?order=ip" class="loaduser">IP</a></th>
@@ -92,13 +92,13 @@
 											</table>
 
 											<select class="btn btn-sm btn-default dropdown-toggle" style="width: 115px;height: 30px;" name="s_meals">
-												<option value="">请选择分组</option>
+												<option value="">请选择套餐</option>
 												{{ range .Meals }}
 												<option value="{{ .ID }}">{{ .Name }}</option>
 												{{ end }}
 											</select>
 											<!-- 操作按钮 -->
-											<button class="btn btn-sm btn-primary m-r-10" type="button" name="e_meals" onclick="submitFormPOST(this)">修改分组</button>
+											<button class="btn btn-sm btn-primary m-r-10" type="button" name="e_meals" onclick="submitFormPOST(this)">修改套餐</button>
 											<input class="btn btn-default" style="width: 200px;height: 30px;" type="text" name="marks" size="3" placeholder="请输入备注">
 											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitmodifymarks" onclick="submitFormPOST(this)">修改备注</button>
 											<button class="btn btn-sm btn-primary m-r-10" type="button" name="submitforbidden" onclick="submitFormPOST(this)">取消授权</button>

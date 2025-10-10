@@ -20,6 +20,7 @@ COPY ./static /app/static
 COPY ./database /app/database
 COPY ./config.yml /app/config.yml
 COPY ./README.md  /app/README.md
+COPY ./logo /app/logo
 
 ENV TZ=Asia/Shanghai
 RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
