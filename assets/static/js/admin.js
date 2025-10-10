@@ -754,14 +754,8 @@ function rssPOST(btn) {
 	})
 }
 
-$("#rssm3u").on("dblclick", function() {
-    $(this).select(); // 选中内容
+function CopyRss(textarea) {
+    textarea.select();
     document.execCommand("copy"); // 执行复制
     lightyear.notify("✅ 已复制到剪贴板！", "success", 1000);
-});
-
-$("#rsstxt").on("dblclick", function() {
-    $(this).select(); // 选中内容
-    document.execCommand("copy"); // 执行复制
-    lightyear.notify("✅ 已复制到剪贴板！", "success", 1000);
-});
+};
