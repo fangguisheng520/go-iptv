@@ -44,8 +44,16 @@ func InitDB() bool {
 func InitLogo() bool {
 	is, err := until.CheckLogo("/config/logo")
 	if err != nil || !is {
-		os.RemoveAll("/config/logo")             // 删除文件夹
-		os.MkdirAll("/config/logo", os.ModePerm) // 创建文件夹
+		err1 := os.RemoveAll("/config/logo") // 删除文件夹
+		if err1 != nil {
+			log.Println("删除logo失败:", err1)
+			return false
+		}
+		err2 := os.MkdirAll("/config/logo", os.ModePerm) // 创建文件夹
+		if err2 != nil {
+			log.Println("创建logo失败:", err2)
+			return false
+		}
 		cmd := exec.Command("cp", "-r", "-f", "./logo/*", "/config/logo")
 		if err := cmd.Run(); err != nil {
 			log.Println("复制logo失败:", err)
