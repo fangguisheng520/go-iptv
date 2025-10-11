@@ -43,6 +43,20 @@ func Install() (bool, string) {
 	log.Println("初始化数据库完成")
 	log.Println("加载数据库...")
 	dao.InitDB("/config/iptv.db")
+	log.Println("初始化EPG缓存...")
+	cache, err := dao.NewFileCache("/config/cache/", true)
+	if err != nil {
+		log.Println("初始化缓存失败:", err)
+		return false, "初始化缓存失败:" + err.Error()
+	}
+	dao.Cache = cache
+
+	if !InitLogo() {
+		log.Println("初始化Logo失败")
+		return false, "初始化Logo失败"
+	}
+
+	InitJwtKey()
 
 	dao.CONFIG_PATH = "/config/config.yml"
 	dao.LoadConfigFile()

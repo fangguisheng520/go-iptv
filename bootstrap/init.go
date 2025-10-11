@@ -46,7 +46,7 @@ func InitLogo() bool {
 	if err != nil || !is {
 		os.RemoveAll("/config/logo")             // 删除文件夹
 		os.MkdirAll("/config/logo", os.ModePerm) // 创建文件夹
-		cmd := exec.Command("cp", "-r", "-f", "./logo", "/config/logo")
+		cmd := exec.Command("cp", "-r", "-f", "./logo/*", "/config/logo")
 		if err := cmd.Run(); err != nil {
 			log.Println("复制logo失败:", err)
 			return false
