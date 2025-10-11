@@ -753,6 +753,8 @@ function rssPOST(btn) {
 					$("#rsstxt").val(item.url);
 				}else if (item.type === 'm3u8'){
 					$("#rssm3u").val(item.url);
+				}else if (item.type === 'epg'){
+				    $("#rssepg").val(item.url);
 				}
 			});
 		}else{

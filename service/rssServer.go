@@ -79,6 +79,7 @@ func GetRssUrl(id string) dto.ReturnJsonDto {
 	cfg := dao.GetConfig()
 	res = append(res, RssUrl{Type: "m3u8", Url: cfg.ServerUrl + "/getRss?token=" + tokenM3u8})
 	res = append(res, RssUrl{Type: "txt", Url: cfg.ServerUrl + "/getRss?token=" + tokenTxt})
+	res = append(res, RssUrl{Type: "epg", Url: cfg.ServerUrl + "/getRssEpg?token=" + tokenTxt})
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "订阅生成成功", Type: "success", Data: res}
 }
