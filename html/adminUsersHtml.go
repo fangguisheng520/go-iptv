@@ -65,14 +65,14 @@ func Users(c *gin.Context) {
 
 	today := time.Now().Truncate(24 * time.Hour).Unix()
 
-	// dao.DB.Model(&models.IptvUser{}).Count(&pageData.UserTotal)
-	dao.DB.Model(&models.IptvUser{}).Where("lasttime > ?", today).Count(&pageData.UserToday)
+	// dao.DB.Model(&models.IptvUserShow{}).Count(&pageData.UserTotal)
+	dao.DB.Model(&models.IptvUserShow{}).Where("lasttime > ?", today).Count(&pageData.UserToday)
 
 	recStart := recCounts * (pageData.Page - 1)
 	keywords := "%" + pageData.Keywords + "%"
 
 	// 基础查询
-	dbQuery := dao.DB.Table(models.IptvUser{}.TableName()+" u").Select(`u.name, u.status, m.name AS mealname, u.mac, u.deviceid, u.model, u.ip, u.region, u.lasttime, u.exp, u.author, u.marks, u.vpn, u.meal`).
+	dbQuery := dao.DB.Table(models.IptvUserShow{}.TableName()+" u").Select(`u.name, u.status, m.name AS mealname, u.mac, u.deviceid, u.model, u.ip, u.region, u.lasttime, u.exp, u.author, u.marks, u.vpn, u.meal`).
 		Joins("LEFT JOIN iptv_meals m ON u.meal = m.id").Where("u.status > ?", 0)
 
 	// 如果不是 admin，增加 author 条件
