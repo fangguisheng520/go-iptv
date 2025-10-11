@@ -126,7 +126,7 @@ func BuildAPK() bool {
 
 	cmd = exec.Command("apktool", "b", buildSourceDir, "-o", apkPath)
 	if err := cmd.Run(); err != nil {
-		log.Println("apktool error:", err)
+		log.Println("编译出错:", err)
 		return false
 	}
 
@@ -143,7 +143,7 @@ func BuildAPK() bool {
 		keyAlias,
 	)
 	if err := cmd.Run(); err != nil {
-		log.Println("jarsigner error:", err)
+		log.Println("签名出错:", err)
 		return false
 	}
 	log.Println("APK编译完成")

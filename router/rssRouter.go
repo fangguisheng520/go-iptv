@@ -10,5 +10,6 @@ func RssRouter(r *gin.Engine, path string) {
 	router := r.Group(path)
 	{
 		router.GET("/getRss", api.GetTXTRss)
+		router.GET("/getRssEpg", api.GetTXTRssEpg)
 	}
 }

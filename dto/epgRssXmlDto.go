@@ -39,3 +39,20 @@ type Desc struct {
 	Lang  string `xml:"lang,attr"`
 	Value string `xml:",chardata"`
 }
+
+// 定义 JSON 结构体
+type CntvProgram struct {
+	Title     string `json:"t"`
+	StartTime int64  `json:"st"`
+	EndTime   int64  `json:"et"`
+}
+
+type CntvJsonChannel struct {
+	IsLive      string        `json:"isLive"`
+	LiveSt      int64         `json:"liveSt"`
+	ChannelName string        `json:"channelName"`
+	LvUrl       string        `json:"lvUrl"`
+	Program     []CntvProgram `json:"program"`
+}
+
+type CntvData map[string]CntvJsonChannel

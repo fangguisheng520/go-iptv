@@ -97,7 +97,7 @@ function loadPage(url, pushHistory = true, showName = "") {
 			if (pushHistory) history.pushState(null, '', url);
 			updateMenuActive(url);
 			if (showName !== "") {
-				showlist(showName);
+				showlist(0,showName);
 			}else{
 				$(".categorylist-btn").first().click();
 			}

@@ -93,9 +93,9 @@ func GetSimpleEpg(id string) dto.SimpleResponse {
 	epgFrom := strings.Split(epgName, "-")[0]
 	epgName = strings.Split(epgName, "-")[1]
 
-	if strings.Contains(epgName, "cctv") {
+	if strings.Contains(epgFrom, "cntv") {
 		res = getSimpleEpgCntv(epgName)
-		if res.Data != (dto.Program{}) {
+		if res.Data == (dto.Program{}) {
 			res = getSimpleEpg51Zmt(epgName)
 		}
 	} else if strings.Contains(epgFrom, "51zmt") {
@@ -106,20 +106,21 @@ func GetSimpleEpg(id string) dto.SimpleResponse {
 	return res
 }
 
-func getEpgCntv(id string) dto.Response {
+func getEpgCntv(name string) dto.Response {
 
-	var cacheKey = "cntv_" + id
+	var cacheKey = "cntv_" + name
 
 	var res dto.Response
 	res.Code = 200
 	res.Msg = "请求成功!"
 
-	if id == "" {
+	if name == "" {
 		res.Data = []dto.Program{}
 		return res
 	}
 
-	epgUrl := "https://api.cntv.cn/epg/epginfo?c=" + id + "&serviceId=channel&d="
+	name = strings.ToLower(name)
+	epgUrl := "https://api.cntv.cn/epg/epginfo?c=" + name + "&serviceId=channel&d="
 
 	var jsonMap map[string]map[string]interface{}
 
@@ -148,7 +149,7 @@ func getEpgCntv(id string) dto.Response {
 		return res
 	}
 
-	if epgData, ok := jsonMap[id]; ok {
+	if epgData, ok := jsonMap[name]; ok {
 		dataList := []dto.Program{}
 		pos := 0
 
@@ -186,21 +187,23 @@ func getEpgCntv(id string) dto.Response {
 	return res
 }
 
-func getSimpleEpgCntv(id string) dto.SimpleResponse {
+func getSimpleEpgCntv(name string) dto.SimpleResponse {
 
-	cacheKey := "simpleEpgCntv_" + id
+	cacheKey := "cntv_" + name
 	var simpleRes dto.SimpleResponse
 	simpleRes.Code = 200
 	simpleRes.Msg = "请求成功!"
 
-	if id == "" {
+	if name == "" {
 		simpleRes.Data = dto.Program{}
 		return simpleRes
 	}
-	epgUrl := "https://api.cntv.cn/epg/epginfo?c=" + id + "&serviceId=channel&d="
+	name = strings.ToLower(name)
+	epgUrl := "https://api.cntv.cn/epg/epginfo?c=" + name + "&serviceId=channel&d="
 
 	var jsonMap map[string]map[string]interface{}
 	readCacheOk := false
+
 	if dao.Cache.Exists(cacheKey) {
 		err := dao.Cache.GetJSON(cacheKey, jsonMap)
 		if err == nil {
@@ -222,10 +225,11 @@ func getSimpleEpgCntv(id string) dto.SimpleResponse {
 
 	if _, ok := jsonMap["errcode"]; ok {
 		simpleRes.Data = dto.Program{}
+		dao.Cache.Delete(cacheKey)
 		return simpleRes
 	}
 
-	if epgData, ok := jsonMap[id]; ok {
+	if epgData, ok := jsonMap[name]; ok {
 		var simpleRes dto.SimpleResponse
 		data := dto.Program{}
 		data.Name = epgData["isLive"].(string)
@@ -240,7 +244,7 @@ func getSimpleEpgCntv(id string) dto.SimpleResponse {
 
 func getEpg51Zmt(id string) dto.Response {
 	epgUrl := "http://epg.51zmt.top:8000/e.xml"
-	cacheKey := "epg51Zmt_" + id
+	cacheKey := "epg51ZmtXml"
 	res := dto.Response{}
 	res.Code = 200
 	res.Msg = "请求成功!"
@@ -249,7 +253,7 @@ func getEpg51Zmt(id string) dto.Response {
 		return res
 	}
 	// zmtTV := zmtXmlToType(epgUrl)
-	var zmtTV dto.ZmtTV
+	var zmtTV dto.TV
 	var xmlByte []byte
 	readCacheOk := false
 	if dao.Cache.Exists(cacheKey) {
@@ -271,6 +275,7 @@ func getEpg51Zmt(id string) dto.Response {
 
 	if isZmtTVEmpty(zmtTV) {
 		res.Data = []dto.Program{}
+		dao.Cache.Delete(cacheKey)
 		return res
 	}
 	currentTime := time.Now()
@@ -284,7 +289,7 @@ func getEpg51Zmt(id string) dto.Response {
 	pos := 0
 
 	for _, channel := range zmtTV.Channels {
-		if strings.ToLower(channel.DisplayName) == id {
+		if strings.ToLower(channel.DisplayName.Value) == id {
 			for _, programme := range zmtTV.Programmes {
 				if programme.Channel == channel.ID {
 					tS, _ := time.Parse(layout, programme.Start)
@@ -293,7 +298,7 @@ func getEpg51Zmt(id string) dto.Response {
 					EndTime := tE.Format("15:04")
 
 					data := dto.Program{}
-					data.Name = programme.Title
+					data.Name = programme.Title.Value
 					data.StartTime = StartTime
 
 					dataList = append(dataList, data)
@@ -313,7 +318,7 @@ func getEpg51Zmt(id string) dto.Response {
 
 func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 	epgUrl := "http://epg.51zmt.top:8000/e.xml"
-	cacheKey := "simpleEpg51zmt_" + id
+	cacheKey := "epg51ZmtXml"
 	res := dto.SimpleResponse{}
 	res.Code = 200
 	res.Msg = "请求成功!"
@@ -322,7 +327,7 @@ func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 		return res
 	}
 	// zmtTV := zmtXmlToType(epgUrl)
-	var zmtTV dto.ZmtTV
+	var zmtTV dto.TV
 	var xmlByte []byte
 	readCacheOk := false
 	if dao.Cache.Exists(cacheKey) {
@@ -355,7 +360,7 @@ func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 	const layout = "20060102150405 -0700"
 
 	for _, channel := range zmtTV.Channels {
-		if strings.ToLower(channel.DisplayName) == id {
+		if strings.EqualFold(channel.DisplayName.Value, id) {
 			for _, programme := range zmtTV.Programmes {
 				if programme.Channel == channel.ID {
 					tS, _ := time.Parse(layout, programme.Start)
@@ -364,7 +369,7 @@ func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 					EndTime := tE.Format("15:04")
 
 					data := dto.Program{}
-					data.Name = programme.Title
+					data.Name = programme.Title.Value
 					data.StartTime = StartTime
 
 					if nowTime < EndTime {
@@ -382,6 +387,6 @@ func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 	return res
 }
 
-func isZmtTVEmpty(tv dto.ZmtTV) bool {
+func isZmtTVEmpty(tv dto.TV) bool {
 	return len(tv.Channels) == 0 || len(tv.Programmes) == 0
 }

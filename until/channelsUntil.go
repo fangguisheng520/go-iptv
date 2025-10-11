@@ -95,19 +95,18 @@ func GetCCTVChannelList(rebuild bool) string {
 	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "cntv-%").Find(&epgs).Error; err != nil {
 		return res
 	}
-	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Find(&channelList).Error; err != nil {
-		return res
-	}
 
 	for _, epg := range epgs {
-		nameList := strings.Split(epg.Remarks, "|")
+		if epg.Content == "" {
+			continue
+		}
+		nameList := strings.Split(epg.Content, ",")
+		var channelList []models.IptvChannel
+		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
+			continue
+		}
 		for _, channel := range channelList {
-			for _, name := range nameList {
-				if strings.EqualFold(channel.Name, name) {
-					res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
-				}
-			}
+			res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
 		}
 	}
 	go dao.Cache.Set(channelCache, []byte(res))
@@ -134,25 +133,26 @@ func GetProvinceChannelList(rebuild bool) string {
 	}
 
 	for _, epg := range epgs {
-		nameList := strings.Split(epg.Remarks, "|")
+		if epg.Content == "" {
+			continue
+		}
+		nameList := strings.Split(epg.Content, ",")
+		var channelList []models.IptvChannel
+		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
+			continue
+		}
 		for _, channel := range channelList {
-			for _, name := range nameList {
-				if strings.EqualFold(channel.Name, name) {
-					res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
-				}
-			}
+			res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
 		}
 	}
 	go dao.Cache.Set(channelCache, []byte(res))
 	return res
 }
 
-func Txt2M3u8(txtData string) string {
+func Txt2M3u8(txtData, host, token string) string {
 
-	cfg := dao.GetConfig()
-
-	epgURL := "https://epg.51zmt.top:8000/e.xml" // ✅ 可自行修改 EPG 地址
-	logoBase := cfg.ServerUrl + "/logo/"         // ✅ 可自行修改 logo 前缀
+	epgURL := host + "/getRssEpg?token=" + token // ✅ 可自行修改 EPG 地址
+	logoBase := host + "/logo/"                  // ✅ 可自行修改 logo 前缀
 
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))

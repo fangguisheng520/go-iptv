@@ -52,9 +52,9 @@
 										</tr>
 										<tr align="center">
 											<td class="w-5">#</td>
-											<td class="w-10">EPG名称</td>
+											<td class="w-10">来源-EPG名称</td>
 											<td class="w-5">备注</td>
-											<td class="w-5">来源</td>
+											<!-- <td class="w-5">来源</td> -->
 											<td class="w-5">状态</td>
 											<td class="w-5">logo</td>
 											<td class="w-10">绑定频道</td>
@@ -67,7 +67,7 @@
                                             <td align="center" class="epg-id" data-value="{{.ID}}">{{.ID}}</td>
                                             <td align="center" class="epg-name" data-value="{{.Name}}">{{.Name}}</td>
                                             <td align="center" class="epg-remarks" data-value="{{.Remarks}}"><font color="red">{{.Remarks}}</font></td>
-                                            <td align="center"><font color="red">{{ EpgName .Name }}</font></td>
+                                            <!-- <td align="center"><font color="red">{{ EpgName .Name }}</font></td> -->
                                             <td align="center">{{ if eq .Status 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
 											<td align="center"><img src="{{.Logo}}" style="background-color: black; height:100%; width:auto; display:block; margin:0 auto;"></td>
                                             <td align="left">{{.Content}}</td>

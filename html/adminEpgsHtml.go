@@ -89,10 +89,8 @@ func Epgs(c *gin.Context) {
 
 	for k, v := range pageData.Epgs {
 		epgName := strings.Split(v.Name, "-")[1]
-		log.Println("epgName", epgName)
 		for _, logo := range logoList {
 			logoName := strings.Split(logo, ".")[0]
-			log.Println("logoName", logoName)
 			if strings.EqualFold(epgName, logoName) {
 				pageData.Epgs[k].Logo = cfg.ServerUrl + "/logo/" + logo
 			}

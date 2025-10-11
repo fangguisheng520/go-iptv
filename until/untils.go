@@ -428,3 +428,27 @@ func GetLogs() []string {
 	}
 	return pngs
 }
+
+func IsValidHost(host string) bool {
+	if host == "" {
+		return false
+	}
+
+	// 去掉端口
+	if strings.Contains(host, ":") {
+		h, _, err := net.SplitHostPort(host)
+		if err == nil {
+			host = h
+		}
+	}
+
+	// 如果是 IP
+	if net.ParseIP(host) != nil {
+		return true
+	}
+
+	// 匹配域名
+	domainPattern := `^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$`
+	matched, _ := regexp.MatchString(domainPattern, host)
+	return matched
+}

@@ -9,7 +9,7 @@ import (
 )
 
 var JwtKey = []byte("test")
-var RssJwtKey = []byte("rss")
+var RssKey = []byte("rss")
 
 // ----------------------
 // 验证 JWT
@@ -92,7 +92,7 @@ func GenerateJWTRss(rssType, id string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(RssJwtKey)
+	return token.SignedString(RssKey)
 }
 
 func VerifyJWTRss(tokenString string) (string, int64, error) {
@@ -101,7 +101,7 @@ func VerifyJWTRss(tokenString string) (string, int64, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenSignatureInvalid
 		}
-		return RssJwtKey, nil
+		return RssKey, nil
 	})
 
 	if err != nil || !token.Valid {

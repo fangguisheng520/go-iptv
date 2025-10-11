@@ -9,5 +9,5 @@ func InitJwtKey() {
 	// 读取配置文件
 	hostname, _ := until.GetContainerID()
 	until.JwtKey = []byte(until.Md5(hostname + time.Now().Format("2006-01-02 15:04:05")))
-	until.RssJwtKey = []byte(until.Md5(hostname))
+	until.RssKey = []byte(until.Md5(hostname))
 }
