@@ -54,7 +54,7 @@ func InitLogo() bool {
 			log.Println("创建logo失败:", err2)
 			return false
 		}
-		cmd := exec.Command("cp", "-r", "-f", "./logo/*", "/config/logo")
+		cmd := exec.Command("bash", "-c", "cp -rf ./logo/* /config/logo")
 		if err := cmd.Run(); err != nil {
 			log.Println("复制logo失败:", err)
 			return false
