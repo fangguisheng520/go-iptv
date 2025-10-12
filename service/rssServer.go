@@ -79,7 +79,7 @@ func GetRssUrl(id string) dto.ReturnJsonDto {
 	cfg := dao.GetConfig()
 	res = append(res, RssUrl{Type: "m3u8", Url: cfg.ServerUrl + "/getRss?token=" + tokenM3u8})
 	res = append(res, RssUrl{Type: "txt", Url: cfg.ServerUrl + "/getRss?token=" + tokenTxt})
-	res = append(res, RssUrl{Type: "epg", Url: cfg.ServerUrl + "/getRssEpg?token=" + tokenTxt})
+	res = append(res, RssUrl{Type: "epg", Url: cfg.ServerUrl + "/getRssEpg?token=" + tokenM3u8})
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "订阅生成成功", Type: "success", Data: res}
 }
@@ -151,7 +151,10 @@ func getTxt(id int64) string {
 
 func GetRssEpg(token, host string) dto.TV {
 
-	var res dto.TV
+	res := dto.TV{
+		GeneratorName: "清和IPTV管理系统",
+		GeneratorURL:  "https://www.qingh.xyz",
+	}
 	aes := until.NewChaCha20(string(until.RssKey))
 	jsonStr, err := aes.Decrypt(token)
 	if err != nil {
@@ -231,10 +234,15 @@ func CleanTV(tv dto.TV) dto.TV {
 	// 1️⃣ 去重 Channel（按 ID 保留第一个）
 	uniqueChannels := make([]dto.XmlChannel, 0, len(tv.Channels))
 	seen := make(map[string]bool)
+	ids := make(map[string]int)
+	i := 1
 	for _, ch := range tv.Channels {
 		if !seen[ch.DisplayName.Value] {
 			seen[ch.DisplayName.Value] = true
+			ids[ch.DisplayName.Value] = i
+			ch.ID = strconv.Itoa(i)
 			uniqueChannels = append(uniqueChannels, ch)
+			i++
 		}
 	}
 	tv.Channels = uniqueChannels
@@ -243,6 +251,7 @@ func CleanTV(tv dto.TV) dto.TV {
 	validProgrammes := make([]dto.Programme, 0, len(tv.Programmes))
 	for _, p := range tv.Programmes {
 		if seen[p.Channel] {
+			p.Channel = strconv.Itoa(ids[p.Channel])
 			validProgrammes = append(validProgrammes, p)
 		}
 	}

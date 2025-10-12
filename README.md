@@ -7,6 +7,10 @@
 当前版本与之前PHP版本并不兼容，若要使用PHP版本，请使用`docker pull v1st233/iptv:20250905`
 
 ## Change log
+#### 2025-10-12
+- 修复epg订阅token错误
+- 修复epg Channel错误
+
 #### 2025-10-11
 - 添加m3u订阅epg支持
 - 修改内网穿透模式无法访问logo (感谢KIKI协助)
