@@ -324,4 +324,5 @@ func BindChannel() {
 	}
 	go until.GetCCTVChannelList(true)
 	go until.GetProvinceChannelList(true)
+	go until.CleanMealsXmlCacheAll()
 }

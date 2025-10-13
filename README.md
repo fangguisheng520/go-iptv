@@ -7,6 +7,9 @@
 当前版本与之前PHP版本并不兼容，若要使用PHP版本，请使用`docker pull v1st233/iptv:20250905`
 
 ## Change log
+#### 2025-10-13
+- 修改epg订阅链接格式
+
 #### 2025-10-12
 - 修复epg订阅token错误
 - 修复epg Channel错误

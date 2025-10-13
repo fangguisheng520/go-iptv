@@ -41,12 +41,12 @@ func getAesType(jsonStr string) (AesData, error) {
 	return data, nil
 }
 
-func GetRssUrl(id string) dto.ReturnJsonDto {
+func GetRssUrl(id, host string) dto.ReturnJsonDto {
 	var res []RssUrl
 
 	var meal models.IptvMeals
-	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ?", id).First(&meal).Error; err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "未找到套餐", Type: "danger"}
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "未找到上线套餐", Type: "danger"}
 	}
 
 	aesData1 := AesData{
@@ -76,10 +76,9 @@ func GetRssUrl(id string) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "生成链接失败", Type: "danger"}
 	}
 
-	cfg := dao.GetConfig()
-	res = append(res, RssUrl{Type: "m3u8", Url: cfg.ServerUrl + "/getRss?token=" + tokenM3u8})
-	res = append(res, RssUrl{Type: "txt", Url: cfg.ServerUrl + "/getRss?token=" + tokenTxt})
-	res = append(res, RssUrl{Type: "epg", Url: cfg.ServerUrl + "/getRssEpg?token=" + tokenM3u8})
+	res = append(res, RssUrl{Type: "m3u8", Url: host + "/getRss?token=" + tokenM3u8})
+	res = append(res, RssUrl{Type: "txt", Url: host + "/getRss?token=" + tokenTxt})
+	res = append(res, RssUrl{Type: "epg", Url: host + "/epg/" + tokenM3u8 + "/e.xml"})
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "订阅生成成功", Type: "success", Data: res}
 }
@@ -105,12 +104,12 @@ func GetRss(token, host string) string {
 func getTxt(id int64) string {
 	var res string
 	var meal models.IptvMeals
-	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ?", id).First(&meal).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
 		return res
 	}
 	categoryNameList := strings.Split(meal.Content, "_")
 	var categoryList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?)", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?) and enable = 1", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
 	}
 
@@ -190,12 +189,12 @@ func getEpg(id int64) dto.TV {
 	}
 
 	var meal models.IptvMeals
-	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ?", id).First(&meal).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
 		return res
 	}
 	categoryNameList := strings.Split(meal.Content, "_")
 	var categoryList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?)", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?) and enable = 1", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
 	}
 	for _, category := range categoryList {
@@ -267,7 +266,7 @@ func GetCntvEpgXml() dto.TV {
 	}
 
 	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "cntv-%").Find(&epgs).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "cntv-%").Find(&epgs).Error; err != nil {
 		return cntvXml
 	}
 
@@ -310,7 +309,7 @@ func GetProvinceEpgXml() dto.TV {
 	}
 
 	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "51zmt-%卫视").Find(&epgs).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "51zmt-%卫视").Find(&epgs).Error; err != nil {
 		return epgXml
 	}
 
@@ -372,7 +371,7 @@ func GetEpgXml(cname string) dto.TV {
 
 	for _, channel := range channelList {
 		var epgs []models.IptvEpg
-		if err := dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+channel.Name+"%").Find(&epgs).Error; err != nil {
+		if err := dao.DB.Model(&models.IptvEpg{}).Where("content like ? and status = 1", "%"+channel.Name+"%").Find(&epgs).Error; err != nil {
 			continue
 		}
 		for _, epg := range epgs {

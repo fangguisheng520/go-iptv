@@ -92,7 +92,7 @@ func GetCCTVChannelList(rebuild bool) string {
 	}
 
 	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "cntv-%").Find(&epgs).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "cntv-%").Find(&epgs).Error; err != nil {
 		return res
 	}
 
@@ -124,7 +124,7 @@ func GetProvinceChannelList(rebuild bool) string {
 	}
 
 	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "51zmt-%卫视").Find(&epgs).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "51zmt-%卫视").Find(&epgs).Error; err != nil {
 		return res
 	}
 	var channelList []models.IptvChannel
@@ -151,8 +151,8 @@ func GetProvinceChannelList(rebuild bool) string {
 
 func Txt2M3u8(txtData, host, token string) string {
 
-	epgURL := host + "/getRssEpg?token=" + token // ✅ 可自行修改 EPG 地址
-	logoBase := host + "/logo/"                  // ✅ 可自行修改 logo 前缀
+	epgURL := host + "/epg/" + token + "/e.xml" // ✅ 可自行修改 EPG 地址
+	logoBase := host + "/logo/"                 // ✅ 可自行修改 logo 前缀
 
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
@@ -206,7 +206,7 @@ func Txt2M3u8(txtData, host, token string) string {
 
 func GetEpgName(name string) string {
 	var epgs []models.IptvEpg
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+name+"%").Find(&epgs)
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ? and status = 1", "%"+name+"%").Find(&epgs)
 
 	var epgName string
 	for _, epg := range epgs {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/xml"
 	"fmt"
 	"go-iptv/dto"
 	"go-iptv/service"
@@ -20,7 +21,16 @@ func GetRssUrl(c *gin.Context) {
 	params := c.Request.PostForm
 	id := params.Get("id")
 
-	c.JSON(200, service.GetRssUrl(id))
+	scheme := GetClientScheme(c)
+
+	host := c.Request.Host
+	if !until.IsValidHost(host) {
+		c.String(200, "host不合法")
+		return
+	}
+	host = fmt.Sprintf("%s://%s", scheme, host)
+
+	c.JSON(200, service.GetRssUrl(id, host))
 }
 
 func GetTXTRss(c *gin.Context) {
@@ -36,7 +46,7 @@ func GetTXTRss(c *gin.Context) {
 
 		host := c.Request.Host
 		if !until.IsValidHost(host) {
-			c.String(200, "参数不合法")
+			c.String(200, "host不合法")
 			return
 		}
 		host = fmt.Sprintf("%s://%s", scheme, host)
@@ -46,27 +56,32 @@ func GetTXTRss(c *gin.Context) {
 }
 
 func GetTXTRssEpg(c *gin.Context) {
-	if token, ok := c.GetQuery("token"); !ok {
+	token := c.Param("token")
+	if token == "" {
 		c.String(200, "token 参数不存在")
 		return
-	} else {
-		if token == "" {
-			c.String(200, "token 参数不存在")
-			return
-		}
-		scheme := "http"
-		if c.Request.TLS != nil {
-			scheme = "https"
-		}
-		host := c.Request.Host
-		if !until.IsValidHost(host) {
-			c.String(200, "参数不合法")
-			return
-		}
-		host = fmt.Sprintf("%s://%s", scheme, host)
-
-		c.XML(200, service.GetRssEpg(token, host))
 	}
+	scheme := GetClientScheme(c)
+
+	host := c.Request.Host
+	if !until.IsValidHost(host) {
+		c.String(200, "host不合法")
+		return
+	}
+	host = fmt.Sprintf("%s://%s", scheme, host)
+
+	tv := service.GetRssEpg(token, host)
+
+	output, err := xml.MarshalIndent(tv, "", "  ")
+	if err != nil {
+		c.String(200, "生成XML失败: %v", err)
+		return
+	}
+
+	// 加上 XML 文件头
+	xmlData := []byte(xml.Header + string(output))
+
+	c.Data(200, "application/xml; charset=utf-8", xmlData)
 }
 
 func GetClientScheme(c *gin.Context) string {

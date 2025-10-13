@@ -169,6 +169,7 @@ func BindChannel() dto.ReturnJsonDto {
 	}
 	go until.GetCCTVChannelList(true)
 	go until.GetProvinceChannelList(true)
+	go until.CleanMealsXmlCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "绑定成功", Type: "success"}
 }
 

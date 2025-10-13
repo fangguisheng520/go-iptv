@@ -64,9 +64,10 @@ func BuildAPK() bool {
 		return false
 	}
 
-	cmd := exec.Command("cp", "-r", "-f", clientSource, buildBaseDir)
-	if err := cmd.Run(); err != nil {
-		log.Println("编译环境复制失败:", err)
+	cmd := exec.Command("bash", "-c", "cp -rf "+clientSource+" "+buildBaseDir)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("编译环境复制失败: %v --- %s\n", err, string(output))
 		return false
 	}
 

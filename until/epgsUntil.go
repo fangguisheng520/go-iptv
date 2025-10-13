@@ -6,6 +6,8 @@ import (
 	"errors"
 	"go-iptv/dao"
 	"go-iptv/dto"
+	"go-iptv/models"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -124,4 +126,16 @@ func GetEpgCntv(name string) (dto.CntvJsonChannel, error) {
 		}
 	}
 	return cntvJson[name], nil
+}
+
+func CleanMealsXmlCacheAll() {
+	var meals []models.IptvMeals
+	dao.DB.Model(&models.IptvMeals{}).Find(&meals)
+	for _, meal := range meals {
+		dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(meal.ID, 10))
+	}
+}
+
+func CleanMealsXmlCacheOne(id int64) {
+	dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(id, 10))
 }

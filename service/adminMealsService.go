@@ -4,6 +4,7 @@ import (
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
+	"go-iptv/until"
 	"net/url"
 	"strings"
 )
@@ -24,9 +25,11 @@ func MealsChangeStatus(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "套餐 " + mealId + " 不存在", Type: "danger"}
 	}
 	if meals.Status == 1 {
+		go until.CleanMealsXmlCacheAll()
 		dao.DB.Model(&models.IptvMeals{}).Where("id = ?", mealId).Update("status", 0)
 		return dto.ReturnJsonDto{Code: 1, Msg: "套餐 " + meals.Name + " 下线", Type: "success"}
 	} else {
+		go until.CleanMealsXmlCacheAll()
 		dao.DB.Model(&models.IptvMeals{}).Where("id = ?", mealId).Update("status", 1)
 		return dto.ReturnJsonDto{Code: 1, Msg: "套餐 " + meals.Name + " 上线", Type: "success"}
 	}
@@ -62,6 +65,7 @@ func MealsEdit(params url.Values, editType int) dto.ReturnJsonDto {
 			}
 			dataList = append(dataList, data)
 		}
+		go until.CleanMealsXmlCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Data: dataList, Msg: "获取成功", Type: "success"}
 	} else {
 		var categoryList []models.IptvCategory
@@ -76,6 +80,7 @@ func MealsEdit(params url.Values, editType int) dto.ReturnJsonDto {
 
 			dataList = append(dataList, data)
 		}
+		go until.CleanMealsXmlCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Data: dataList, Msg: "获取成功", Type: "success"}
 	}
 }
@@ -91,6 +96,7 @@ func MealsDel(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Where("id = ?", mealId).Delete(&models.IptvMeals{}).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "删除失败", Type: "danger"}
 	}
+	go until.CleanMealsXmlCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "删除成功", Type: "success"}
 }
 
@@ -116,11 +122,13 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 		if err := dao.DB.Create(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "添加失败", Type: "danger"}
 		}
+		go until.CleanMealsXmlCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Msg: "添加成功", Type: "success"}
 	} else {
 		if err := dao.DB.Where("id = ?", mealId).Updates(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "编辑失败", Type: "danger"}
 		}
+		go until.CleanMealsXmlCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Msg: "编辑成功", Type: "success"}
 	}
 

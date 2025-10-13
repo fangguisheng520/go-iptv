@@ -270,6 +270,7 @@ func ForbiddenChannels(params url.Values) dto.ReturnJsonDto {
 			return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("启用频道 %s 成功\n", channel.Name), Type: "success"}
 		}
 	}
+	go until.CleanMealsXmlCacheAll() // 清除缓存
 	return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 }
 
@@ -287,7 +288,7 @@ func SubmitAddType(params url.Values) dto.ReturnJsonDto {
 	dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
 
 	dao.DB.Model(&models.IptvCategory{}).Create(&models.IptvCategory{Name: name, Enable: 1, Type: "add", Sort: maxSort + 1})
-	go BindChannel() // 添加频道后重新绑定
+	// go BindChannel() // 添加频道后重新绑定
 	return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("添加频道 %s 成功\n", name), Type: "success"}
 }
 
@@ -658,7 +659,6 @@ func AddChannelList(cname, srclist string) (int, error) {
 		go BindChannel()
 		// go until.UpdateChannelsId()
 	}
-
 	return repetNum, nil
 }
 
@@ -680,6 +680,7 @@ func CategoryChangeStatus(params url.Values) dto.ReturnJsonDto {
 		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).Update("enable", 1)
 		dao.DB.Model(&models.IptvCategory{}).Where("name like ?", "%("+name+")").Update("enable", 1)
 	}
+	go until.CleanMealsXmlCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "Category " + cateData.Name + "状态修改成功", Type: "success"}
 }
 
