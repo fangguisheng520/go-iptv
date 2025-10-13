@@ -33,9 +33,12 @@ func AdminRouter(r *gin.Engine, path string) {
 
 			router.GET("/channels", html.Channels)
 			router.POST("/channels", api.Channels)
+			router.POST("/channels/uploadPayList", api.UploadPayList)
+			router.POST("/channels/uploadLogo", api.UploadLogo)
 
 			router.GET("/epgs", html.Epgs)
 			router.POST("/epgs", api.Epgs)
+			router.POST("/epgs/import", api.EpgsImport)
 
 			router.GET("/notice", html.Notice)
 			router.POST("/notice", api.Notice)

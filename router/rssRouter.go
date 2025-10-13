@@ -9,7 +9,8 @@ import (
 func RssRouter(r *gin.Engine, path string) {
 	router := r.Group(path)
 	{
-		router.GET("/getRss", api.GetTXTRss)
+		router.GET("/getRss/:token/paylist.m3u", api.GetTXTRssM3u)
+		router.GET("/getRss/:token/paylist.txt", api.GetTXTRssTxt)
 		router.GET("/epg/:token/e.xml", api.GetTXTRssEpg)
 	}
 }

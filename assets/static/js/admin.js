@@ -127,7 +127,7 @@ function submitFormPOST(btn, showChannel = false) {
 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
-		if (key === "iconfile" || key === "bjfile") {
+		if (key === "iconfile" || key === "bjfile" || key === "paylistfile") {
 			return;
 		}
 		params.append(key, value);
@@ -169,7 +169,7 @@ function submitFormPOST(btn, showChannel = false) {
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
-			loadPage(action, true, showName);
+			loadPage(window.location.href, true, showName);
 			if ($('.modal-backdrop').length > 0) {
 				document.querySelector('.modal-backdrop').remove();
 				document.body.classList.remove('modal-open');
@@ -251,7 +251,6 @@ document.addEventListener("click", function(e) {
     if (link) {
 		e.preventDefault();
 		const url = new URL(link.href, window.location.origin);
-		
 		loadPage(url);
 		
 		return; // 不是目标元素，忽略
@@ -348,7 +347,7 @@ function categorycheck(name){
 
 function tdBtnPOST(btn) {
 
-	var action = window.location.pathname; // 默认当前路径
+	var action =  window.location.href; // 默认当前路径
 
 	var params = new URLSearchParams();
 
@@ -383,7 +382,14 @@ function tdBtnPOST(btn) {
 				document.body.classList.remove('modal-open');
 				document.body.style.overflow = ''; // 恢复滚动条
 			}
-			loadPage(action);
+			if (btn.name.includes("del")) {
+				// 删除按钮所在的 tr
+				const tr = btn.closest("tr");
+				if (tr) tr.remove();
+			}else{
+				loadPage(action);
+			}
+			
 		}
 	})
 	.catch(err => {
@@ -545,7 +551,14 @@ function uploadIcon(event) {
 	const file = event.target.files[0];
 	if (!file) return;
 
-	const formData = new FormData($('#appform')[0]);
+	const formData = new FormData();
+	const fileInput = document.querySelector('input[name="iconfile"]'); // 获取文件输入框
+	if (fileInput && fileInput.files.length > 0) {
+	formData.append("iconfile", fileInput.files[0]);
+	}else{
+		lightyear.notify("❌ 请选择文件！", "danger", 1000);
+		return;
+	}
 	$.ajax({
 		url: '/admin/client/uploadIcon',  // ✅ 上传接口
 		type: 'POST',
@@ -601,7 +614,14 @@ function uploadBj(event) {
 	const file = event.target.files[0];
 	if (!file) return;
 
-	const formData = new FormData($('#appform')[0]);
+	const formData = new FormData();
+	const fileInput = document.querySelector('input[name="bjfile"]'); // 获取文件输入框
+	if (fileInput && fileInput.files.length > 0) {
+	formData.append("bjfile", fileInput.files[0]);
+	}else{
+		lightyear.notify("❌ 请选择文件！", "danger", 1000);
+		return;
+	}
 	$.ajax({
 		url: '/admin/client/uploadBj',  // ✅ 上传接口
 		type: 'POST',
@@ -693,8 +713,6 @@ function confirmAndSubmit(btn ,msg) {
 }
 
 function getCategory(btn) {
-	var action = window.location.pathname;
-
 	const params = new URLSearchParams();
 
 	if (btn.name && btn.value) {
@@ -768,3 +786,148 @@ function CopyRss(textarea) {
     document.execCommand("copy"); // 执行复制
     lightyear.notify("✅ 已复制到剪贴板！", "success", 1000);
 };
+
+function uploadPayList(event) {
+	var action = window.location.pathname;
+	const file = event.target.files[0];
+	if (!file) return;
+
+	const formData = new FormData();
+	const fileInput = document.querySelector('input[name="paylistfile"]'); // 获取文件输入框
+	if (fileInput && fileInput.files.length > 0) {
+	formData.append("paylistfile", fileInput.files[0]);
+	}else{
+		lightyear.notify("❌ 请选择文件！", "danger", 1000);
+		return;
+	}
+	$.ajax({
+		url: '/admin/channels/uploadPayList',  // ✅ 上传接口
+		type: 'POST',
+		data: formData,
+		contentType: false,
+		processData: false,
+		success: function(res) {
+			$('#paylistfile').val(''); // ✅ 清空文件输入框
+			lightyear.notify(res.msg, res.type, 1000); // ✅ 上传成功后，显示提示信息
+			loadPage(action); // ✅ 上传成功后，重新加载页面
+		},
+		error: function(res) {
+			lightyear.notify(res.msg, res.type, 3000);
+			$('#paylistfile').val('');
+		}
+	});
+};
+
+function uploadEpg(event) {
+	var input = event.target;
+    var file = input.files[0];
+    if (file) {
+        $('#epgfilename').text(file.name); // 显示文件名
+    } else {
+        $('#epgfilename').text('');
+    }
+};
+
+
+function epgImportFormPOST(btn) {
+    var form = $(btn).closest("form")[0]; // 原生 DOM
+    if (!form) {
+        lightyear.notify("表单提交失败", "danger", 3000);
+        return;
+    }
+
+    var formData = new FormData(form);
+
+    $.ajax({
+        url: "/admin/epgs/import",
+        type: "POST",
+        data: formData,
+        processData: false, // 必须
+        contentType: false, // 必须，让浏览器自动设置 multipart/form-data
+        success: function(data) {
+            // 如果返回的是文本，可以先尝试 JSON.parse
+            if (typeof data === "string") {
+                try {
+                    data = JSON.parse(data);
+                } catch (err) {
+                    console.log("解析 JSON 失败:", err);
+                    lightyear.notify("返回数据格式错误", "danger", 3000);
+                    return;
+                }
+            }
+
+            // 登录跳转
+            if (data && typeof data.msg === "string" && data.msg.includes('/admin/login')) {
+                window.location.href = "/admin/login";
+                return;
+            }
+
+            if (data && data.type === "success") {
+				lightyear.notify(data.msg, data.type, 3000);
+                loadPage(window.location.href);
+                $('.modal-backdrop').remove();
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+            }
+        },
+        error: function(err) {
+            console.log(err);
+            lightyear.notify("提交失败", "danger", 3000);
+        }
+    });
+}
+
+function uploadLogo(input) {
+    if (!input.files || input.files.length === 0) return;
+
+    var file = input.files[0];
+
+    // 获取当前行标识
+    var tr = $(input).closest("tr");
+    var rowName = tr.data("name");
+
+    // 上传文件
+    var formData = new FormData();
+    formData.append("uploadlogo", file);
+    formData.append("epgname", rowName); // 发送行标识给后端
+
+    $.ajax({
+        url: "/admin/channels/uploadLogo",
+        type: "POST",
+        data: formData,
+        processData: false, // 不处理数据
+        contentType: false, // 不设置 Content-Type，让浏览器自动生成 multipart/form-data
+        success: function(data) {
+            if (typeof data === "string") {
+                try {
+                    data = JSON.parse(data);
+                } catch (err) {
+                    console.error("解析 JSON 失败:", err);
+                    lightyear.notify("上传失败", "danger", 3000);
+                    return;
+                }
+            }
+
+			if (data && typeof data.msg === "string" && data.msg.includes('/admin/login')) {
+                window.location.href = "/admin/login";
+                return;
+            }
+
+            if (data && data.type === "success") {
+                lightyear.notify(data.msg, data.type, 3000);
+				const fileInputs = document.querySelectorAll('input[type="file"]');
+    			fileInputs.forEach(input => input.value = "");
+                loadPage(window.location.href);
+            } else if (data && data.msg) {
+                lightyear.notify(data.msg, data.type || "danger", 3000);
+				const fileInputs = document.querySelectorAll('input[type="file"]');
+    			fileInputs.forEach(input => input.value = "");
+            }
+        },
+        error: function(err) {
+            console.error(err);
+            lightyear.notify("上传失败", "danger", 3000);
+        }
+    });
+}
+

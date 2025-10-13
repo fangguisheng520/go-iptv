@@ -204,6 +204,65 @@ func Txt2M3u8(txtData, host, token string) string {
 	return builder.String()
 }
 
+func M3UToGenreTXT(m3u string) string {
+	lines := strings.Split(m3u, "\n")
+
+	genreMap := make(map[string][]string)
+	var groupsOrder []string // 记录首次出现的分组顺序
+
+	// 更稳健的正则：在任意位置捕获 group-title="xx"，最后一个逗号后是频道名
+	reExtinf := regexp.MustCompile(`(?i)#EXTINF:[^,]*?(?:.*?group-title=["']([^"']+)["'])?.*?,\s*(.*)$`)
+
+	var lastGroup, lastName string
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#EXTM3U") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "#EXTINF:") {
+			matches := reExtinf.FindStringSubmatch(line)
+			log.Println(matches)
+			if len(matches) >= 3 {
+				group := strings.TrimSpace(matches[1])
+				name := strings.TrimSpace(matches[2])
+
+				if group == "" {
+					group = "未分组"
+				}
+
+				lastGroup = group
+				lastName = name
+
+				// 若首次见到该分组，记录顺序
+				if _, ok := genreMap[group]; !ok {
+					groupsOrder = append(groupsOrder, group)
+					genreMap[group] = []string{}
+				}
+			}
+		} else if strings.HasPrefix(line, "http") || strings.HasPrefix(line, "rtsp") || strings.HasPrefix(line, "rtmp") {
+			if lastName != "" && lastGroup != "" {
+				genreMap[lastGroup] = append(genreMap[lastGroup], fmt.Sprintf("%s,%s", lastName, line))
+				// 清空以避免错误关联
+				lastName, lastGroup = "", ""
+			}
+		}
+	}
+
+	// 按首次出现顺序输出（避免 sort 后改变顺序）
+	var builder strings.Builder
+	for _, group := range groupsOrder {
+		builder.WriteString(fmt.Sprintf("%s,#genre#\n", group))
+		for _, item := range genreMap[group] {
+			builder.WriteString(item + "\n")
+		}
+		builder.WriteString("\n")
+	}
+
+	return strings.TrimSpace(builder.String())
+}
+
 func GetEpgName(name string) string {
 	var epgs []models.IptvEpg
 	dao.DB.Model(&models.IptvEpg{}).Where("content like ? and status = 1", "%"+name+"%").Find(&epgs)
@@ -226,4 +285,21 @@ func GetEpgName(name string) string {
 	}
 
 	return strings.Split(epgName, "-")[1]
+}
+
+func IsM3UContent(data string) bool {
+	// 去除前后空白
+	trimmed := strings.TrimSpace(data)
+
+	// 必须以 #EXTM3U 开头
+	if !strings.HasPrefix(trimmed, "#EXTM3U") {
+		return false
+	}
+
+	// 检查是否包含至少一个 #EXTINF
+	if !strings.Contains(data, "#EXTINF:") {
+		return false
+	}
+
+	return true
 }

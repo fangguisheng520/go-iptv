@@ -86,6 +86,10 @@ func UpdateList() {
 
 		urlData := until.FilterEmoji(string(body)) // 过滤emoji表情
 
+		if until.IsM3UContent(urlData) {
+			urlData = until.M3UToGenreTXT(urlData)
+		}
+
 		if v.AutoCategory == 1 {
 			if !strings.Contains(urlData, "#genre#") {
 				dao.DB.Model(&models.IptvCategory{}).Where("name = ?", v.Name).Updates(map[string]interface{}{
@@ -130,7 +134,7 @@ func GenreChannels(listName, srclist string) {
 			})
 			AddChannelList(categoryName, genreList)
 		} else {
-			var maxSort int
+			var maxSort int64
 			dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
 			newCategory := models.IptvCategory{
 				LatestTime: time.Now().Format("2006-01-02 15:04:05"),

@@ -16,7 +16,7 @@ type ChaCha20 struct {
 // 创建新的实例，key长度必须为 32 字节
 func NewChaCha20(key string) *ChaCha20 {
 	return &ChaCha20{
-		Key: []byte(key),
+		Key: []byte(Md5Hex(key)),
 	}
 }
 

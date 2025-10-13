@@ -1,12 +1,20 @@
 package service
 
 import (
+	"encoding/xml"
+	"errors"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"io"
+	"log"
+	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func GetEpgData(params url.Values) dto.ReturnJsonDto {
@@ -181,6 +189,97 @@ func ClearBind() dto.ReturnJsonDto {
 func ClearCache() dto.ReturnJsonDto {
 	dao.Cache.Clear()
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除缓存成功", Type: "success"}
+}
+
+func EpgImportFile(c *gin.Context) dto.ReturnJsonDto {
+
+	epgFromName := c.PostForm("epgfromname")
+	if epgFromName == "" || strings.Contains(epgFromName, "-") || !until.IsSafe(epgFromName) {
+		return dto.ReturnJsonDto{Code: 0, Msg: "EPG来源名称不合法", Type: "danger"}
+	}
+
+	file, err := c.FormFile("epgfile")
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取文件失败:" + err.Error(), Type: "danger"}
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "打开文件失败: " + err.Error(), Type: "danger"}
+	}
+	defer f.Close()
+
+	// 读取内容
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "读取文件失败: " + err.Error(), Type: "danger"}
+	}
+
+	var xmlData dto.TV
+	errXml := xml.Unmarshal(data, &xmlData)
+	if errXml != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "xml格式化失败: " + errXml.Error(), Type: "danger"}
+	}
+
+	var eOld models.IptvEpg
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", epgFromName+"-%").First(&eOld).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return dto.ReturnJsonDto{Code: 0, Msg: "EPG查询失败: " + err.Error(), Type: "danger"}
+	}
+	if eOld.ID != 0 {
+		dao.DB.Model(&models.IptvEpg{}).Where("name like ?", epgFromName+"-%").Delete(&models.IptvEpg{})
+	}
+
+	var epgs []models.IptvEpg
+	for _, channel := range xmlData.Channels {
+		epgs = append(epgs, models.IptvEpg{
+			Name:    epgFromName + "-" + channel.DisplayName.Value,
+			Status:  1,
+			Remarks: channel.DisplayName.Value,
+		})
+	}
+	if err := dao.DB.Model(&models.IptvEpg{}).Create(&epgs).Error; err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "保存失败: " + err.Error(), Type: "danger"}
+	}
+	go BindChannel()
+	return dto.ReturnJsonDto{Code: 1, Msg: "保存成功", Type: "success"}
+}
+
+func UploadLogo(c *gin.Context) dto.ReturnJsonDto {
+
+	epgFromName := c.PostForm("epgname")
+	log.Println(epgFromName)
+	if epgFromName == "" || !strings.Contains(epgFromName, "-") || !until.IsSafe(epgFromName) {
+		return dto.ReturnJsonDto{Code: 0, Msg: "EPG名称不合法", Type: "danger"}
+	}
+
+	epgName := strings.Split(epgFromName, "-")[1]
+
+	file, err := c.FormFile("uploadlogo")
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取文件失败:" + err.Error(), Type: "danger"}
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "打开文件失败:" + err.Error(), Type: "danger"}
+	}
+	defer f.Close()
+
+	// 读取前 512 字节判断 MIME 类型
+	buf := make([]byte, 512)
+	n, _ := f.Read(buf)
+	contentType := http.DetectContentType(buf[:n])
+
+	if contentType != "image/png" {
+		return dto.ReturnJsonDto{Code: 0, Msg: "只允许上传 PNG 文件", Type: "danger"}
+	}
+
+	dst := "/config/logo/" + epgName + ".png"
+	if err := c.SaveUploadedFile(file, dst); err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "保存文件失败:" + err.Error(), Type: "danger"}
+	}
+	go until.CleanMealsXmlCacheAll()
+	return dto.ReturnJsonDto{Code: 1, Msg: "上传成功", Type: "success"}
 }
 
 // func SaveEpgApi(params url.Values) dto.ReturnJsonDto {

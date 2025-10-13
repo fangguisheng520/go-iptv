@@ -18,8 +18,7 @@ type RssUrl struct {
 }
 
 type AesData struct {
-	T string `json:"t"`
-	I int64  `json:"i"`
+	I int64 `json:"i"`
 }
 
 func getAesdata(aesData AesData) (string, error) {
@@ -49,52 +48,40 @@ func GetRssUrl(id, host string) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到上线套餐", Type: "danger"}
 	}
 
-	aesData1 := AesData{
-		T: "m",
+	aesData := AesData{
 		I: meal.ID,
 	}
-	aesDataStr1, err := getAesdata(aesData1)
+	aesDataStr, err := getAesdata(aesData)
 	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "生成key1失败", Type: "danger"}
-	}
-	aesData2 := AesData{
-		T: "t",
-		I: meal.ID,
-	}
-	aesDataStr2, err := getAesdata(aesData2)
-	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "生成key2失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "生成key失败", Type: "danger"}
 	}
 
 	aes := until.NewChaCha20(string(until.RssKey))
-	tokenM3u8, err := aes.Encrypt(aesDataStr1)
+	token, err := aes.Encrypt(aesDataStr)
 	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "生成链接失败", Type: "danger"}
-	}
-	tokenTxt, err := aes.Encrypt(aesDataStr2)
-	if err != nil {
+		log.Println(err)
 		return dto.ReturnJsonDto{Code: 0, Msg: "生成链接失败", Type: "danger"}
 	}
 
-	res = append(res, RssUrl{Type: "m3u8", Url: host + "/getRss?token=" + tokenM3u8})
-	res = append(res, RssUrl{Type: "txt", Url: host + "/getRss?token=" + tokenTxt})
-	res = append(res, RssUrl{Type: "epg", Url: host + "/epg/" + tokenM3u8 + "/e.xml"})
+	res = append(res, RssUrl{Type: "m3u8", Url: host + "/getRss/" + token + "/paylist.m3u"})
+	res = append(res, RssUrl{Type: "txt", Url: host + "/getRss/" + token + "/paylist.txt"})
+	res = append(res, RssUrl{Type: "epg", Url: host + "/epg/" + token + "/e.xml"})
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "订阅生成成功", Type: "success", Data: res}
 }
 
-func GetRss(token, host string) string {
+func GetRss(token, host, t string) string {
 
 	aes := until.NewChaCha20(string(until.RssKey))
 	jsonStr, err := aes.Decrypt(token)
 	if err != nil {
-		return "订阅失败1"
+		return "订阅失败,token解密错误"
 	}
 	aesData, err := getAesType(jsonStr)
 	if err != nil {
-		return "订阅失败2"
+		return "订阅失败，token读取错误"
 	}
-	if aesData.T == "t" {
+	if t == "t" {
 		return getTxt(aesData.I)
 	} else {
 		return until.Txt2M3u8(getTxt(aesData.I), host, token)
@@ -163,11 +150,7 @@ func GetRssEpg(token, host string) dto.TV {
 	if err != nil {
 		return res
 	}
-	if aesData.T == "t" {
-		return res
-	} else {
-		return getEpg(aesData.I)
-	}
+	return getEpg(aesData.I)
 }
 
 func getEpg(id int64) dto.TV {

@@ -33,26 +33,40 @@ func GetRssUrl(c *gin.Context) {
 	c.JSON(200, service.GetRssUrl(id, host))
 }
 
-func GetTXTRss(c *gin.Context) {
-	if token, ok := c.GetQuery("token"); !ok {
+func GetTXTRssM3u(c *gin.Context) {
+	token := c.Param("token")
+	if token == "" {
 		c.String(200, "token 参数不存在")
 		return
-	} else {
-		if token == "" {
-			c.String(200, "token 参数不存在")
-			return
-		}
-		scheme := GetClientScheme(c)
-
-		host := c.Request.Host
-		if !until.IsValidHost(host) {
-			c.String(200, "host不合法")
-			return
-		}
-		host = fmt.Sprintf("%s://%s", scheme, host)
-
-		c.String(200, service.GetRss(token, host))
 	}
+	scheme := GetClientScheme(c)
+
+	host := c.Request.Host
+	if !until.IsValidHost(host) {
+		c.String(200, "host不合法")
+		return
+	}
+	host = fmt.Sprintf("%s://%s", scheme, host)
+
+	c.String(200, service.GetRss(token, host, "m"))
+}
+
+func GetTXTRssTxt(c *gin.Context) {
+	token := c.Param("token")
+	if token == "" {
+		c.String(200, "token 参数不存在")
+		return
+	}
+	scheme := GetClientScheme(c)
+
+	host := c.Request.Host
+	if !until.IsValidHost(host) {
+		c.String(200, "host不合法")
+		return
+	}
+	host = fmt.Sprintf("%s://%s", scheme, host)
+
+	c.String(200, service.GetRss(token, host, "t"))
 }
 
 func GetTXTRssEpg(c *gin.Context) {
@@ -81,7 +95,7 @@ func GetTXTRssEpg(c *gin.Context) {
 	// 加上 XML 文件头
 	xmlData := []byte(xml.Header + string(output))
 
-	c.Data(200, "application/xml; charset=utf-8", xmlData)
+	c.Data(200, "text/xml", xmlData)
 }
 
 func GetClientScheme(c *gin.Context) string {

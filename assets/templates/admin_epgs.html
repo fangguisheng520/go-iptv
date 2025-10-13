@@ -40,14 +40,13 @@
 									<table class="table table-hover table-vcenter">
 										<tr>
 											<td colspan="7">
-												<form method="POST">
 													<label class="control-label">操作：</label>
 													<button class="btn btn-default" type="button" data-toggle="modal" data-target="#addepg">增加EPG</button>
 													<button class="btn btn-default" type="button" onclick="submitFormPOST(this)" name="bindchannel">绑定频道</button>
 													<button class="btn btn-default" type="button" onclick="confirmAndSubmit(this,'确定要清空绑定的频道列表吗？')" name="clearbind">清空绑定</button>
 													<button class="btn btn-default" type="button" name="clearcache" onclick="confirmAndSubmit(this,'确定要清空EPG缓存吗？')">清空EPG缓存</button>
-													<!-- <button class="btn btn-default" type="button" data-toggle="modal" data-target="#epgset">EPG接口设置</button> -->
-												</form>
+													
+													<button class="btn btn-default" type="button" data-toggle="modal" data-target="#epgimport">文件导入</button>
 											</td>
 										</tr>
 										<tr align="center">
@@ -63,7 +62,7 @@
 										<tbody style="font-size:12px;font-weight: bold;">
                                         {{ if gt (len .Epgs) 0 }}
                                         {{range .Epgs}}
-                                        <tr>    
+                                        <tr data-name="{{.Name}}">    
                                             <td align="center" class="epg-id" data-value="{{.ID}}">{{.ID}}</td>
                                             <td align="center" class="epg-name" data-value="{{.Name}}">{{.Name}}</td>
                                             <td align="center" class="epg-remarks" data-value="{{.Remarks}}"><font color="red">{{.Remarks}}</font></td>
@@ -74,6 +73,10 @@
                                             <td align="center">
                                                 <button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.ID}}" class="btn btn-xs {{if eq .Status 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>&nbsp;
                                                 <button class="btn btn-xs btn-info" type="button" name="editepg" value="{{.ID}}" data-toggle="modal" onclick="epgsGetChannel(this)" data-target="#editepg">编辑</button>&nbsp;
+												<label class="btn btn-xs btn-info" style="margin:0;">
+													<span>上传logo</span>
+													<input type="file" name="uploadlogo" id="uploadlogo" onchange="uploadLogo(this)" style="display:none;">
+												</label>&nbsp;
                                                 <button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="delepg" value="{{.ID}}">删除</button>
                                             </td>
                                         </tr>
@@ -167,6 +170,36 @@
 													<div class="modal-footer">
 														<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="edit_save_epg" name="edit_save_epg">确定</button>
 														<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+													</div>
+												</form>
+											</div>
+										</div>
+									</div>
+									<div class="modal fade" id="epgimport" tabindex="-1" role="dialog">
+										<div class="modal-dialog" role="document">
+											<div class="modal-content">
+												<div class="modal-header">
+													<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#epgfromname').val('');$('#epgfilename').text('');"><span aria-hidden="true">&times;</span></button>
+													<h4 class="modal-title">导入epg xml文件</h4>
+												</div>
+												<form method="post" enctype="multipart/form-data">
+													<div class="modal-body">
+														<div class="form-group">
+															<label class="control-label">epg源名称:</label>
+															<input type="text" class="form-control" name="epgfromname" id="epgfromname" value="" placeholder="请输入名称,尽可能用英文，不要使用英文横杠">
+															<small class="help-block">若源已存在，将覆盖已有的</small>
+														</div>
+														<div class="form-group">
+															<label class="btn btn-default" style="margin:0;">
+																<span>选择文件</span>
+																<input type="file" name="epgfile" id="epgfile" onchange="uploadEpg(event)" style="display:none;">
+															</label>
+															<span id="epgfilename" style="margin-left:10px;"></span>
+														</div>
+													</div>
+													<div class="modal-footer">
+														<button class="btn btn-default" type="button" name="epgImportFile" onclick="epgImportFormPOST(this)">保存</button>
+														<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#epgfromname').val('');$('#epgfilename').text('');">关闭</button>
 													</div>
 												</form>
 											</div>

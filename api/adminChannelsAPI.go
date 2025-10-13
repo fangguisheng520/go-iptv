@@ -56,3 +56,12 @@ func Channels(c *gin.Context) {
 
 	c.JSON(200, res)
 }
+
+func UploadPayList(c *gin.Context) {
+	_, ok := until.GetAuthName(c)
+	if !ok {
+		c.JSON(200, dto.NewAdminRedirectDto())
+		return
+	}
+	c.JSON(200, service.UploadPayList(c))
+}

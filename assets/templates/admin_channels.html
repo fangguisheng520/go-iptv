@@ -26,7 +26,13 @@
 												</label>
 												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="update_interval">保存设定</button>
 												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="updatelistall">更新全部</button>
-												<button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addlist">导入列表</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addlist">添加列表</button>
+											<!-- </form>
+											<form class="form-inline" method="post" id='paylistfile_form'> -->
+												<label class="btn btn-xs btn-info btn-default" style="margin:0;">
+													<span>文件导入</span>
+													<input type="file" name="paylistfile" onchange="uploadPayList(event)" id="paylistfile" style="display:none;">
+												</label>
 											</form>
 										</td>
 									</tr>
@@ -36,7 +42,7 @@
 										<td class="w-5">名称</td>
 										<td class="w-15">url</td>
 										<td class="w-10">最后更新时间</td>
-										<td class="w-5">DIYP</td>
+										<td class="w-5">自动分组</td>
 										<td class="w-5">状态</td>
 										<td class="w-10">操作</td>
 									</tr>
@@ -65,22 +71,23 @@
 										<div class="modal-content">
 											<div class="modal-header">
 												<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-												<h4 class="modal-title">增加外部列表</h4>
+												<h4 class="modal-title">外部列表</h4>
 											</div>
 											<form method="post" action="/admin/channels">
 												<div class="modal-body">
+													<input type="hidden" id="cId" data-value="" name="cId" value="">
 													<div class="form-group">
 														<label for="recipient-name" class="control-label">分类名称：</label>
 														<input type="text" class="form-control" id="listname" name="listname" placeholder="分类名称">
 													</div>
 													<div class="form-group">
-														<input type="hidden" name="cId" id="cId" value="">
 														<label for="message-text" class="control-label">列表链接：</label>
 														<input class="form-control" id="listurl" name="listurl" placeholder="请输入列表链接"></input>
 													</div>
 													<div class="form-group">
    														<input type="checkbox" id="autocategory" name="autocategory" value="on"></input>
-   														<label for="message-text" class="control-label">启用DIYP格式自动分类</label>
+   														<label for="message-text" class="control-label">启用自动分组</label>
+														<small class="help-block">支持txt格式#genre#分组、支持m3u8格式group-title分组</small>
 													</div>
 												</div>
 												<div class="modal-footer">
@@ -111,7 +118,7 @@
 								<div class="input-group">
 									<div class="input-group-btn">
                                         <input type="hidden" id="typename0" name="old_name" value=""/>
-										<input class="form-control" style="width: 108px;height: 30px;" id="typename" type="text" size="10" name="category" value="" placeholder="分类名称"/>
+										<input class="form-control" style="width: 200px;height: 30px;" id="typename" type="text" size="10" name="category" value="" placeholder="分类名称"/>
 										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_addtype">增加分类</button>
 										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this)" name="submit_deltype">删除分类</button>
 										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_modifytype">修改分类</button>

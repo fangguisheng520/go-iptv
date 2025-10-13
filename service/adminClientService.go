@@ -6,6 +6,7 @@ import (
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/until"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -20,6 +21,22 @@ func UploadFile(c *gin.Context, imgType string) dto.ReturnJsonDto {
 		if err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "获取文件失败:" + err.Error(), Type: "danger"}
 		}
+
+		f, err := file.Open()
+		if err != nil {
+			return dto.ReturnJsonDto{Code: 0, Msg: "打开文件失败:" + err.Error(), Type: "danger"}
+		}
+		defer f.Close()
+
+		// 读取前 512 字节判断 MIME 类型
+		buf := make([]byte, 512)
+		n, _ := f.Read(buf)
+		contentType := http.DetectContentType(buf[:n])
+
+		if contentType != "image/png" {
+			return dto.ReturnJsonDto{Code: 0, Msg: "只允许上传 PNG 文件", Type: "danger"}
+		}
+
 		dst := "/config/images/icon/icon.png"
 		if err := c.SaveUploadedFile(file, dst); err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "保存文件失败:" + err.Error(), Type: "danger"}
@@ -30,6 +47,22 @@ func UploadFile(c *gin.Context, imgType string) dto.ReturnJsonDto {
 		if err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "获取文件失败:" + err.Error(), Type: "danger"}
 		}
+
+		f, err := file.Open()
+		if err != nil {
+			return dto.ReturnJsonDto{Code: 0, Msg: "打开文件失败:" + err.Error(), Type: "danger"}
+		}
+		defer f.Close()
+
+		// 读取前 512 字节判断 MIME 类型
+		buf := make([]byte, 512)
+		n, _ := f.Read(buf)
+		contentType := http.DetectContentType(buf[:n])
+
+		if contentType != "image/png" {
+			return dto.ReturnJsonDto{Code: 0, Msg: "只允许上传 PNG 文件", Type: "danger"}
+		}
+
 		pngName := until.Md5(url.QueryEscape(fmt.Sprintf("%s%d", file.Filename, time.Now().Unix())))
 
 		dst := "/config/images/bj/" + pngName + ".png"
