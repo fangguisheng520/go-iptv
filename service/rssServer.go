@@ -235,6 +235,8 @@ func CleanTV(tv dto.XmlTV) dto.XmlTV {
 			i++
 		}
 	}
+	log.Println("去重后的频道", uniqueChannels)
+	log.Println("seen", seen)
 	tv.Channels = uniqueChannels
 
 	// 2️⃣ 删除无效的 Programme（仅保留 channel 存在的）
@@ -320,7 +322,7 @@ func GetProvinceEpgXml() dto.XmlTV {
 		eName := strings.Split(epg.Name, "-")[1]
 
 		var epgList models.IptvEpgList
-		if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", eFrom).First(&epgList).Error; err != nil {
+		if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", eFrom).First(&epgList).Error; err != nil {
 			continue
 		}
 		tmpXml := until.GetEpgListXml(epgList.Name, epgList.Url)
@@ -386,15 +388,18 @@ func GetEpgXml(cname string) dto.XmlTV {
 						},
 					})
 					for _, p := range tmpXml.Programmes {
-						p.Channel = epg.Name
+						p.Channel = eName
 						epgXml.Programmes = append(epgXml.Programmes, p)
 					}
+				}
+				if len(epgXml.Channels) > 0 && len(epgXml.Programmes) > 0 {
+					break
 				}
 				continue
 			}
 
 			var epgList models.IptvEpgList
-			if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", eType).First(&epgList).Error; err != nil {
+			if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", eType).First(&epgList).Error; err != nil {
 				continue
 			}
 			tmpXml := until.GetEpgListXml(epgList.Name, epgList.Url)

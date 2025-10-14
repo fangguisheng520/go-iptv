@@ -18,7 +18,7 @@ func HashPassword(password string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func CheckUserDay(users []models.IptvUser) []models.IptvUser {
+func CheckUserDay(users []models.IptvUserShow) []models.IptvUserShow {
 	now := time.Now().Unix()
 	for i, u := range users {
 		users[i].LastTimeStr = time.Unix(u.LastTime, 0).Format("2006-01-02 15:04:05")

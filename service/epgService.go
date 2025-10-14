@@ -243,7 +243,7 @@ func getEpgXml(epgFrom, epgName string) dto.Response {
 	res.Msg = "请求成功!"
 
 	var epgsList models.IptvEpgList
-	if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", epgFrom).First(&epgsList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", epgFrom).First(&epgsList).Error; err != nil {
 		return res
 	}
 
@@ -297,7 +297,7 @@ func getSimpleEpg(epgFrom, epgName string) dto.SimpleResponse {
 	res.Msg = "请求成功!"
 
 	var epgsList models.IptvEpgList
-	if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", epgFrom).First(&epgsList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", epgFrom).First(&epgsList).Error; err != nil {
 		return res
 	}
 

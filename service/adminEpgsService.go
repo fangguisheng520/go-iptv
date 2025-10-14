@@ -142,10 +142,10 @@ func ChangeListStatus(params url.Values) dto.ReturnJsonDto {
 
 	if epgData.Status == 1 {
 		dao.DB.Model(&models.IptvEpgList{}).Where("id = ?", id).Update("status", 0)
-		dao.DB.Model(&models.IptvEpg{}).Where("name like ?", epgData.Name+"-%").Update("status", 0)
+		dao.DB.Model(&models.IptvEpg{}).Where("name like ?", epgData.Remarks+"-%").Update("status", 0)
 	} else {
 		dao.DB.Model(&models.IptvEpgList{}).Where("id = ?", id).Update("status", 1)
-		dao.DB.Model(&models.IptvEpg{}).Where("name like ?", epgData.Name+"-%").Update("status", 1)
+		dao.DB.Model(&models.IptvEpg{}).Where("name like ?", epgData.Remarks+"-%").Update("status", 1)
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "EPG 列表 " + epgData.Name + "状态修改成功", Type: "success"}
 }
@@ -324,7 +324,7 @@ func DelEpgList(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Where("id = ?", listId).Delete(&models.IptvEpgList{}).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "删除列表失败:" + err.Error(), Type: "danger"}
 	}
-	if err := dao.DB.Where("name like ?", epgList.Name+"-%").Delete(&models.IptvEpg{}).Error; err != nil {
+	if err := dao.DB.Where("name like ?", epgList.Remarks+"-%").Delete(&models.IptvEpg{}).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "删除EPG失败:" + err.Error(), Type: "danger"}
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "删除成功", Type: "success"}

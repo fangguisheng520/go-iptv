@@ -8,6 +8,7 @@ import (
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,9 +21,11 @@ func ConvertCntvToXml(cntv dto.CntvJsonChannel, cName string) dto.XmlTV {
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
 
+	log.Println("开始转换", cName)
+
 	// 添加频道
 	tv.Channels = append(tv.Channels, dto.XmlChannel{
-		ID: "1",
+		ID: cName,
 		DisplayName: dto.DisplayName{
 			Lang:  "zh",
 			Value: cName,
@@ -37,7 +40,7 @@ func ConvertCntvToXml(cntv dto.CntvJsonChannel, cName string) dto.XmlTV {
 		tv.Programmes = append(tv.Programmes, dto.Programme{
 			Start:   start,
 			Stop:    stop,
-			Channel: "1",
+			Channel: cName,
 			Title: dto.Title{
 				Lang:  "zh",
 				Value: p.Title,
@@ -78,7 +81,7 @@ func GetEpgListXml(name, url string) dto.XmlTV {
 
 func GetEpgCntv(name string) (dto.CntvJsonChannel, error) {
 
-	var cacheKey = "cntv_" + name
+	var cacheKey = "cntv_" + strings.ToUpper(name)
 
 	var cntvJson dto.CntvData
 

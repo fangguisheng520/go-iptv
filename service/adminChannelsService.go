@@ -136,12 +136,12 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-无法访问url:" + err.Error(), Type: "danger"}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-状态码:" + strconv.Itoa(resp.StatusCode), Type: "danger"}
 	}
 
 	body, err := io.ReadAll(resp.Body)

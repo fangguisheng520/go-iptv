@@ -103,7 +103,7 @@ func Epgs(c *gin.Context) {
 	pageData.EpgFromDb = epgList
 	pageData.EpgFromList = make(map[string]string)
 	for _, v := range epgList {
-		pageData.EpgFromList[v.Name] = v.Remarks
+		pageData.EpgFromList[v.Remarks] = v.Name
 	}
 
 	// cfg := dao.GetConfig()

@@ -38,7 +38,7 @@ func Exception(c *gin.Context) {
 	// cfg := dao.GetConfig()
 	// pageData.MaxSameipUser = int(cfg.App.MaxSameIPUser)
 
-	dao.DB.Model(&models.IptvUser{}).Select("status,name,model,vpn,idchange,marks,exp").Where("vpn>0 or idchange>0").Find(&pageData.Users)
+	dao.DB.Model(&models.IptvUserShow{}).Select("status,name,model,vpn,idchange,marks,exp").Where("vpn>0 or idchange>0").Find(&pageData.Users)
 
 	pageData.Users = until.CheckUserDay(pageData.Users)
 
