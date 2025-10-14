@@ -67,8 +67,7 @@ func GetRssUrl(id, host string, getnewkey bool) dto.ReturnJsonDto {
 	aes := until.NewChaCha20(string(until.RssKey))
 	token, err := aes.Encrypt(aesDataStr)
 	if err != nil {
-		log.Println(err)
-		return dto.ReturnJsonDto{Code: 0, Msg: "生成链接失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "生成链接失败" + err.Error(), Type: "danger"}
 	}
 
 	res = append(res, RssUrl{Type: "m3u8", Url: host + "/getRss/" + token + "/paylist.m3u"})
@@ -235,8 +234,6 @@ func CleanTV(tv dto.XmlTV) dto.XmlTV {
 			i++
 		}
 	}
-	log.Println("去重后的频道", uniqueChannels)
-	log.Println("seen", seen)
 	tv.Channels = uniqueChannels
 
 	// 2️⃣ 删除无效的 Programme（仅保留 channel 存在的）

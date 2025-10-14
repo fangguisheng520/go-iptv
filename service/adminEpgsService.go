@@ -5,7 +5,6 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -254,7 +253,6 @@ func EpgImport(params url.Values) dto.ReturnJsonDto {
 func UploadLogo(c *gin.Context) dto.ReturnJsonDto {
 
 	epgFromName := c.PostForm("epgname")
-	log.Println(epgFromName)
 	if epgFromName == "" || !strings.Contains(epgFromName, "-") || !until.IsSafe(epgFromName) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "EPG名称不合法", Type: "danger"}
 	}

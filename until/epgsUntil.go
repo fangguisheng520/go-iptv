@@ -8,7 +8,6 @@ import (
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,8 +19,6 @@ func ConvertCntvToXml(cntv dto.CntvJsonChannel, cName string) dto.XmlTV {
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
-
-	log.Println("开始转换", cName)
 
 	// 添加频道
 	tv.Channels = append(tv.Channels, dto.XmlChannel{

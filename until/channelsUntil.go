@@ -223,7 +223,6 @@ func M3UToGenreTXT(m3u string) string {
 
 		if strings.HasPrefix(line, "#EXTINF:") {
 			matches := reExtinf.FindStringSubmatch(line)
-			log.Println(matches)
 			if len(matches) >= 3 {
 				group := strings.TrimSpace(matches[1])
 				name := strings.TrimSpace(matches[2])
