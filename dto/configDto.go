@@ -68,6 +68,10 @@ type Redis struct {
 	Db       int    `mapstructure:"db" json:"db" yaml:"db"`
 }
 
+type Rss struct {
+	Key string `mapstructure:"key" json:"key" yaml:"key"`
+}
+
 type Config struct {
 	ServerUrl string        `mapstructure:"server_url" json:"server_url" yaml:"server_url"`
 	Build     Build         `mapstructure:"build" json:"build" yaml:"build"`
@@ -75,6 +79,7 @@ type Config struct {
 	Tips      Tips          `mapstructure:"tips" json:"tips" yaml:"tips"`
 	Ad        Ad            `mapstructure:"ad" json:"ad" yaml:"ad"`
 	Channel   ConfigChannel `mapstructure:"channel" json:"channel" yaml:"channel"`
+	Rss       Rss           `mapstructure:"rss" json:"rss" yaml:"rss"`
 	// Weather   Weather   `mapstructure:"weather" json:"weather" yaml:"weather"`
 	// Cache     Cache     `mapstructure:"cache" json:"cache" yaml:"cache"`
 	// EPGErrors EPGErrors `mapstructure:"epg_errors" json:"epg_errors" yaml:"epg_errors"`

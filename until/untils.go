@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,6 +23,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/net/publicsuffix"
 )
 
 func Md5(str string) (retMd5 string) {
@@ -451,4 +453,34 @@ func IsValidHost(host string) bool {
 	domainPattern := `^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$`
 	matched, _ := regexp.MatchString(domainPattern, host)
 	return matched
+}
+
+func GetMainDomain(input string) string {
+	// 补全 URL 协议前缀，避免解析失败
+	if !strings.HasPrefix(input, "http://") && !strings.HasPrefix(input, "https://") {
+		input = "https://" + input
+	}
+
+	u, err := url.Parse(input)
+	if err != nil {
+		return ""
+	}
+
+	domain := u.Hostname()
+	if domain == "" {
+		return ""
+	}
+
+	// 获取主域 + 后缀（如 51zmt.top / bbc.co.uk）
+	eTLDPlusOne, err := publicsuffix.EffectiveTLDPlusOne(domain)
+	if err != nil {
+		return ""
+	}
+
+	// 获取后缀（如 top / co.uk）
+	suffix, _ := publicsuffix.PublicSuffix(domain)
+
+	// 去掉后缀部分，保留主域
+	mainDomain := strings.TrimSuffix(eTLDPlusOne, "."+suffix)
+	return mainDomain
 }

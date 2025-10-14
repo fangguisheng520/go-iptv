@@ -17,9 +17,7 @@ func GetRssUrl(c *gin.Context) {
 		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
-	c.Request.ParseForm()
-	params := c.Request.PostForm
-	id := params.Get("id")
+	id := c.PostForm("id")
 
 	scheme := GetClientScheme(c)
 
@@ -30,7 +28,13 @@ func GetRssUrl(c *gin.Context) {
 	}
 	host = fmt.Sprintf("%s://%s", scheme, host)
 
-	c.JSON(200, service.GetRssUrl(id, host))
+	getnewkey, exists := c.GetPostForm("getnewkey")
+	if exists && getnewkey != "" {
+		c.JSON(200, service.GetRssUrl(getnewkey, host, true))
+		return
+	}
+
+	c.JSON(200, service.GetRssUrl(id, host, false))
 }
 
 func GetTXTRssM3u(c *gin.Context) {

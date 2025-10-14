@@ -78,24 +78,6 @@ type DataReqDto struct {
 	Region   string `json:"region"`
 	Rand     string `json:"rand"`
 }
-
-type ZmtTV struct {
-	Channels   []ZmtChannel   `xml:"channel"`
-	Programmes []ZmtProgramme `xml:"programme"`
-}
-
-type ZmtChannel struct {
-	ID          string `xml:"id,attr"`
-	DisplayName string `xml:"display-name"`
-}
-
-type ZmtProgramme struct {
-	Start   string `xml:"start,attr"`
-	Stop    string `xml:"stop,attr"`
-	Channel string `xml:"channel,attr"`
-	Title   string `xml:"title"`
-}
-
 type Program struct {
 	Name      string `json:"name"`
 	StartTime string `json:"starttime"`

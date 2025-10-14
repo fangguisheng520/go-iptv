@@ -106,7 +106,7 @@ func GetCCTVChannelList(rebuild bool) string {
 			continue
 		}
 		for _, channel := range channelList {
-			res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
+			res += fmt.Sprintf("%s,%s\n", strings.ReplaceAll(channel.Name, "-", ""), channel.Url)
 		}
 	}
 	go dao.Cache.Set(channelCache, []byte(res))

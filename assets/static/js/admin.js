@@ -713,33 +713,19 @@ function confirmAndSubmit(btn ,msg) {
 }
 
 function getCategory(btn) {
-	const params = new URLSearchParams();
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var cid = $tr.find(".c-id").data("value");
+	var cname = $tr.find(".c-name").data("value");
+	var curl = $tr.find(".c-url").data("value");
+	var ca = $tr.find(".c-a").data("value");
 
-	if (btn.name && btn.value) {
-		params.append(btn.name, btn.value);
-	}else if (btn.name) {
-		params.append(btn.name, "");
-	}else{
-		lightyear.notify("表单提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
-		return ;
-	}
-
-	if (btn.name === "editCategory") {
-		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
-		var cid = $tr.find(".c-id").data("value");
-		var cname = $tr.find(".c-name").data("value");
-		var curl = $tr.find(".c-url").data("value");
-		var ca = $tr.find(".c-a").data("value");
-
-		$("#cId").val(cid);
-		$("#listname").val(cname);
-		$("#listurl").val(curl);
-		$("#autocategory").prop("checked", ca === 1);
-	}
+	$("#cId").val(cid);
+	$("#listname").val(cname);
+	$("#listurl").val(curl);
+	$("#autocategory").prop("checked", ca === 1);
 }
+
+
 function rssPOST(btn) {
 	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
 	var mealid = $tr.find(".meal-id").data("value");
@@ -763,11 +749,11 @@ function rssPOST(btn) {
 		return JSON.parse(text); // 或 response.json()
 	})
 	.then(res => {
-		
 		if (res.type === "success") {
 			lightyear.notify(res.msg, res.type, 1000);
 			res.data.forEach(function (item, index) {
 				if (item.type === 'txt'){
+					$("#getnewkey").val(mealid);
 					$("#rsstxt").val(item.url);
 				}else if (item.type === 'm3u8'){
 					$("#rssm3u").val(item.url);
@@ -829,54 +815,6 @@ function uploadEpg(event) {
 };
 
 
-function epgImportFormPOST(btn) {
-    var form = $(btn).closest("form")[0]; // 原生 DOM
-    if (!form) {
-        lightyear.notify("表单提交失败", "danger", 3000);
-        return;
-    }
-
-    var formData = new FormData(form);
-
-    $.ajax({
-        url: "/admin/epgs/import",
-        type: "POST",
-        data: formData,
-        processData: false, // 必须
-        contentType: false, // 必须，让浏览器自动设置 multipart/form-data
-        success: function(data) {
-            // 如果返回的是文本，可以先尝试 JSON.parse
-            if (typeof data === "string") {
-                try {
-                    data = JSON.parse(data);
-                } catch (err) {
-                    console.log("解析 JSON 失败:", err);
-                    lightyear.notify("返回数据格式错误", "danger", 3000);
-                    return;
-                }
-            }
-
-            // 登录跳转
-            if (data && typeof data.msg === "string" && data.msg.includes('/admin/login')) {
-                window.location.href = "/admin/login";
-                return;
-            }
-
-            if (data && data.type === "success") {
-				lightyear.notify(data.msg, data.type, 3000);
-                loadPage(window.location.href);
-                $('.modal-backdrop').remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-            }
-        },
-        error: function(err) {
-            console.log(err);
-            lightyear.notify("提交失败", "danger", 3000);
-        }
-    });
-}
-
 function uploadLogo(input) {
     if (!input.files || input.files.length === 0) return;
 
@@ -931,3 +869,86 @@ function uploadLogo(input) {
     });
 }
 
+function getEpgList(btn) {
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var cid = $tr.find(".e-id").data("value");
+	var cname = $tr.find(".e-name").data("value");
+	var curl = $tr.find(".e-url").data("value");
+
+	$("#eid").val(cid);
+	$("#epgfromname").val(cname);
+	$("#epgfromurl").val(curl);
+}
+
+function deleteLogo(id) {
+	const params = new URLSearchParams();
+	params.append("deleteLogo", id);
+
+	$.ajax({
+		url: '/admin/epgsList',   // ✅ 删除接口
+		type: 'POST',
+		data: params.toString(),
+		contentType: 'application/x-www-form-urlencoded',
+		success: function(res) {
+			lightyear.notify(res.msg, res.type, 1000);
+			if (res.code === 1) {
+				$('#logo_'+id).remove();
+				$('#uploadlogo').val('');
+			}
+			
+		},
+		error: function(res) {
+			lightyear.notify(res.msg, res.type, 3000); // ✅ 上传失败后，显示提示信息
+			$('#uploadlogo').val(''); // ✅ 清空输入框
+		}
+	});
+}
+
+function getnewkey(btn){
+	$.confirm({
+        title: '操作确认',
+        content: "刷新KEY后之前的链接将不可用，确认刷新吗？",
+        type: 'green',
+        buttons: {
+            confirm: {
+                text: '确认',
+                btnClass: 'btn-success',
+                action: function () {
+					const params = new URLSearchParams();
+					params.append("getnewkey", btn.value);
+
+					$.ajax({
+						url: '/admin/getRssUrl',   // ✅ 删除接口
+						type: 'POST',
+						data: params.toString(),
+						contentType: 'application/x-www-form-urlencoded',
+						success: function(res) {
+							lightyear.notify(res.msg, res.type, 1000);
+							if (res.type === "success") {
+								lightyear.notify(res.msg, res.type, 1000);
+								res.data.forEach(function (item, index) {
+									if (item.type === 'txt'){
+										$("#rsstxt").val(item.url);
+									}else if (item.type === 'm3u8'){
+										$("#rssm3u").val(item.url);
+									}else if (item.type === 'epg'){
+										$("#rssepg").val(item.url);
+									}
+								});
+							}else{
+								lightyear.notify(res.msg, res.type, 3000);
+							}
+						},
+						error: function(res) {
+							lightyear.notify(res.msg, res.type, 3000); // ✅ 上传失败后，显示提示信息
+						}
+					});
+                }
+            },
+            cancel: {
+                text: '取消',
+                btnClass: 'btn-danger'
+            }
+        }
+    });
+}

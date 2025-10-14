@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
@@ -24,19 +23,19 @@ func GetWeather() map[string]interface{} {
 	return res
 }
 
-func GetEpg(id string) dto.Response {
+func GetEpg(name string) dto.Response {
 	var res dto.Response
 	res.Code = 200
 	res.Msg = "请求成功!"
 
 	var epgs []models.IptvEpg
-	id = strings.ToLower(id)
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").Find(&epgs)
+	name = strings.ToLower(name)
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+name+"%").Find(&epgs)
 
 	var epgName string
 	for _, epg := range epgs {
 		for _, v := range strings.Split(epg.Content, ",") {
-			if id == strings.ToLower(v) {
+			if strings.EqualFold(v, name) {
 				epgName = epg.Name
 				break
 			}
@@ -55,30 +54,28 @@ func GetEpg(id string) dto.Response {
 	if strings.Contains(epgFrom, "cntv") {
 		res = getEpgCntv(epgName)
 		if len(res.Data) <= 0 {
-			res = getEpg51Zmt(epgName)
+			res = getEpgXml(epgFrom, epgName)
 		}
-	} else if strings.Contains(epgFrom, "51zmt") {
-		res = getEpg51Zmt(epgName)
 	} else {
-		res = getEpg51Zmt(epgName)
+		res = getEpgXml(epgFrom, epgName)
 	}
 	return res
 }
 
-func GetSimpleEpg(id string) dto.SimpleResponse {
+func GetSimpleEpg(name string) dto.SimpleResponse {
 	var res dto.SimpleResponse
 
 	res.Code = 200
 	res.Msg = "请求成功!"
 
 	var epgs []models.IptvEpg
-	id = strings.ToLower(id)
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+id+"%").Find(&epgs)
+	name = strings.ToLower(name)
+	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+name+"%").Find(&epgs)
 	var epgName string
 	for _, epg := range epgs {
 
 		for _, v := range strings.Split(epg.Content, ",") {
-			if id == strings.ToLower(v) {
+			if strings.EqualFold(v, name) {
 				epgName = epg.Name
 				break
 			}
@@ -96,12 +93,10 @@ func GetSimpleEpg(id string) dto.SimpleResponse {
 	if strings.Contains(epgFrom, "cntv") {
 		res = getSimpleEpgCntv(epgName)
 		if res.Data == (dto.Program{}) {
-			res = getSimpleEpg51Zmt(epgName)
+			res = getSimpleEpg(epgFrom, epgName)
 		}
-	} else if strings.Contains(epgFrom, "51zmt") {
-		res = getSimpleEpg51Zmt(epgName)
 	} else {
-		res = getSimpleEpg51Zmt(epgName)
+		res = getSimpleEpg(epgFrom, epgName)
 	}
 	return res
 }
@@ -242,40 +237,18 @@ func getSimpleEpgCntv(name string) dto.SimpleResponse {
 	return simpleRes
 }
 
-func getEpg51Zmt(id string) dto.Response {
-	epgUrl := "http://epg.51zmt.top:8000/e.xml"
-	cacheKey := "epg51ZmtXml"
+func getEpgXml(epgFrom, epgName string) dto.Response {
 	res := dto.Response{}
 	res.Code = 200
 	res.Msg = "请求成功!"
-	if id == "" {
-		res.Data = []dto.Program{}
+
+	var epgsList models.IptvEpgList
+	if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", epgFrom).First(&epgsList).Error; err != nil {
 		return res
 	}
-	// zmtTV := zmtXmlToType(epgUrl)
-	var zmtTV dto.TV
-	var xmlByte []byte
-	readCacheOk := false
-	if dao.Cache.Exists(cacheKey) {
-		tmpByte, err := dao.Cache.Get(cacheKey)
-		if err == nil {
-			xmlByte = tmpByte
-			readCacheOk = true
-		}
-	}
 
-	if !readCacheOk {
-		xmlByte = []byte(until.GetUrlData(epgUrl))
-		if dao.Cache.Set(cacheKey, xmlByte) != nil {
-			dao.Cache.Delete(cacheKey)
-		}
-	}
-
-	xml.Unmarshal(xmlByte, &zmtTV)
-
-	if isZmtTVEmpty(zmtTV) {
-		res.Data = []dto.Program{}
-		dao.Cache.Delete(cacheKey)
+	xmlTV := until.GetEpgListXml(epgsList.Name, epgsList.Url)
+	if isXmlTVEmpty(xmlTV) {
 		return res
 	}
 	currentTime := time.Now()
@@ -288,9 +261,9 @@ func getEpg51Zmt(id string) dto.Response {
 	dataList := make([]dto.Program, 0)
 	pos := 0
 
-	for _, channel := range zmtTV.Channels {
-		if strings.ToLower(channel.DisplayName.Value) == id {
-			for _, programme := range zmtTV.Programmes {
+	for _, channel := range xmlTV.Channels {
+		if strings.EqualFold(channel.DisplayName.Value, epgName) {
+			for _, programme := range xmlTV.Programmes {
 				if programme.Channel == channel.ID {
 					tS, _ := time.Parse(layout, programme.Start)
 					tE, _ := time.Parse(layout, programme.Stop)
@@ -313,42 +286,23 @@ func getEpg51Zmt(id string) dto.Response {
 			break
 		}
 	}
+
 	return res
 }
 
-func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
-	epgUrl := "http://epg.51zmt.top:8000/e.xml"
-	cacheKey := "epg51ZmtXml"
+func getSimpleEpg(epgFrom, epgName string) dto.SimpleResponse {
+
 	res := dto.SimpleResponse{}
 	res.Code = 200
 	res.Msg = "请求成功!"
-	if id == "" {
-		res.Data = dto.Program{}
+
+	var epgsList models.IptvEpgList
+	if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", epgFrom).First(&epgsList).Error; err != nil {
 		return res
 	}
-	// zmtTV := zmtXmlToType(epgUrl)
-	var zmtTV dto.TV
-	var xmlByte []byte
-	readCacheOk := false
-	if dao.Cache.Exists(cacheKey) {
-		tmpByte, err := dao.Cache.Get(cacheKey)
-		if err == nil {
-			xmlByte = tmpByte
-			readCacheOk = true
-		}
-	}
 
-	if !readCacheOk {
-		xmlByte = []byte(until.GetUrlData(epgUrl))
-		if dao.Cache.Set(cacheKey, xmlByte) != nil {
-			dao.Cache.Delete(cacheKey)
-		}
-	}
-
-	xml.Unmarshal(xmlByte, &zmtTV)
-
-	if isZmtTVEmpty(zmtTV) {
-		res.Data = dto.Program{}
+	xmlTV := until.GetEpgListXml(epgsList.Name, epgsList.Url)
+	if isXmlTVEmpty(xmlTV) {
 		return res
 	}
 	currentTime := time.Now()
@@ -359,9 +313,9 @@ func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 	nowTime := currentTime.Format("15:04")
 	const layout = "20060102150405 -0700"
 
-	for _, channel := range zmtTV.Channels {
-		if strings.EqualFold(channel.DisplayName.Value, id) {
-			for _, programme := range zmtTV.Programmes {
+	for _, channel := range xmlTV.Channels {
+		if strings.EqualFold(channel.DisplayName.Value, epgName) {
+			for _, programme := range xmlTV.Programmes {
 				if programme.Channel == channel.ID {
 					tS, _ := time.Parse(layout, programme.Start)
 					tE, _ := time.Parse(layout, programme.Stop)
@@ -383,10 +337,11 @@ func getSimpleEpg51Zmt(id string) dto.SimpleResponse {
 			break
 		}
 	}
+
 	res.Data = dto.Program{}
 	return res
 }
 
-func isZmtTVEmpty(tv dto.TV) bool {
+func isXmlTVEmpty(tv dto.XmlTV) bool {
 	return len(tv.Channels) == 0 || len(tv.Programmes) == 0
 }

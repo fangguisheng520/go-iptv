@@ -40,7 +40,7 @@ func InitRouter() *gin.Engine {
 		"DfApkName": func() string { return "清和电视" },
 		"Add":       func(a, b int64) int64 { return a + b },
 		"Sub":       func(a, b int64) int64 { return a - b },
-		"EpgName":   until.EpgName,
+		"Prefix":    func(name string) string { return strings.Split(name, "-")[0] },
 	})
 
 	r.Static("/app", "./app")
@@ -158,6 +158,7 @@ func InitRouter() *gin.Engine {
 				crontab.StopChan = make(chan struct{})
 				go bootstrap.BuildAPK()
 				go crontab.Crontab()
+				go crontab.EpgCron()
 				bootstrap.Installed = true
 				c.JSON(http.StatusOK, gin.H{
 					"code": 1,
@@ -206,7 +207,7 @@ func loadTemplates(r *gin.Engine) {
 			"DfApkName": func() string { return "清和电视" },
 			"Add":       func(a, b int64) int64 { return a + b },
 			"Sub":       func(a, b int64) int64 { return a - b },
-			"EpgName":   until.EpgName,
+			"Prefix":    func(name string) string { return strings.Split(name, "-")[0] },
 		})
 		tmpl = template.Must(tmpl.ParseFS(assets.EmbeddedFS, "templates/*"))
 		staticFiles, _ := fs.Sub(assets.StaticFS, "static")

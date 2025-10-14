@@ -56,8 +56,6 @@ func Install() (bool, string) {
 		return false, "初始化Logo失败"
 	}
 
-	InitJwtKey()
-
 	dao.CONFIG_PATH = "/config/config.yml"
 	dao.LoadConfigFile()
 
@@ -71,5 +69,6 @@ func Install() (bool, string) {
 		return false, "创建install.lock失败:" + err.Error()
 	}
 	defer file.Close()
+	InitJwtKey()
 	return true, "success"
 }

@@ -10,6 +10,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type RssUrl struct {
@@ -40,7 +41,7 @@ func getAesType(jsonStr string) (AesData, error) {
 	return data, nil
 }
 
-func GetRssUrl(id, host string) dto.ReturnJsonDto {
+func GetRssUrl(id, host string, getnewkey bool) dto.ReturnJsonDto {
 	var res []RssUrl
 
 	var meal models.IptvMeals
@@ -54,6 +55,13 @@ func GetRssUrl(id, host string) dto.ReturnJsonDto {
 	aesDataStr, err := getAesdata(aesData)
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "生成key失败", Type: "danger"}
+	}
+
+	if getnewkey {
+		cfg := dao.GetConfig()
+		cfg.Rss.Key = until.Md5(time.Now().Format("2006-01-02 15:04:05"))
+		until.RssKey = []byte(cfg.Rss.Key)
+		dao.SetConfig(cfg)
 	}
 
 	aes := until.NewChaCha20(string(until.RssKey))
@@ -128,16 +136,16 @@ func getTxt(id int64) string {
 			}
 			res += category.Name + ",#genre#\n"
 			for _, channel := range channels {
-				res += channel.Name + "," + channel.Url + "\n"
+				res += strings.ReplaceAll(channel.Name, "-", "") + "," + channel.Url + "\n"
 			}
 		}
 	}
 	return res
 }
 
-func GetRssEpg(token, host string) dto.TV {
+func GetRssEpg(token, host string) dto.XmlTV {
 
-	res := dto.TV{
+	res := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
@@ -153,9 +161,9 @@ func GetRssEpg(token, host string) dto.TV {
 	return getEpg(aesData.I)
 }
 
-func getEpg(id int64) dto.TV {
+func getEpg(id int64) dto.XmlTV {
 
-	res := dto.TV{
+	res := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
@@ -212,7 +220,7 @@ func getEpg(id int64) dto.TV {
 	return res
 }
 
-func CleanTV(tv dto.TV) dto.TV {
+func CleanTV(tv dto.XmlTV) dto.XmlTV {
 	// 1️⃣ 去重 Channel（按 ID 保留第一个）
 	uniqueChannels := make([]dto.XmlChannel, 0, len(tv.Channels))
 	seen := make(map[string]bool)
@@ -242,8 +250,8 @@ func CleanTV(tv dto.TV) dto.TV {
 	return tv
 }
 
-func GetCntvEpgXml() dto.TV {
-	cntvXml := dto.TV{
+func GetCntvEpgXml() dto.XmlTV {
+	cntvXml := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
@@ -285,14 +293,14 @@ func GetCntvEpgXml() dto.TV {
 	return cntvXml
 }
 
-func GetProvinceEpgXml() dto.TV {
-	epgXml := dto.TV{
+func GetProvinceEpgXml() dto.XmlTV {
+	epgXml := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
 
 	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "51zmt-%卫视").Find(&epgs).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "%"+"-%卫视").Find(&epgs).Error; err != nil {
 		return epgXml
 	}
 
@@ -308,8 +316,14 @@ func GetProvinceEpgXml() dto.TV {
 		if len(channelList) == 0 {
 			continue
 		}
+		eFrom := strings.Split(epg.Name, "-")[0]
 		eName := strings.Split(epg.Name, "-")[1]
-		tmpXml := until.Get51zmtXml()
+
+		var epgList models.IptvEpgList
+		if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", eFrom).First(&epgList).Error; err != nil {
+			continue
+		}
+		tmpXml := until.GetEpgListXml(epgList.Name, epgList.Url)
 		epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
 			ID: eName,
 			DisplayName: dto.DisplayName{
@@ -335,8 +349,8 @@ func GetProvinceEpgXml() dto.TV {
 	return epgXml
 }
 
-func GetEpgXml(cname string) dto.TV {
-	epgXml := dto.TV{
+func GetEpgXml(cname string) dto.XmlTV {
+	epgXml := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
@@ -379,7 +393,11 @@ func GetEpgXml(cname string) dto.TV {
 				continue
 			}
 
-			tmpXml := until.Get51zmtXml()
+			var epgList models.IptvEpgList
+			if err := dao.DB.Model(&models.IptvEpgList{}).Where("name = ? and status = 1", eType).First(&epgList).Error; err != nil {
+				continue
+			}
+			tmpXml := until.GetEpgListXml(epgList.Name, epgList.Url)
 			epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
 				ID: epg.Name,
 				DisplayName: dto.DisplayName{

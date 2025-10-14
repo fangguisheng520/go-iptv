@@ -2,7 +2,7 @@ package dto
 
 import "encoding/xml"
 
-type TV struct {
+type XmlTV struct {
 	XMLName       xml.Name     `xml:"tv"`
 	GeneratorName string       `xml:"generator_info_name,attr"`
 	GeneratorURL  string       `xml:"generator_info_url,attr"`

@@ -9,6 +9,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -97,10 +98,41 @@ func Epgs(c *gin.Context) {
 		}
 	}
 
+	var epgList []models.IptvEpgList
+	dao.DB.Model(&models.IptvEpgList{}).Find(&epgList)
+	pageData.EpgFromDb = epgList
+	pageData.EpgFromList = make(map[string]string)
+	for _, v := range epgList {
+		pageData.EpgFromList[v.Name] = v.Remarks
+	}
+
 	// cfg := dao.GetConfig()
 
 	// pageData.EpgErr = cfg.EPGErrors
 	// pageData.EPGApiChk = cfg.App.EPGApiChk
 
 	c.HTML(200, "admin_epgs.html", pageData)
+}
+
+func EpgsFrom(c *gin.Context) {
+	username, ok := until.GetAuthName(c)
+	if !ok {
+		c.JSON(200, dto.NewAdminRedirectDto())
+		return
+	}
+	var pageData = dto.AdminEpgsDto{
+		LoginUser: username,
+		Title:     "EPG源管理",
+	}
+
+	var epgList []models.IptvEpgList
+	dao.DB.Model(&models.IptvEpgList{}).Find(&epgList)
+	pageData.EpgFromDb = epgList
+	pageData.EpgFromList = make(map[string]string)
+	for k, v := range epgList {
+		epgList[k].LastTimeStr = time.Unix(v.LastTime, 0).Format("2006-01-02 15:04:05")
+		pageData.EpgFromList[v.Name] = v.Remarks
+	}
+
+	c.HTML(200, "admin_epgs_list.html", pageData)
 }

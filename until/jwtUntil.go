@@ -9,7 +9,7 @@ import (
 )
 
 var JwtKey = []byte("test")
-var RssKey = []byte("rss")
+var RssKey = []byte("e10adc3949ba59abbe56e057f20f883e")
 
 // ----------------------
 // 验证 JWT

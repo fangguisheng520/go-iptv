@@ -35,8 +35,6 @@ func main() {
 	}
 	dao.Cache = cache
 
-	bootstrap.InitJwtKey() // 初始化JWTkey
-
 	if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
 		bootstrap.Installed = false
 		log.Println("检测到未安装，开始安装...")
@@ -62,12 +60,15 @@ func main() {
 		return
 	}
 
+	bootstrap.InitJwtKey() // 初始化JWTkey
+
 	if !bootstrap.InitLogo() {
 		log.Println("logo目录初始化错误")
 		return
 	}
 
 	go crontab.Crontab()
+	go crontab.EpgCron()
 
 	if bootstrap.Installed {
 		if !bootstrap.BuildAPK() {

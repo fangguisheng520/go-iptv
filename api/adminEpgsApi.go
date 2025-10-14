@@ -36,19 +36,39 @@ func Epgs(c *gin.Context) {
 			res = service.ClearBind()
 		case "clearcache":
 			res = service.ClearCache()
+		case "deleteLogo":
+			res = service.DeleteLogo(params)
 		}
 
 	}
 	c.JSON(200, res)
 }
 
-func EpgsImport(c *gin.Context) {
+func EpgsFrom(c *gin.Context) {
 	_, ok := until.GetAuthName(c)
 	if !ok {
 		c.JSON(200, dto.NewAdminRedirectDto())
 		return
 	}
-	c.JSON(200, service.EpgImportFile(c))
+	c.Request.ParseForm()
+	params := c.Request.PostForm
+	var res dto.ReturnJsonDto
+
+	for k := range params {
+		switch k {
+		case "change_status":
+			res = service.ChangeListStatus(params)
+		case "updatelist":
+			res = service.UpdateEpgList(params)
+		case "dellist":
+			res = service.DelEpgList(params)
+		case "epgImport":
+			res = service.EpgImport(params)
+		case "updatelistall":
+			res = service.UpdateEpgListAll()
+		}
+	}
+	c.JSON(200, res)
 }
 
 func UploadLogo(c *gin.Context) {

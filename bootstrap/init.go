@@ -36,6 +36,24 @@ func InitDB() bool {
 	}
 	dao.DB.AutoMigrate(&models.IptvCategory{})
 	dao.DB.AutoMigrate(&models.IptvEpg{})
+	dao.DB.AutoMigrate(&models.IptvEpgList{})
+	var epgList []models.IptvEpgList
+	if err := dao.DB.Model(&models.IptvEpgList{}).Find(&epgList).Error; err != nil {
+		return false
+	}
+	if len(epgList) == 0 {
+		dao.DB.Where("name like ?", "51zmt-%").Delete(&models.IptvEpg{})
+		var update = models.IptvEpgList{
+			Name:    "51zmt",
+			Remarks: "51zmt",
+			Url:     "http://epg.51zmt.top:8000/e.xml",
+			Status:  1,
+		}
+		dao.DB.Model(&models.IptvEpgList{}).Save(&update)
+		if !until.UpdataEpgListOne(update.ID) {
+			log.Println("初始化51zmt失败")
+		}
+	}
 	dao.DB.AutoMigrate(&models.IptvMeals{})
 	dao.DB.AutoMigrate(&models.IptvMovie{})
 	return true

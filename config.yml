@@ -23,3 +23,5 @@ ad:
 channel:
     interval: 10
     auto: 1
+rss:
+    key: ''
