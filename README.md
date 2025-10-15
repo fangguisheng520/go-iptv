@@ -2,11 +2,28 @@
 >提取自矿神群晖IPTV并大改，由原来的PHP+MySql改为Go+Sqlite     
 >添加缺失功能，精简删除非必要功能，修改系统存在的安全漏洞   
 
-
 # 注意
 当前版本与之前PHP版本并不兼容，若要使用PHP版本，请使用`docker pull v1st233/iptv:20250905`
 
+# 反馈bug
+- Github: [Github issues](https://github.com/wz1st/go-iptv/issues)
+
+- 邮箱： v1st233@gmail.com
+
+- 博客： [清和's blog](https://www.qingh.xyz/go-iptv-docker/)
+
+- QQ群：952354546     
+<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pMPxYtnMvSlAL1irmcOzdSZSKhETKebC&jump_from=webapi&authKey=JluAYPajYgxbyuz+T0caZmrtfJbPQUxoZ6tORWtu1teN3PP/rEtu5lFZu+AUG1Bi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="清和iptv" title="清和iptv"></a>
+
 ## Change log
+#### 2025-10-15
+- 修复EPG订阅cctv-1格式无logo问题
+- 修复EPG订阅cctv-1格式无节目单问题
+- 修复epg编辑无法保存bug
+- 修复订阅token无法固定问题
+- 修复频道显示无cctv-1格式问题
+- 修复节目单重复问题
+
 #### 2025-10-14
 - 删除epg文件导入功能，改为url导入
 - 整合菜单选项

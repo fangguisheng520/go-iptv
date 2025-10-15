@@ -54,7 +54,7 @@ func GetEpgData(params url.Values) dto.ReturnJsonDto {
 
 func SaveEpg(params url.Values, editType int) dto.ReturnJsonDto {
 	if editType == 1 {
-		id := params.Get("id")
+		id := params.Get("epgId")
 		if id == "" {
 			return dto.ReturnJsonDto{Code: 0, Msg: "EPG id不能为空", Type: "danger"}
 		}

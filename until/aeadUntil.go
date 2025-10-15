@@ -1,10 +1,8 @@
 package until
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"io"
 
 	"golang.org/x/crypto/chacha20poly1305"
 )
@@ -27,14 +25,10 @@ func (c *ChaCha20) Encrypt(plainText string) (string, error) {
 		return "", err
 	}
 
-	nonce := make([]byte, chacha20poly1305.NonceSize)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", err
-	}
+	// 固定 nonce（不安全，但输出可重复）
+	nonce := c.Key[:chacha20poly1305.NonceSize] // 取 key 前 12 字节当作 nonce
 
 	cipherText := aead.Seal(nil, nonce, []byte(plainText), nil)
-
-	// 将 nonce + cipherText 一起编码为 Base64
 	full := append(nonce, cipherText...)
 	return base64.URLEncoding.EncodeToString(full), nil
 }

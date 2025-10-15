@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func ConvertCntvToXml(cntv dto.CntvJsonChannel, cName string) dto.XmlTV {
+func ConvertCntvToXml(cntv dto.CntvJsonChannel, eName string) dto.XmlTV {
 	tv := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
@@ -22,10 +22,10 @@ func ConvertCntvToXml(cntv dto.CntvJsonChannel, cName string) dto.XmlTV {
 
 	// 添加频道
 	tv.Channels = append(tv.Channels, dto.XmlChannel{
-		ID: cName,
+		ID: eName,
 		DisplayName: dto.DisplayName{
 			Lang:  "zh",
-			Value: cName,
+			Value: eName,
 		},
 	})
 
@@ -37,7 +37,7 @@ func ConvertCntvToXml(cntv dto.CntvJsonChannel, cName string) dto.XmlTV {
 		tv.Programmes = append(tv.Programmes, dto.Programme{
 			Start:   start,
 			Stop:    stop,
-			Channel: cName,
+			Channel: eName,
 			Title: dto.Title{
 				Lang:  "zh",
 				Value: p.Title,

@@ -106,7 +106,7 @@ func GetCCTVChannelList(rebuild bool) string {
 			continue
 		}
 		for _, channel := range channelList {
-			res += fmt.Sprintf("%s,%s\n", strings.ReplaceAll(channel.Name, "-", ""), channel.Url)
+			res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
 		}
 	}
 	go dao.Cache.Set(channelCache, []byte(res))
@@ -124,7 +124,7 @@ func GetProvinceChannelList(rebuild bool) string {
 	}
 
 	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "51zmt-%卫视").Find(&epgs).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "51zmt-%卫视%").Find(&epgs).Error; err != nil {
 		return res
 	}
 	var channelList []models.IptvChannel
