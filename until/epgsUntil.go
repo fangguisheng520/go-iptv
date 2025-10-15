@@ -237,7 +237,7 @@ func UpdataEpgListOne(id int64) bool {
 }
 
 func BindChannel() bool {
-	ClearBind() // 清空绑定
+	// ClearBind() // 清空绑定
 	var channelList []models.IptvChannel
 	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
 		return false
@@ -265,7 +265,7 @@ func BindChannel() bool {
 				}
 			}
 		}
-		epgData.Content = strings.Join(tmpList, ",")
+		epgData.Content = strings.Join(MergeAndUnique(strings.Split(epgData.Content, ","), tmpList), ",")
 		if epgData.Content != "" {
 			dao.DB.Save(&epgData)
 		}
@@ -274,8 +274,4 @@ func BindChannel() bool {
 	go GetProvinceChannelList(true)
 	go CleanMealsXmlCacheAll()
 	return true
-}
-
-func ClearBind() {
-	dao.DB.Model(&models.IptvEpg{}).Where("content != ''").Update("content", "")
 }

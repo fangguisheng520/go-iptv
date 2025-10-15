@@ -484,3 +484,25 @@ func GetMainDomain(input string) string {
 	mainDomain := strings.TrimSuffix(eTLDPlusOne, "."+suffix)
 	return mainDomain
 }
+
+func MergeAndUnique(a, b []string) []string {
+	m := make(map[string]struct{})
+
+	for _, v := range append(a, b...) {
+		// 去掉空字符串
+		if v == "" {
+			continue
+		}
+		// 去重
+		if _, exists := m[v]; !exists {
+			m[v] = struct{}{}
+		}
+	}
+
+	// 转回切片
+	result := make([]string, 0, len(m))
+	for k := range m {
+		result = append(result, k)
+	}
+	return result
+}

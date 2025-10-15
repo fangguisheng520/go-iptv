@@ -293,7 +293,6 @@ func AddChannelList(cname, srclist string) {
 }
 
 func BindChannel() {
-	dao.DB.Model(&models.IptvEpg{}).Where("content != ''").Update("content", "")
 	var channeList []models.IptvChannel
 	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channeList).Error; err != nil {
 		return
@@ -321,7 +320,7 @@ func BindChannel() {
 				}
 			}
 		}
-		epgData.Content = strings.Join(tmpList, ",")
+		epgData.Content = strings.Join(until.MergeAndUnique(strings.Split(epgData.Content, ","), tmpList), ",")
 		if epgData.Content != "" {
 			dao.DB.Save(&epgData)
 		}

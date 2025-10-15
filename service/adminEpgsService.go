@@ -159,7 +159,7 @@ func DeleteEpg(params url.Values) dto.ReturnJsonDto {
 }
 
 func BindChannel() dto.ReturnJsonDto {
-	ClearBind() // 清空绑定
+	// ClearBind() // 清空绑定
 	var channelList []models.IptvChannel
 	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败", Type: "danger"}
@@ -187,7 +187,7 @@ func BindChannel() dto.ReturnJsonDto {
 				}
 			}
 		}
-		epgData.Content = strings.Join(tmpList, ",")
+		epgData.Content = strings.Join(until.MergeAndUnique(strings.Split(epgData.Content, ","), tmpList), ",")
 		if epgData.Content != "" {
 			dao.DB.Save(&epgData)
 		}

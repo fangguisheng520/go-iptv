@@ -199,6 +199,9 @@ func getEpg(id int64) dto.XmlTV {
 			res.Programmes = append(res.Programmes, tvData.Programmes...)
 		default:
 			tvData := GetEpgXml(category.Name)
+			// output, _ := xml.MarshalIndent(tvData, "", "  ")
+			// log.Println(string(output))
+
 			res.Channels = append(res.Channels, tvData.Channels...)
 			res.Programmes = append(res.Programmes, tvData.Programmes...)
 		}
@@ -428,7 +431,7 @@ func GetEpgXml(cname string) dto.XmlTV {
 
 			for _, p := range tmpXml.Programmes {
 				if p.Channel == cId {
-					p.Channel = epg.Name
+					p.Channel = channel.Name
 					epgXml.Programmes = append(epgXml.Programmes, p)
 				}
 			}
