@@ -12,97 +12,11 @@
 
 - 博客： [清和's blog](https://www.qingh.xyz/go-iptv-docker/)
 
-- QQ群：952354546     
-<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pMPxYtnMvSlAL1irmcOzdSZSKhETKebC&jump_from=webapi&authKey=JluAYPajYgxbyuz+T0caZmrtfJbPQUxoZ6tORWtu1teN3PP/rEtu5lFZu+AUG1Bi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="清和iptv" title="清和iptv"></a>
+- QQ群：952354546     &nbsp;&nbsp;&nbsp;&nbsp;<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pMPxYtnMvSlAL1irmcOzdSZSKhETKebC&jump_from=webapi&authKey=JluAYPajYgxbyuz+T0caZmrtfJbPQUxoZ6tORWtu1teN3PP/rEtu5lFZu+AUG1Bi"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="清和iptv" title="清和iptv"></a>
 
 
-### Change log
-#### 2025-10-15
-- 统一安装界面风格
-- 添加快速跳转到安装页面按钮
-- 修复EPG订阅cctv-1格式无logo问题
-- 修复EPG订阅cctv-1格式无节目单问题
-- 修复epg编辑无法保存bug
-- 修复订阅token无法固定问题
-- 修复频道显示无cctv-1格式问题
-- 修复节目单重复问题
 
-#### 2025-10-14
-- 删除epg文件导入功能，改为url导入
-- 整合菜单选项
-- 添加epg logo上传、删除
-- 添加订阅加密key持久化和手动更新
-- epg订阅缺失bug
-- 客户端显示缺失bug
-
-#### 2025-10-13
-- 修改epg订阅链接格式
-- 添加频道文件导入，支持txt和m3u格式
-- 添加epg xml格式epg导入  暂无对应的epg订阅输出
-
-#### 2025-10-12
-- 修复epg订阅token错误
-- 修复epg Channel错误
-
-#### 2025-10-11
-- 添加m3u订阅epg支持
-- 修改内网穿透模式无法访问logo (感谢KIKI协助)
-- 修复apk epg为空bug
-- 改用aes替代jwt，解决订阅链接过长问题
-- 修复频道保存bug，默认频道添加修改错误提示
-- 更新依赖
-
-#### 2025-10-10
-- 修改客户端修改授权显示未授权bug
-- 套餐添加txt、m3u格式订阅，用以支持酷9、tvbox等客户端 (暂时只有51zmt的epg，后续会添加更多； 台标暂时只能手动添加到`/config/logo`，后续会添加页面上传功能)
-
-#### 2025-10-9
-- 修复点播保存不合法问题
-- 精简菜单，精简配置项
-- 修复背景图片显示逻辑
-
-#### 2025-9-29
-- 修复弹窗提交内容时滚动条失效bug
-- 修复时区问题
-- 添加客户端是否需要授权开关(默认需要)
-- 清理日志，添加登录提示
-
-#### 2025-9-28
-- 修复EXTM3U直播源无法保存bug
-- 修复登录超时的跳转体验
-- 修复定时更新外部链接功能的定时任务重复执行
-- 添加epg缓存
-- epg暂时只有cntv和51zmt 够我用2333，求打赏给动力      
-
-#### 2025-9-26
-- 未安装时全局跳转到安装页面
-- 添加编译时无法下载
-
-#### 2025-9-25
-- go重构管理页面
-- 改为sqlite，更清晰明了的文件映射
-- 添加了自动安装及友好的安装提示
-- 更友好的页面加载体验，专注家庭使用，删除了订单相关功能
-- 更简洁的操作体验
-
-#### 2025-9-18
-- 改不动这个史了，归档，go重构了下，看这个吧 [go-iptv](https://github.com/wz1st/go-iptv)
-
-#### 2025-9-5
-- 修复了文件上传漏洞
-- 修复了任意文件删除漏洞
-- 添加定时更新外部列表
-- 添加更改应用图标功能
-- 添加自动重新编译功能
-- 添加修改应用名称、包名、签名key功能
-- 修改了系统图标、系统名称、系统版本
-
-#### 2025-8-25
-- 添加docker自动构建，添加armv7、arm64、386、amd64版本
-
-#### 2025-8-22
-- 修复了SQL注入漏洞
-- 改为alpine+nginx+php-fpm+mariadb 精简镜像大小
+## [更新记录](./changelog)
 
 ## 安装
 ```
