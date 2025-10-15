@@ -25,8 +25,8 @@ func About(c *gin.Context) {
 	pageData.Content = string(data)
 	re := regexp.MustCompile(`\./static`)
 	pageData.Content = re.ReplaceAllString(pageData.Content, "/static")
-	re = regexp.MustCompile(`\./changelog`)
-	pageData.Content = re.ReplaceAllString(pageData.Content, "/changelog")
+	re = regexp.MustCompile(`\./ChangeLog.md`)
+	pageData.Content = re.ReplaceAllString(pageData.Content, "/ChangeLog.md")
 
 	c.HTML(http.StatusOK, "admin_about.html", pageData)
 }

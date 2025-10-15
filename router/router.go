@@ -51,7 +51,7 @@ func InitRouter() *gin.Engine {
 	r.Use(func(c *gin.Context) {
 		if !bootstrap.Installed {
 			path := c.Request.URL.Path
-			if path != "/" && path != "/install" && path != "/changelog" &&
+			if path != "/" && path != "/install" && path != "/ChangeLog.md" &&
 				!strings.HasPrefix(path, "/images/") &&
 				!strings.HasPrefix(path, "/favicon.ico") &&
 				!strings.HasPrefix(path, "/static/") {
@@ -101,9 +101,9 @@ func InitRouter() *gin.Engine {
 		c.HTML(http.StatusOK, templateName, pageData)
 	})
 
-	r.GET("/changelog", func(c *gin.Context) {
+	r.GET("/ChangeLog.md", func(c *gin.Context) {
 		var pageData dto.IndexDto
-		data, _ := os.ReadFile("/app/changelog.md")
+		data, _ := os.ReadFile("/app/ChangeLog.md")
 		pageData.Content = string(data)
 		c.HTML(http.StatusOK, "install_log.html", pageData)
 	})
