@@ -30,7 +30,7 @@ func GetEpgData(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败", Type: "danger"}
 	}
 
-	epgList := strings.Split(epg.Remarks, "|")
+	CheckList := until.MergeAndUnique(strings.Split(epg.Content, ","), strings.Split(epg.Remarks, "|"))
 
 	var dataList []dto.EpgsReturnDto
 
@@ -38,7 +38,7 @@ func GetEpgData(params url.Values) dto.ReturnJsonDto {
 		var data dto.EpgsReturnDto
 		data.Name = v.Name
 		data.Checked = false
-		for _, v1 := range epgList {
+		for _, v1 := range CheckList {
 			if strings.EqualFold(v1, v.Name) {
 				data.Checked = true
 			}
