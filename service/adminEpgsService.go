@@ -67,7 +67,7 @@ func SaveEpg(params url.Values, editType int) dto.ReturnJsonDto {
 			return dto.ReturnJsonDto{Code: 0, Msg: "EPG 来源不能为空", Type: "danger"}
 		}
 
-		remarks := params.Get("remarks")
+		remarks := params.Get("epgRemarks")
 		namesList := params["names[]"]
 
 		var epgData models.IptvEpg
