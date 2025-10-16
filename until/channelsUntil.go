@@ -25,9 +25,9 @@ func ConvertListFormat(srclist string) string {
 	if len(matches) > 0 {
 		for _, match := range matches {
 			channelName := strings.TrimSpace(match[1])
-			if idx := strings.Index(channelName, " "); idx != -1 {
-				channelName = channelName[:idx]
-			}
+			// if idx := strings.Index(channelName, " "); idx != -1 {
+			// 	channelName = channelName[:idx]
+			// }
 			channelURL := match[2]
 			convertedList.WriteString(fmt.Sprintf("%s,%s\n", channelName, channelURL))
 		}
@@ -41,9 +41,9 @@ func ConvertListFormat(srclist string) string {
 	if len(matches) > 0 {
 		for _, match := range matches {
 			channelName := strings.TrimSpace(match[1])
-			if idx := strings.Index(channelName, " "); idx != -1 {
-				channelName = channelName[:idx]
-			}
+			// if idx := strings.Index(channelName, " "); idx != -1 {
+			// 	channelName = channelName[:idx]
+			// }
 			channelURL := match[2]
 			convertedList.WriteString(fmt.Sprintf("%s,%s\n", channelName, channelURL))
 		}
