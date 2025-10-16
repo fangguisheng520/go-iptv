@@ -12,12 +12,13 @@ CREATE TABLE iptv_category (
     enable INTEGER NOT NULL DEFAULT 1,
     type TEXT NOT NULL DEFAULT 'add',
     url TEXT DEFAULT NULL,
+    ua TEXT,
     autocategory TEXT DEFAULT NULL,
     latesttime TEXT DEFAULT NULL,
     sort INTEGER
 );
-INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'add','',0,'',-2);
-INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'add','',0,'',-1);
+INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'add','','',0,'',-2);
+INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'add','','',0,'',-1);
 CREATE TABLE iptv_channels (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
@@ -31,10 +32,11 @@ CREATE TABLE iptv_epg_list (
     name TEXT NOT NULL,
     url TEXT DEFAULT NULL,
     status INTEGER NOT NULL DEFAULT 1,
+    ua TEXT,
     lasttime BIGINT NOT NULL,
     remarks TEXT DEFAULT NULL
 );
-INSERT INTO iptv_epg_list VALUES(1,'51zmt','http://epg.51zmt.top:8000/e.xml',1,0,'51zmt');
+INSERT INTO iptv_epg_list VALUES(1,'51zmt','http://epg.51zmt.top:8000/e.xml',1,'',0,'51zmt');
 
 CREATE TABLE iptv_epg (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

@@ -3,7 +3,6 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ "main" ]       # push 到 main 分支触发 latest 镜像
-    tags: [ "v*" ]             # push Git tag（如 v1.0.0）时触发版本镜像
   workflow_dispatch:           # 允许手动触发
 
 jobs:

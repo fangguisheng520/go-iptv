@@ -33,6 +33,7 @@ func AdminGetChannels(params url.Values) string {
 	var categoryDb models.IptvCategory
 
 	if err := dao.DB.Where("name = ?", category).First(&categoryDb).Error; err != nil {
+		log.Println(err)
 		return res
 	}
 
@@ -103,6 +104,7 @@ func UpdateInterval(params url.Values) dto.ReturnJsonDto {
 func AddList(params url.Values) dto.ReturnJsonDto {
 	listName := params.Get("listname")
 	url := params.Get("listurl")
+	ua := params.Get("listua")
 	cId := params.Get("cId")
 	autocategory := params.Get("autocategory")
 
@@ -114,7 +116,7 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "输入不合法", Type: "danger"}
 	}
 
-	iptvCategory := models.IptvCategory{Name: listName, Url: url}
+	iptvCategory := models.IptvCategory{Name: listName, Url: url, UA: ua}
 
 	if cId == "" {
 		var category models.IptvCategory
@@ -134,7 +136,16 @@ func AddList(params url.Values) dto.ReturnJsonDto {
 		iptvCategory.AutoCategory = 1
 	}
 
-	resp, err := http.Get(url)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-创建请求错误:" + err.Error(), Type: "danger"}
+	}
+
+	// 添加自定义 User-Agent
+	req.Header.Set("User-Agent", ua)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-无法访问url:" + err.Error(), Type: "danger"}
 	}
@@ -219,20 +230,29 @@ func UpdateList(params url.Values) dto.ReturnJsonDto {
 	defer func() { crontab.UpdateStatus = false }()
 
 	var iptvCategory models.IptvCategory
-	res := dao.DB.Model(&models.IptvCategory{}).Select("url, autocategory").Where("name = ?", listName).First(&iptvCategory)
+	res := dao.DB.Model(&models.IptvCategory{}).Where("name = ?", listName).First(&iptvCategory)
 
 	if res.RowsAffected == 0 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "频道列表不存在", Type: "danger"}
 	}
 
-	resp, err := http.Get(iptvCategory.Url)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", iptvCategory.Url, nil)
 	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-创建请求错误:" + err.Error(), Type: "danger"}
+	}
+
+	// 添加自定义 User-Agent
+	req.Header.Set("User-Agent", iptvCategory.UA)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-无法访问url:" + err.Error(), Type: "danger"}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "获取频道列表失败-状态码:" + strconv.Itoa(resp.StatusCode), Type: "danger"}
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -511,7 +531,7 @@ func SubmitSave(params url.Values) dto.ReturnJsonDto {
 		"latesttime": time.Now().Format("2006-01-02 15:04:05"),
 	})
 	AddChannelList(categoryName, srclistStr)
-	go BindChannel()
+	// go BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "保存成功", Type: "success"}
 }
 
@@ -577,6 +597,7 @@ func AddChannelList(cname, srclist string) (int, error) {
 
 	// 转换为 "频道,URL" 格式
 	srclist = until.ConvertListFormat(srclist)
+	log.Println("srclist:", srclist)
 
 	// 获取 cname 分类下已有的频道
 	var oldChannels []models.IptvChannel
@@ -696,7 +717,7 @@ func AddChannelList(cname, srclist string) (int, error) {
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
 		go BindChannel()
-		// go until.UpdateChannelsId()
+		go until.CleanMealsXmlCacheAll()
 	}
 	return repetNum, nil
 }

@@ -30,6 +30,7 @@
 								{{if .Url }}
 								<tr data-id="{{ .ID }}">
 									<td style="display:none;" class="e-id" data-value="{{ .ID }}">{{ .ID }}</td>
+									<td style="display:none;" class="e-ua" data-value="{{ .UA }}">{{ .UA }}</td>
 									<td align="center" class="e-name" data-value="{{ .Name }}">{{ .Name }}</td>
 									<td align="center">{{ .Remarks }}</td>
 									<td align="center" class="e-url" data-value="{{ .Url }}">{{ .Url }}</td>
@@ -62,6 +63,10 @@
 											<div class="form-group">
 												<label class="control-label">epg源url地址:</label>
 												<input type="text" class="form-control" name="epgfromurl" id="epgfromurl" value="" placeholder="请输入epg源地址">
+											</div>
+											<div class="form-group">
+												<label class="control-label">User-Agent:</label>
+												<input type="text" class="form-control" name="epgfromua" id="epgfromua" value="" placeholder="Go-http-client/1.1">
 											</div>
 										</div>
 										<div class="modal-footer">

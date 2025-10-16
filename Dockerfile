@@ -1,5 +1,6 @@
 FROM golang:1.24-alpine AS builder
 
+VOLUME /config
 WORKDIR /app
 
 COPY go.mod go.sum ./
@@ -22,12 +23,13 @@ COPY ./config.yml /app/config.yml
 COPY ./README.md  /app/README.md
 COPY ./ChangeLog.md /app/ChangeLog.md
 COPY ./logo /app/logo
+COPY ./Version /app/Version
 
 ENV TZ=Asia/Shanghai
 RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
-    mkdir -p /config/images/icon ; \
-    mkdir -p /config/images/bj ; \
+    # mkdir -p /config/images/icon ; \
+    # mkdir -p /config/images/bj ; \
     chmod 777 -R /app/iptv /usr/bin/apktool* 
 
 CMD ["./iptv"]

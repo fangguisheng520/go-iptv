@@ -47,6 +47,7 @@ func AdminRouter(r *gin.Engine, path string) {
 
 			router.GET("/client", html.Client)
 			router.POST("/client", api.Client)
+			router.GET("/client/buildStatus", api.BuildStatus)
 			router.POST("/client/uploadIcon", api.ClientUploadIcon)
 			router.POST("/client/uploadBj", api.ClientUploadBj)
 

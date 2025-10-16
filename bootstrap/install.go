@@ -28,12 +28,19 @@ func Install() (bool, string) {
 		return false, err.Error()
 	}
 
+	cmd := exec.Command("bash", "-c", "mkdir -p /config/images/icon && mkdir -p /config/images/bj && mkdir -p /config/cache")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println("创建/config子文件夹失败", err, string(output))
+		return false, err.Error()
+	}
+
 	if err := until.CopyFile("/app/config.yml", "/config/config.yml"); err != nil {
 		log.Println("复制配置文件失败:", err)
 		return false, "复制配置文件失败:" + err.Error()
 	}
 
-	cmd := exec.Command("sqlite3", "/config/iptv.db")
+	cmd = exec.Command("sqlite3", "/config/iptv.db")
 	cmd.Stdin, _ = os.Open("/app/database/sqlite.sql") // 把 SQL 文件内容传给标准输入
 
 	if err := cmd.Run(); err != nil {

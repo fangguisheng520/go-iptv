@@ -72,6 +72,7 @@ func BuildAPK() bool {
 	}
 
 	if until.Exists(iconFile) {
+		log.Println("更换图标")
 		// err := until.CopyFile(iconFile, buildSourceDir+"/res/drawable-hdpi/ezpay.png")
 		err1 := until.CopyFile(iconFile, buildSourceDir+"/res/drawable-hdpi/icon.png")
 		err2 := until.CopyFile(iconFile, buildSourceDir+"/res/drawable-hdpi/logo.png")
@@ -82,6 +83,7 @@ func BuildAPK() bool {
 	}
 
 	if until.GetBg() != "" {
+		log.Println("更换背景")
 		err := until.CopyFile("/config/images/bj/"+until.GetBg(), buildSourceDir+"/res/drawable-hdpi/ez_bg.png")
 		if err != nil {
 			log.Println("复制背景文件失败:", err)

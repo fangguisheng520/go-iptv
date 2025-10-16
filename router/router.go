@@ -36,11 +36,11 @@ func InitRouter() *gin.Engine {
 	r.RemoteIPHeaders = []string{"X-Original-Forwarded-For", "X-Real-IP", "X-Forwarded-For"}
 
 	r.SetFuncMap(template.FuncMap{
-		"SiteName":  func() string { return "清和IPTV管理系统" },
-		"DfApkName": func() string { return "清和电视" },
-		"Add":       func(a, b int64) int64 { return a + b },
-		"Sub":       func(a, b int64) int64 { return a - b },
-		"Prefix":    func(name string) string { return strings.Split(name, "-")[0] },
+		"SiteName": func() string { return "清和IPTV管理系统" },
+		"Version":  func() string { return "清和IPTV v" + until.GetVersion() },
+		"Add":      func(a, b int64) int64 { return a + b },
+		"Sub":      func(a, b int64) int64 { return a - b },
+		"Prefix":   func(name string) string { return strings.Split(name, "-")[0] },
 	})
 
 	r.Static("/app", "./app")
@@ -85,12 +85,14 @@ func InitRouter() *gin.Engine {
 		timeStr, err := until.GetFileModTimeStr("./app/" + cfg.Build.Name + ".apk")
 		if err != nil {
 			pageData.ApkTime = "未知"
+		} else {
+			pageData.ApkTime = timeStr
+			pageData.ApkName = cfg.Build.Name + ".apk"
+			pageData.ApkVersion = cfg.Build.Version
+			pageData.ApkSize = until.GetFileSize("./app/" + cfg.Build.Name + ".apk")
+			pageData.ApkUrl = "/app/" + cfg.Build.Name + ".apk"
 		}
-		pageData.ApkTime = timeStr
-		pageData.ApkName = cfg.Build.Name
-		pageData.ApkVersion = cfg.Build.Version
-		pageData.ApkSize = until.GetFileSize("./app/" + cfg.Build.Name + ".apk")
-		pageData.ApkUrl = "/app/" + cfg.Build.Name + ".apk"
+
 		pageData.Status = bootstrap.GetBuildStatus()
 
 		ua := c.GetHeader("User-Agent")
@@ -210,11 +212,11 @@ func loadTemplates(r *gin.Engine) {
 	if gin.Mode() == gin.ReleaseMode {
 		// 生产环境：用 embed.FS
 		tmpl := template.New("").Funcs(template.FuncMap{
-			"SiteName":  func() string { return "清和IPTV管理系统" },
-			"DfApkName": func() string { return "清和电视" },
-			"Add":       func(a, b int64) int64 { return a + b },
-			"Sub":       func(a, b int64) int64 { return a - b },
-			"Prefix":    func(name string) string { return strings.Split(name, "-")[0] },
+			"SiteName": func() string { return "清和IPTV管理系统" },
+			"Version":  func() string { return "清和IPTV v" + until.GetVersion() },
+			"Add":      func(a, b int64) int64 { return a + b },
+			"Sub":      func(a, b int64) int64 { return a - b },
+			"Prefix":   func(name string) string { return strings.Split(name, "-")[0] },
 		})
 		tmpl = template.Must(tmpl.ParseFS(assets.EmbeddedFS, "templates/*"))
 		staticFiles, _ := fs.Sub(assets.StaticFS, "static")

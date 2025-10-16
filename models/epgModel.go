@@ -18,6 +18,7 @@ type IptvEpgList struct {
 	Name        string `gorm:"column:name" json:"name"`
 	Remarks     string `gorm:"column:remarks" json:"remarks"`
 	Url         string `gorm:"column:url" json:"url"`
+	UA          string `gorm:"column:ua" json:"ua"`
 	LastTime    int64  `gorm:"column:lasttime" json:"lasttime"`
 	LastTimeStr string `gorm:"-" json:"lasttimeStr"`
 	Status      int64  `gorm:"column:status" json:"status"`

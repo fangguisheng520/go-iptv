@@ -6,6 +6,7 @@ type IptvCategory struct {
 	Enable       int64  `gorm:"column:enable;default:1" json:"enable"`
 	Type         string `gorm:"default:add;column:type" json:"type"`
 	Url          string `gorm:"column:url" json:"url"`
+	UA           string `gorm:"column:ua" json:"ua"`
 	LatestTime   string `gorm:"column:latesttime" json:"latesttime"`
 	AutoCategory int64  `gorm:"column:autocategory" json:"autocategory"`
 	Sort         int64  `gorm:"column:sort" json:"sort"`

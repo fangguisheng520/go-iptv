@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -77,6 +78,7 @@ func SaveEpg(params url.Values, editType int) dto.ReturnJsonDto {
 		}
 		epgData.Name = epg + "-" + name
 		epgData.Content = strings.Join(namesList, ",")
+		// epgData.Content = strings.Join(until.MergeAndUnique(strings.Split(epgData.Content, ","), namesList), ",")
 		epgData.Remarks = remarks
 
 		if err := dao.DB.Save(&epgData).Error; err != nil {
@@ -154,6 +156,13 @@ func DeleteEpg(params url.Values) dto.ReturnJsonDto {
 	if id == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "EPG id不能为空", Type: "danger"}
 	}
+	idInt64, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "EPG id为数字", Type: "danger"}
+	}
+	if idInt64 <= 18 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "CNTV EPG不能删除", Type: "danger"}
+	}
 	dao.DB.Where("id = ?", id).Delete(&models.IptvEpg{})
 	return dto.ReturnJsonDto{Code: 1, Msg: "EPG删除成功", Type: "success"}
 }
@@ -211,6 +220,7 @@ func ClearCache() dto.ReturnJsonDto {
 func EpgImport(params url.Values) dto.ReturnJsonDto {
 	listName := params.Get("epgfromname")
 	url := params.Get("epgfromurl")
+	ua := params.Get("epgfromua")
 	eId := params.Get("eid")
 
 	if listName == "" {
@@ -231,7 +241,7 @@ func EpgImport(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "该频道列表已存在", Type: "danger"}
 	}
 
-	iptvEpgList := models.IptvEpgList{Name: listName, Url: url, Status: 1, Remarks: remarks}
+	iptvEpgList := models.IptvEpgList{Name: listName, Url: url, Status: 1, Remarks: remarks, UA: ua}
 	if eId != "" {
 		if err := dao.DB.Model(&models.IptvEpgList{}).Where("id = ?", eId).First(&eOld).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "频道列表不存在", Type: "danger"}

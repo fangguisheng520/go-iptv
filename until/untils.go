@@ -59,16 +59,33 @@ func GetUrl(c *gin.Context) string {
 	return protocol + host + modifiedPath
 }
 
-func GetUrlData(url string) string {
-	resp, err := http.Get(url)
+func GetUrlData(url string, ua ...string) string {
+	defaultUA := "Go-http-client/1.1"
+	useUA := defaultUA
+
+	if len(ua) > 0 && ua[0] != "" {
+		useUA = ua[0]
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ""
+	}
+
+	req.Header.Set("User-Agent", useUA)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return ""
 	}
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return ""
 	}
+
 	return string(body)
 }
 
@@ -505,4 +522,12 @@ func MergeAndUnique(a, b []string) []string {
 		result = append(result, k)
 	}
 	return result
+}
+
+func GetVersion() string {
+	data, err := os.ReadFile("/app/Version")
+	if err != nil {
+		return "2.3.0"
+	}
+	return strings.TrimSpace(string(data))
 }

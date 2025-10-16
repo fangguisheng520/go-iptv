@@ -86,14 +86,16 @@
 												</div>
 											</td>
                                             <td align="left">{{.Content}}</td>
-                                            <td align="center">
+                                            <td align="left">
                                                 <button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.ID}}" class="btn btn-xs {{if eq .Status 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>&nbsp;
                                                 <button class="btn btn-xs btn-info" type="button" name="editepg" value="{{.ID}}" data-toggle="modal" onclick="epgsGetChannel(this)" data-target="#editepg">编辑</button>&nbsp;
 												<label class="btn btn-xs btn-info" style="margin:0;">
 													<span>上传logo</span>
 													<input type="file" name="uploadlogo" id="uploadlogo" onchange="uploadLogo(this)" style="display:none;">
 												</label>&nbsp;
+												{{ if gt .ID 18 }}
                                                 <button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="delepg" value="{{.ID}}">删除</button>
+												{{ end }}
                                             </td>
                                         </tr>
                                         {{end}}

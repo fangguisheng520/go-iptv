@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
-    <title>{{ DfApkName }}官网-卫视|在线|电视直播|在线观看|湖南|风云直播|卫视直播|网络|中央电视台|电视直播网</title>
+    <title>清和电视官网-卫视|在线|电视直播|在线观看|湖南|风云直播|卫视直播|网络|中央电视台|电视直播网</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <link href="./static/css/pclive.css" rel="stylesheet">
     <script language="javascript" type="text/javascript" src="./static/js/jquery.min.js"></script>
@@ -16,10 +16,10 @@
                 <div class="wraponetop-left">
                     <div class="title">
                         <img src="./static/images/logo.png" />
-                        <span>{{ DfApkName }}</span>
+                        <span>清和电视</span>
                     </div>
                     <div class="introduceone">最任性、最好用的直播软件</div>
-                    <div class="introducetwo">{{ DfApkName }}直播运行于智能电视机顶盒或者智能电视机，操作简单，集直播、回看、预约、一周节目表(EPG)于一身，继承传统的上下键换台，无需任何学习，下载即可上手。具有行业领先的频道收藏、隐藏、WIFI传源等功能。</div>
+                    <div class="introducetwo">清和电视直播运行于智能电视机顶盒或者智能电视机，操作简单，集直播、回看、预约、一周节目表(EPG)于一身，继承传统的上下键换台，无需任何学习，下载即可上手。具有行业领先的频道收藏、隐藏、WIFI传源等功能。</div>
                     <div class="donwload">
                         <div class="introducethree"> 
                             <span>更新时间：{{if eq .Status 1}}APK编译中，请稍后...{{else}}{{ .ApkTime }}{{end}}</span> 
@@ -29,7 +29,7 @@
                             <span>大小：{{if eq .Status 1}}APK编译中，请稍后...{{else}}{{ .ApkSize }}{{end}}</span> 
                             <span>系统：Android 4.0+</span>
                         </div>
-                        {{if eq .Status 1}}APK编译中，请稍后...{{else}}<a id="downurl" href="{{ .ApkUrl }}" download="{{ DfApkName }}.apk">立即下载</a> {{end}}
+                        {{if eq .Status 1}}APK编译中，请稍后...{{else}}<a id="downurl" href="{{ .ApkUrl }}" download="{{ .ApkName }}">立即下载</a> {{end}}
                         <p><a id="managementurl" href="/admin" management="{{ SiteName }}">{{ SiteName }}</a></p>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
     <!-- 尾部 -->
     <div class="pc-ct-wrapperfooter">
         <div class="pc-main-wrapperfooter">
-            <div class="disclaimer">免责声明：所有内容均来源于公开的网络链接，{{ DfApkName }}不承担任何内容所引起的争议和法律责任
+            <div class="disclaimer">免责声明：所有内容均来源于公开的网络链接，清和电视不承担任何内容所引起的争议和法律责任
             </div>
           <div class="copyright">&copy;&nbsp;&nbsp;2025&nbsp;&nbsp;{{ SiteName }}
           </div>

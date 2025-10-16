@@ -2634,7 +2634,7 @@ dd, dt {
     left: 0;         /* 左侧对齐 */
     bottom: 0;       /* 底部对齐 */
     width: 100%;     /* 占满整个宽度 */
-    height: 96px;
+    height: 200px;
     border-top: 1px solid rgba(77,82,89,0.05);
     padding: 24px;
     font-size: 13px;

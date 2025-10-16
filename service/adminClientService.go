@@ -204,3 +204,12 @@ func SetTipSet(params url.Values) dto.ReturnJsonDto {
 	dao.SetConfig(cfg)
 	return dto.ReturnJsonDto{Code: 1, Msg: "设置成功", Type: "success"}
 }
+
+func GetBuildStatus() dto.ReturnJsonDto {
+	cfg := dao.GetConfig()
+	if bootstrap.GetBuildStatus() == 1 {
+		return dto.ReturnJsonDto{Code: 0, Msg: "APK编译中...", Type: "danger", Data: map[string]interface{}{"size": until.GetFileSize("./app/" + cfg.Build.Name + ".apk")}}
+	} else {
+		return dto.ReturnJsonDto{Code: 1, Msg: "APK编译完成", Type: "success", Data: map[string]interface{}{"size": until.GetFileSize("./app/" + cfg.Build.Name + ".apk"), "version": cfg.Build.Version, "url": "/app/" + cfg.Build.Name + ".apk", "name": cfg.Build.Name + ".apk"}}
+	}
+}

@@ -23,8 +23,6 @@
 docker volume create iptv
 docker pull v1st233/iptv:latest
 docker run -d --name iptv_server -p <port>:80 -v iptv:/config v1st233/iptv:latest
-# username: admin
-# password: password
 ```
 或
 ```

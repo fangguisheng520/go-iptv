@@ -133,9 +133,6 @@ function submitFormPOST(btn, showChannel = false) {
 		params.append(key, value);
 	});
 	params.append(btn.name, "");
-	if (params.has("submitappinfo") && !params.has("up_sets")) {
-		params.append("up_sets", 0);
-	}
 
 	if(showChannel && (btn.name === "submit_addtype" || 
 		btn.name  === "submit_modifytype" || 
@@ -717,11 +714,13 @@ function getCategory(btn) {
 	var cid = $tr.find(".c-id").data("value");
 	var cname = $tr.find(".c-name").data("value");
 	var curl = $tr.find(".c-url").data("value");
+	var cua = $tr.find(".c-ua").data("value");
 	var ca = $tr.find(".c-a").data("value");
 
 	$("#cId").val(cid);
 	$("#listname").val(cname);
 	$("#listurl").val(curl);
+	$("#listua").val(cua);
 	$("#autocategory").prop("checked", ca === 1);
 }
 
@@ -874,10 +873,12 @@ function getEpgList(btn) {
 	var cid = $tr.find(".e-id").data("value");
 	var cname = $tr.find(".e-name").data("value");
 	var curl = $tr.find(".e-url").data("value");
+	var cua = $tr.find(".e-ua").data("value");
 
 	$("#eid").val(cid);
 	$("#epgfromname").val(cname);
 	$("#epgfromurl").val(curl);
+	$("#epgfromua").val(cua);
 }
 
 function deleteLogo(id) {
@@ -951,4 +952,84 @@ function getnewkey(btn){
             }
         }
     });
+}
+
+function BuildApk(btn) {
+var form = btn.closest("form");
+	if (!form) {
+		lightyear.notify("表单提交失败", "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
+		return;
+	}
+
+	var action = form.action || window.location.pathname; // 默认当前路径
+
+	const params = new URLSearchParams();
+	new FormData(form).forEach((value, key) => {
+		params.append(key, value);
+	});
+	params.append(btn.name, "");
+	if (!params.has("up_sets")) {
+		params.append("up_sets", 0);
+	}
+	// 使用 fetch AJAX 提交
+	fetch(action, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded"
+		},
+		body: params.toString()
+	})
+	.then(async response => {
+		const text = await response.text(); // 先拿到响应内容
+		if (text.includes('/admin/login')) {
+			window.location.href = "/admin/login";
+			throw text;
+		}
+		return JSON.parse(text); // 或 response.json()
+	})
+	// .then(response => response.json())
+	.then(data => {
+		lightyear.notify(data.msg, data.type, 3000);
+		if (data.type === "success") {
+			$('#submitappinfo').prop('disabled', true);
+			$('.download-link').prop('disabled', true);
+			getBuildStatus()
+		}
+	})
+	.catch(err => {
+		lightyear.notify("提交失败:"+ err, "danger", 3000);
+		// document.querySelector('.modal-backdrop').remove();
+		// document.body.classList.remove('modal-open');
+		// document.body.style.overflow = ''; // 恢复滚动条
+	});
+}
+function getBuildStatus() {
+    // 定义定时器
+    var timer = setInterval(function() {
+        $.getJSON('/admin/client/buildStatus', function(resp) {
+            // 将返回的 data 值更新到 #apksize
+            $('#apksize').val(resp.data.size);
+
+            // 如果 code 为 1，取消 #submitappinfo 的 disabled
+            if(resp.code === 1) {
+				lightyear.notify(resp.msg, resp.type, 1000);
+				$('.download-link').each(function() {
+   					// 单独设置每个下载链接
+					$(this).attr('href', resp.data.url);
+					$(this).attr('download', resp.data.name);
+				});
+				$('#app_version').val(resp.data.version);
+					
+                $('#submitappinfo').prop('disabled', false);
+				$('.download-link').prop('disabled', false);
+                // 停止轮询
+                clearInterval(timer);
+            }
+        }).fail(function() {
+			lightyear.notify("请求失败，稍后重试...", 'danger', 1000);
+        });
+    }, 1000); // 每秒执行一次
 }
