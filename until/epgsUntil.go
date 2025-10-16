@@ -505,7 +505,6 @@ func GetCntvEpgXml() dto.XmlTV {
 		if epg.Content == "" {
 			continue
 		}
-		// eFrom := strings.Split(epg.Name, "-")[0]
 		eName := strings.Split(epg.Name, "-")[1]
 		nameList := strings.Split(epg.Content, ",")
 		var channelList []models.IptvChannel
@@ -575,7 +574,7 @@ func GetProvinceEpgXml() dto.XmlTV {
 			})
 			var cId string
 			for _, c := range tmpXml.Channels {
-				if c.DisplayName.Value == channel.Name {
+				if c.DisplayName.Value == eName {
 					cId = c.ID
 					break
 				}
