@@ -1,6 +1,12 @@
 ## 清和iptv
->提取自矿神群晖IPTV并大改，由原来的PHP+MySql改为Go+Sqlite     
->添加缺失功能，精简删除非必要功能，修改系统存在的安全漏洞   
+>源自骆驼IPTV并大改，由原来的PHP+MySql改为Go+Sqlite     
+
+- 添加缺失功能
+- 精简删除非必要页面功能
+- 添加自动反编译APK，添加修改APK图标和背景
+- 添加EPG订阅
+- 添加套餐对接酷9等空壳平台
+- 修改系统存在的安全漏洞
 
 ## 注意
 当前版本与之前PHP版本并不兼容，若要使用PHP版本，请使用`docker pull v1st233/iptv:20250905`
@@ -35,8 +41,6 @@ docker run -d --name iptv_server -p port:80 -v iptv:/config image_name:latest
 ## 使用
 容器跑起来后访问`http://<ip>:<port>`即可，根据提示安装系统，然后登录添加源->修改套餐->下载安装APK->授权用户即可使用
 
-## 鸣谢
-- [我不是矿神](https://imnks.com/)
 ## 打赏
 >如果觉得好用，请打赏支持一下
 
