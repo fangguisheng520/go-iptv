@@ -284,6 +284,7 @@ func BindChannel() bool {
 	go GetCCTVChannelList(true)
 	go GetProvinceChannelList(true)
 	go CleanMealsXmlCacheAll()
+	go MakeMealsXmlCacheAll()
 	return true
 }
 

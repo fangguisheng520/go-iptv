@@ -17,7 +17,11 @@ func EpgCron() {
 	c.AddFunc("0 0 1 * * *", func() {
 		log.Println("更新EPG列表任务开始执行:", time.Now().Format("2006-01-02 15:04:05"))
 		// 在这里写你的任务逻辑
-		until.UpdataEpgList()
+		if until.UpdataEpgList() {
+			log.Println("更新EPG列表任务执行成功:", time.Now().Format("2006-01-02 15:04:05"))
+		} else {
+			log.Println("更新EPG列表任务执行失败:", time.Now().Format("2006-01-02 15:04:05"))
+		}
 	})
 	c.Start()
 }

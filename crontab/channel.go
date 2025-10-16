@@ -162,7 +162,7 @@ func AddChannelList(cname, srclist string) {
 		}); err != nil {
 			return
 		}
-		go BindChannel()
+		go until.BindChannel()
 		// go until.UpdateChannelsId()
 		return
 	}
@@ -287,45 +287,7 @@ func AddChannelList(cname, srclist string) {
 
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
-		go BindChannel()
+		go until.BindChannel()
 		// go until.UpdateChannelsId()
 	}
-}
-
-func BindChannel() {
-	var channeList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channeList).Error; err != nil {
-		return
-	}
-
-	var epgList []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Find(&epgList).Error; err != nil {
-		return
-	}
-
-	for _, epgData := range epgList {
-		var tmpList []string
-		for _, channelData := range channeList {
-
-			if strings.EqualFold(channelData.Name, epgData.Name) {
-				tmpList = append(tmpList, channelData.Name)
-				break
-			}
-
-			nameList := strings.Split(epgData.Remarks, "|")
-			for _, name := range nameList {
-				if strings.EqualFold(channelData.Name, name) {
-					tmpList = append(tmpList, channelData.Name)
-					break
-				}
-			}
-		}
-		epgData.Content = strings.Join(until.MergeAndUnique(strings.Split(epgData.Content, ","), tmpList), ",")
-		if epgData.Content != "" {
-			dao.DB.Save(&epgData)
-		}
-	}
-	go until.GetCCTVChannelList(true)
-	go until.GetProvinceChannelList(true)
-	go until.CleanMealsXmlCacheAll()
 }

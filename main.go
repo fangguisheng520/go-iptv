@@ -34,6 +34,10 @@ func main() {
 		return
 	}
 	dao.Cache = cache
+	if dao.Cache.Clear() != nil {
+		log.Println("初始化清除缓存失败:", err)
+		return
+	}
 
 	if !until.Exists("/config/iptv.db") || !until.Exists("/config/config.yml") || !until.Exists("/config/install.lock") {
 		bootstrap.Installed = false
