@@ -72,7 +72,7 @@ func Users(c *gin.Context) {
 	keywords := "%" + pageData.Keywords + "%"
 
 	// 基础查询
-	dbQuery := dao.DB.Table(models.IptvUserShow{}.TableName()+" u").Select(`u.name, u.status, m.name AS mealname, u.mac, u.deviceid, u.model, u.ip, u.region, u.lasttime, u.exp, u.author, u.marks, u.vpn, u.meal`).
+	dbQuery := dao.DB.Table(models.IptvUserShow{}.TableName()+" u").Select(`u.*, m.name AS mealname`).
 		Joins("LEFT JOIN iptv_meals m ON u.meal = m.id").Where("u.status > ?", 0)
 
 	// 如果不是 admin，增加 author 条件

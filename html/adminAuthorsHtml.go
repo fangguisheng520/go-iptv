@@ -73,7 +73,7 @@ func Authors(c *gin.Context) {
 
 	// 基础查询
 	dbQuery := dao.DB.Model(&models.IptvUser{}).
-		Select(`name,deviceid,model,ip,region,lasttime,exp,status`).
+		// Select(`name,deviceid,model,ip,region,lasttime,exp,status`).
 		Where("status <= ?", 0)
 
 	dbQuery = dbQuery.Where(

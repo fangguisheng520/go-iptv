@@ -276,6 +276,20 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 
 	result.MovieEngine.Model = movie
 
+	if cfg.App.NeedAuthor == 0 {
+		result = getMealName(user, result)
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s \n", result.ID, result.IP, user.DeviceID, result.MealName)
+	} else if cfg.App.NeedAuthor == 1 && user.Status != -1 {
+		result = getMealName(user, result)
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s\n", result.ID, result.IP, user.DeviceID, result.MealName)
+	} else {
+		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 未授权 \n", result.ID, result.IP, user.DeviceID)
+	}
+
+	return result
+}
+
+func getMealName(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 	var meals []models.IptvMeals
 	dao.DB.Model(&models.IptvMeals{}).Where("status = ?", 1).Find(&meals)
 
@@ -289,14 +303,6 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 			result.ProvList = strings.Split(v.Content, "_")
 		}
 	}
-	if cfg.App.NeedAuthor == 0 {
-		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s \n", result.ID, result.IP, user.DeviceID, result.MealName)
-	} else if cfg.App.NeedAuthor == 1 && user.Status != -1 {
-		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 套餐: %s\n", result.ID, result.IP, user.DeviceID, result.MealName)
-	} else {
-		log.Printf("用户: %d 登录成功,IP: %s 设备ID: %s 未授权 \n", result.ID, result.IP, user.DeviceID)
-	}
-
 	return result
 }
 
