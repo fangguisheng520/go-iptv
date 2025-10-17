@@ -161,7 +161,7 @@ func UpdataEpgList() bool {
 					case reNum.MatchString(upper):
 						match := reNum.FindStringSubmatch(upper)
 						num := match[1]
-						remarks = fmt.Sprintf("CCTV%s|CCTV-%s|CCTV%s4K|CCTV-%s4K|CCTV%sHD|CCTV-%sHD", num, num, num, num, num, num)
+						remarks = fmt.Sprintf("CCTV%s|CCTV-%s|CCTV%s 4K|CCTV-%s 4K|CCTV%s HD|CCTV-%s HD", num, num, num, num, num, num)
 
 					case reAlpha.MatchString(upper):
 						match := reAlpha.FindStringSubmatch(upper)
@@ -506,7 +506,7 @@ func GetCntvEpgXml() dto.XmlTV {
 		if epg.Content == "" {
 			continue
 		}
-		eName := strings.Split(epg.Name, "-")[1]
+		eName := strings.SplitN(epg.Name, "-", 2)[1]
 		nameList := strings.Split(epg.Content, ",")
 		var channelList []models.IptvChannel
 		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
@@ -557,8 +557,8 @@ func GetProvinceEpgXml() dto.XmlTV {
 		if len(channelList) == 0 {
 			continue
 		}
-		eFrom := strings.Split(epg.Name, "-")[0]
-		eName := strings.Split(epg.Name, "-")[1]
+		eFrom := strings.SplitN(epg.Name, "-", 2)[0]
+		eName := strings.SplitN(epg.Name, "-", 2)[1]
 
 		var epgList models.IptvEpgList
 		if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", eFrom).First(&epgList).Error; err != nil {

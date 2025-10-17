@@ -149,6 +149,11 @@ func GetProvinceChannelList(rebuild bool) string {
 	return res
 }
 
+func ClearAutoChannelCache() {
+	dao.Cache.Delete("province_channel_list")
+	dao.Cache.Delete("cctv_channel_list")
+}
+
 func Txt2M3u8(txtData, host, token string) string {
 
 	epgURL := host + "/epg/" + token + "/e.xml" // ✅ 可自行修改 EPG 地址
@@ -283,7 +288,7 @@ func GetEpgName(name string) string {
 		return epgName
 	}
 
-	return strings.Split(epgName, "-")[1]
+	return strings.SplitN(epgName, "-", 2)[1]
 }
 
 func IsM3UContent(data string) bool {

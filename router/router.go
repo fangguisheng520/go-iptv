@@ -37,7 +37,7 @@ func InitRouter() *gin.Engine {
 
 	r.SetFuncMap(template.FuncMap{
 		"SiteName": func() string { return "清和IPTV管理系统" },
-		"Version":  func() string { return "清和IPTV v" + until.GetVersion() },
+		"Version":  func() string { return "清和IPTV " + until.GetVersion() },
 		"Add":      func(a, b int64) int64 { return a + b },
 		"Sub":      func(a, b int64) int64 { return a - b },
 		"Prefix":   func(name string) string { return strings.Split(name, "-")[0] },
@@ -213,7 +213,7 @@ func loadTemplates(r *gin.Engine) {
 		// 生产环境：用 embed.FS
 		tmpl := template.New("").Funcs(template.FuncMap{
 			"SiteName": func() string { return "清和IPTV管理系统" },
-			"Version":  func() string { return "清和IPTV v" + until.GetVersion() },
+			"Version":  func() string { return "清和IPTV " + until.GetVersion() },
 			"Add":      func(a, b int64) int64 { return a + b },
 			"Sub":      func(a, b int64) int64 { return a - b },
 			"Prefix":   func(name string) string { return strings.Split(name, "-")[0] },

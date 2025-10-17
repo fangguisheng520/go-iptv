@@ -15,10 +15,11 @@ CREATE TABLE iptv_category (
     ua TEXT,
     autocategory TEXT DEFAULT NULL,
     latesttime TEXT DEFAULT NULL,
+    repeat INTEGER DEFAULT 0,
     sort INTEGER
 );
-INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'add','','',0,'',-2);
-INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'add','','',0,'',-1);
+INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'auto','','',0,'',0,-2);
+INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'auto','','',0,'',0,-1);
 CREATE TABLE iptv_channels (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,

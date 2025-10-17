@@ -48,8 +48,8 @@ func GetEpg(name string) dto.Response {
 	if epgName == "" {
 		return res
 	}
-	epgFrom := strings.Split(epgName, "-")[0]
-	epgName = strings.Split(epgName, "-")[1]
+	epgFrom := strings.SplitN(epgName, "-", 2)[0]
+	epgName = strings.SplitN(epgName, "-", 2)[1]
 
 	if strings.Contains(epgFrom, "cntv") {
 		res = getEpgCntv(epgName)
@@ -87,8 +87,8 @@ func GetSimpleEpg(name string) dto.SimpleResponse {
 	if epgName == "" {
 		return res
 	}
-	epgFrom := strings.Split(epgName, "-")[0]
-	epgName = strings.Split(epgName, "-")[1]
+	epgFrom := strings.SplitN(epgName, "-", 2)[0]
+	epgName = strings.SplitN(epgName, "-", 2)[1]
 
 	if strings.Contains(epgFrom, "cntv") {
 		res = getSimpleEpgCntv(epgName)

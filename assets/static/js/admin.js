@@ -308,6 +308,20 @@ function checkboxAllName(a){
 	}
 }
 
+function autoCheck(){
+	var ck=document.getElementsByName("names[]");
+	for (var i = 0; i < ck.length; i++) {
+		ck[i].checked=false;
+	}
+}
+
+function clearCheck(){
+	var ck=document.getElementsByName("names[]");
+	for (var i = 0; i < ck.length; i++) {
+		ck[i].checked=false;
+	}
+}
+
 function showlist(sort,name){
 	$("#srclist").val("正在加载中...");
 	$.ajax({
@@ -383,6 +397,16 @@ function tdBtnPOST(btn) {
 				// 删除按钮所在的 tr
 				const tr = btn.closest("tr");
 				if (tr) tr.remove();
+				if (btn.name === "dellist"){
+					$('.categorylist-btn').each(function() {
+						var $this = $(this);
+						var dataValue = $this.data('value'); // 获取 data-value
+						// 判断是否等于 btn.value 或包含 "(btn.value)"
+						if (dataValue == btn.value || (dataValue && dataValue.includes('(' + btn.value + ')'))) {
+							$this.remove(); // 删除元素及所有子元素
+						}
+					});
+				}
 			}else{
 				loadPage(action);
 			}
@@ -468,6 +492,28 @@ function mealsGetCategory(btn) {
 	})
 }
 
+function epgEdit(btn) {
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var epgid = $tr.find(".epg-id").data("value");
+	var epgname = $tr.find(".epg-name").data("value");
+	var epgremarks = $tr.find(".epg-remarks").data("value");
+
+	var index = epgname.indexOf("-");
+	var prefix, name;
+	if (index !== -1) {
+		prefix = epgname.substring(0, index);
+		name = epgname.substring(index + 1);
+	} else {
+		prefix = epgname;
+		name = "";
+	}
+	
+	$("#editepgselect").val(prefix);
+	$("#epgId").val(epgid);
+	$("#epgName").val(name);
+	$("#epgRemarks").val(epgremarks);
+}
+
 function epgsGetChannel(btn) {
 
 	var action = window.location.pathname;
@@ -486,20 +532,23 @@ function epgsGetChannel(btn) {
 		return ;
 	}
 
-	if (btn.name === "editepg") {
-		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
-		var epgid = $tr.find(".epg-id").data("value");
-		var epgname = $tr.find(".epg-name").data("value");
-		var epgremarks = $tr.find(".epg-remarks").data("value");
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var epgid = $tr.find(".epg-id").data("value");
+	var epgname = $tr.find(".epg-name").data("value");
 
-		var prefix = epgname.split("-")[0];
-		var name = epgname.split("-")[1];
-		
-		$("#editepgselect").val(prefix);
-		$("#epgId").val(epgid);
-		$("#epgName").val(name);
-		$("#epgRemarks").val(epgremarks);
+	var index = epgname.indexOf("-");
+	var prefix, name;
+	if (index !== -1) {
+		prefix = epgname.substring(0, index);
+		name = epgname.substring(index + 1);
+	} else {
+		prefix = epgname;
+		name = "";
 	}
+	
+	$("#bdingepgselect").val(prefix);
+	$("#epgId1").val(epgid);
+	$("#epgName1").val(name);
 
 	// 使用 fetch AJAX 提交
 	fetch(action, {
@@ -716,12 +765,14 @@ function getCategory(btn) {
 	var curl = $tr.find(".c-url").data("value");
 	var cua = $tr.find(".c-ua").data("value");
 	var ca = $tr.find(".c-a").data("value");
+	var cr = $tr.find(".c-r").data("value");
 
 	$("#cId").val(cid);
 	$("#listname").val(cname);
 	$("#listurl").val(curl);
 	$("#listua").val(cua);
 	$("#autocategory").prop("checked", ca === 1);
+	$("#repeat").prop("checked", cr === 1);
 }
 
 

@@ -90,26 +90,31 @@ func UpdateList() {
 			urlData = until.M3UToGenreTXT(urlData)
 		}
 
+		var doRepeat = false
+		if v.Repeat == 1 {
+			doRepeat = true
+		}
+
 		if v.AutoCategory == 1 {
 			if !strings.Contains(urlData, "#genre#") {
 				dao.DB.Model(&models.IptvCategory{}).Where("name = ?", v.Name).Updates(map[string]interface{}{
 					"latesttime":   time.Now().Format("2006-01-02 15:04:05"),
 					"autocategory": 0,
 				})
-				AddChannelList(v.Name, urlData)
+				AddChannelList(v.Name, urlData, doRepeat)
 			}
-			GenreChannels(v.Name, urlData)
+			GenreChannels(v.Name, urlData, doRepeat)
 		} else {
 			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", v.Name).Updates(map[string]interface{}{
 				"latesttime": time.Now().Format("2006-01-02 15:04:05"),
 			})
-			AddChannelList(v.Name, urlData)
+			AddChannelList(v.Name, urlData, doRepeat)
 		}
 	}
 	log.Println("定时执行更新频道任务结束")
 }
 
-func GenreChannels(listName, srclist string) {
+func GenreChannels(listName, srclist string, doRepeat bool) {
 
 	data := until.ConvertDataToMap(srclist)
 
@@ -132,7 +137,7 @@ func GenreChannels(listName, srclist string) {
 			dao.DB.Model(&models.IptvCategory{}).Where("name = ?", categoryName).Updates(map[string]interface{}{
 				"latesttime": time.Now().Format("2006-01-02 15:04:05"),
 			})
-			AddChannelList(categoryName, genreList)
+			AddChannelList(categoryName, genreList, doRepeat)
 		} else {
 			var maxSort int64
 			dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
@@ -148,13 +153,13 @@ func GenreChannels(listName, srclist string) {
 				return
 			}
 
-			AddChannelList(categoryName, genreList)
+			AddChannelList(categoryName, genreList, doRepeat)
 		}
 	}
 	log.Println("更新" + listName + "分类结束")
 }
 
-func AddChannelList(cname, srclist string) {
+func AddChannelList(cname, srclist string, doRepeat bool) {
 	if srclist == "" {
 		// 如果 srclist 为空，删除当前分类下所有数据
 		if err := dao.DB.Transaction(func(tx *gorm.DB) error {
@@ -181,6 +186,22 @@ func AddChannelList(cname, srclist string) {
 	for _, ch := range oldChannels {
 		if ch.Url != "" && ch.Name != "" {
 			existMap[ch.Url] = ch.Name
+		}
+	}
+
+	var handChannels []models.IptvChannel
+	existHandMap := make(map[string]string)
+	if doRepeat {
+		dao.DB.Table(models.IptvChannel{}.TableName()+" AS c").
+			Select("c.name, c.url").
+			Joins("LEFT JOIN "+models.IptvCategory{}.TableName()+" AS cat ON c.category = cat.name").
+			Where("cat.type = ?", "user").
+			Scan(&handChannels)
+
+		for _, ch := range handChannels {
+			if ch.Url != "" && ch.Name != "" {
+				existHandMap[ch.Url] = ch.Name
+			}
 		}
 	}
 
@@ -218,12 +239,23 @@ func AddChannelList(cname, srclist string) {
 
 		srcList := strings.Split(source, "#")
 		for _, src := range srcList {
-			src2 := strings.NewReplacer(`"`, "", "'", "", "}", "", "{", "").Replace(src)
+			src2 := strings.Trim(strings.NewReplacer(`"`, "", "'", "", "}", "", "{", "").Replace(src), " \r\n\t")
 			if src2 == "" || channelName == "" {
 				continue
 			}
 
 			srclistUrls[src2] = struct{}{}
+
+			if doRepeat {
+				if _, exists := existHandMap[src2]; exists {
+					for _, ch := range oldChannels {
+						if ch.Url == src2 {
+							delIDs = append(delIDs, ch.ID)
+						}
+					}
+					continue
+				}
+			}
 
 			if oldName, exists := existMap[src2]; exists {
 				if oldName != channelName {
