@@ -829,6 +829,9 @@ func UploadPayList(c *gin.Context) dto.ReturnJsonDto {
 	if !strings.Contains(urlData, "#genre#") {
 		repeat, err := AddChannelList(listName, urlData, false)
 		if err == nil && repeat != -1 {
+			var maxSort int64
+			dao.DB.Model(&models.IptvCategory{}).Select("IFNULL(MAX(sort),0)").Scan(&maxSort)
+			dao.DB.Model(&models.IptvCategory{}).Create(&models.IptvCategory{Name: listName, Type: "user", Sort: maxSort + 1, LatestTime: time.Now().Format("2006-01-02 15:04:05")})
 			return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("更新列表 %s 成功，重复 %d 条\n", listName, repeat), Type: "success"}
 		} else {
 			return dto.ReturnJsonDto{Code: 0, Msg: fmt.Sprintf("更新列表 %s 失败\n", listName), Type: "danger"}

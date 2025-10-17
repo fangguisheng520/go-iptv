@@ -21,7 +21,7 @@ func Meals(c *gin.Context) {
 	}
 
 	dao.DB.Model(&models.IptvMeals{}).Find(&pageData.Meals)
-	dao.DB.Model(&models.IptvCategory{}).Where("type = ?", "add").Count(&pageData.ChannelNum)
+	dao.DB.Model(&models.IptvCategory{}).Where("type != ?", "import").Count(&pageData.ChannelNum)
 
 	c.HTML(200, "admin_meals.html", pageData)
 }

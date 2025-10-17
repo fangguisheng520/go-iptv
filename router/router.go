@@ -40,7 +40,7 @@ func InitRouter() *gin.Engine {
 		"Version":  func() string { return "清和IPTV " + until.GetVersion() },
 		"Add":      func(a, b int64) int64 { return a + b },
 		"Sub":      func(a, b int64) int64 { return a - b },
-		"Prefix":   func(name string) string { return strings.Split(name, "-")[0] },
+		"Prefix":   func(name string) string { return strings.SplitN(name, "-", 2)[0] },
 	})
 
 	r.Static("/app", "./app")
@@ -216,7 +216,7 @@ func loadTemplates(r *gin.Engine) {
 			"Version":  func() string { return "清和IPTV " + until.GetVersion() },
 			"Add":      func(a, b int64) int64 { return a + b },
 			"Sub":      func(a, b int64) int64 { return a - b },
-			"Prefix":   func(name string) string { return strings.Split(name, "-")[0] },
+			"Prefix":   func(name string) string { return strings.SplitN(name, "-", 2)[0] },
 		})
 		tmpl = template.Must(tmpl.ParseFS(assets.EmbeddedFS, "templates/*"))
 		staticFiles, _ := fs.Sub(assets.StaticFS, "static")

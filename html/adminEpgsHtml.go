@@ -89,7 +89,7 @@ func Epgs(c *gin.Context) {
 	cfg := dao.GetConfig()
 
 	for k, v := range pageData.Epgs {
-		epgName := strings.Split(v.Name, "-")[1]
+		epgName := strings.SplitN(v.Name, "-", 2)[1]
 		for _, logo := range logoList {
 			logoName := strings.Split(logo, ".")[0]
 			if strings.EqualFold(epgName, logoName) {
