@@ -107,18 +107,18 @@
 										<div class="modal-dialog" role="document">
 											<div class="modal-content">
 												<div class="modal-header">
-													<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+													<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#name').val('');$('#remarks').val('');$('#epg').val('');"><span aria-hidden="true">&times;</span></button>
 													<h4 class="modal-title">增加EPG</h4>
 												</div>
 												<form method="post">
 													<div class="modal-body">
 														<div class="form-group">
 															<label class="control-label">名称：</label>
-															<input type="text" class="form-control" name="name" placeholder="请输入名称">
+															<input type="text" class="form-control" id="name" name="name" placeholder="请输入名称">
 														</div>
 														<div class="form-group">
 															<label class="control-label">自动绑定规则：</label>
-															<input type="text" class="form-control" name="remarks" placeholder="多个自动绑定规则请用 | 分隔开">
+															<input type="text" class="form-control" name="remarks" name="remarks" placeholder="多个自动绑定规则请用 | 分隔开">
 														</div>
 														<div class="form-group">
 															<label class="control-label">EPG来源：</label>
@@ -133,7 +133,7 @@
 													</div>
 													<div class="modal-footer">
 														<button class="btn btn-primary" type="button" name="add_save_epg" onclick="submitFormPOST(this)" >新增</button>
-														<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+														<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#name').val('');$('#remarks').val('');$('#epg').val('');">关闭</button>
 													</div>
 												</form>
 											</div>
@@ -143,7 +143,7 @@
 										<div class="modal-dialog modal-lg" role="document">
 											<div class="modal-content">
 												<div class="modal-header">
-													<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+													<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#epgId').val('');$('#epgName').val('');$('#epgRemarks').val('');$('#editepgselect').val('');"><span aria-hidden="true">&times;</span></button>
 													<h4 class="modal-title">编辑EPG</h4>
 												</div>
 												<form method="post" action="/admin/epgsList">
@@ -175,7 +175,7 @@
 													</div>
 													<div class="modal-footer">
 														<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="edit_save_epg" name="edit_save_epg">确定</button>
-														<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+														<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#epgId').val('');$('#epgName').val('');$('#epgRemarks').val('');$('#editepgselect').val('');">关闭</button>
 													</div>
 												</form>
 											</div>

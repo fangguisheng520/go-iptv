@@ -726,7 +726,6 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 				Category: cname,
 				Sort:     sortIndex,
 			})
-			log.Println(newChannels)
 			existMap[src2] = channelName
 			sortIndex++
 		}

@@ -73,7 +73,7 @@
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#cId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#repeat').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
 												<h4 class="modal-title">外部列表</h4>
 											</div>
 											<form method="post" action="/admin/channels">
@@ -90,6 +90,7 @@
 													<div class="form-group">
 														<label for="message-text" class="control-label">User-Agent: </label>
 														<input class="form-control" id="listua" name="listua" placeholder="Go-http-client/1.1"></input>
+														<small class="help-block">APTV源的UA样例为: AptvPlayer/1.4.10</small>
 													</div>
 													<div class="form-group">
    														<input type="checkbox" id="autocategory" name="autocategory" value="on"></input>
@@ -104,7 +105,7 @@
 												</div>
 												<div class="modal-footer">
 													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" id="addthirdlist" name="addlist">确定</button>
-													<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+													<button type="button" class="btn btn-default" onclick="$('#cId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#repeat').prop('checked', false);" data-dismiss="modal">关闭</button>
 												</div>
 											</form>
 										</div>
