@@ -168,6 +168,8 @@ func UpdataEpgList() bool {
 						suffix := match[1]
 						remarks = fmt.Sprintf("CCTV%s|CCTV-%s", suffix, suffix)
 					}
+				} else {
+					remarks = fmt.Sprintf("%s|%s 4K|%s HD", remarks, remarks, remarks)
 				}
 				epgs = append(epgs, models.IptvEpg{
 					Name:    list.Remarks + "-" + channel.DisplayName.Value,
@@ -212,7 +214,10 @@ func UpdataEpgListOne(id int64) bool {
 		// 2️⃣ 匹配字母台，如 CCTV4EUO、CCTV4AME、CCTVF、CCTVE 等
 		reAlpha := regexp.MustCompile(`(?i)CCTV(\d*[A-Z]+)`)
 		for _, channel := range xmlTV.Channels {
-			remarks := channel.DisplayName.Value + "|" + channel.DisplayName.Value + "4k|" + channel.DisplayName.Value + "4K"
+			remarks := channel.DisplayName.Value
+			if remarks == "" {
+				continue
+			}
 			upper := strings.ToUpper(remarks)
 			if strings.Contains(upper, "CCTV") {
 				switch {
@@ -226,7 +231,10 @@ func UpdataEpgListOne(id int64) bool {
 					suffix := match[1]
 					remarks = fmt.Sprintf("CCTV%s|CCTV-%s", suffix, suffix)
 				}
+			} else {
+				remarks = fmt.Sprintf("%s|%s 4K|%s HD", remarks, remarks, remarks)
 			}
+
 			epgs = append(epgs, models.IptvEpg{
 				Name:    list.Remarks + "-" + channel.DisplayName.Value,
 				Status:  1,

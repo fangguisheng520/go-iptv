@@ -76,8 +76,6 @@ func main() {
 		return
 	}
 
-	bootstrap.InitJwtKey() // 初始化JWTkey
-
 	if !bootstrap.InitLogo() {
 		log.Println("logo目录初始化错误")
 		return
@@ -86,7 +84,8 @@ func main() {
 	go crontab.Crontab()
 	go crontab.EpgCron()
 
-	if bootstrap.Installed {
+	if !debug {
+		bootstrap.InitJwtKey() // 初始化JWTkey
 		if !bootstrap.BuildAPK() {
 			log.Println("APK编译错误")
 			return

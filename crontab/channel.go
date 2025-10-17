@@ -65,23 +65,34 @@ func UpdateList() {
 		log.Println("没有可更新的频道列表")
 		return
 	}
+
+	client := &http.Client{}
 	for _, v := range lists {
-		resp, err := http.Get(v.Url)
+		req, err := http.NewRequest("GET", v.Url, nil)
 		if err != nil {
-			log.Println("更新频道列表失败--->链接响应失败1：", v.Url)
-			return
+			log.Println("更新频道列表失败--->创建请求错误:: ", err.Error(), " URL: ", v.Url)
+			continue
+		}
+
+		// 添加自定义 User-Agent
+		req.Header.Set("User-Agent", v.UA)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println("更新频道列表失败--->无法访问url: ", err.Error(), " URL: ", v.Url)
+			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
-			log.Println("更新频道列表失败--->链接响应失败2：", v.Url)
-			return
+			log.Println("更新频道列表失败--->读取响应失败-状态码：", resp.StatusCode, " URL: ", v.Url)
+			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Println("更新频道列表失败--->读取响应失败：", v.Url)
-			return
+			log.Println("更新频道列表失败--->读取响应失败：", " URL: ", v.Url)
+			continue
 		}
 
 		urlData := until.FilterEmoji(string(body)) // 过滤emoji表情
