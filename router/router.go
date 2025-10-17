@@ -20,11 +20,11 @@ import (
 )
 
 func InitRouter(debug bool) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
 	var r *gin.Engine
 	if debug {
 		r = gin.Default()
 	} else {
-		gin.SetMode(gin.ReleaseMode)
 		r = gin.New()
 	}
 
