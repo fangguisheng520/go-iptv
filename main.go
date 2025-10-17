@@ -8,6 +8,7 @@ import (
 	"go-iptv/router"
 	"go-iptv/until"
 	"log"
+	"os"
 )
 
 func main() {
@@ -27,6 +28,11 @@ func main() {
 		return
 	}
 
+	var debug bool = false
+	if os.Getenv("DEBUG") == "true" {
+		debug = true
+	}
+
 	log.Println("初始化EPG缓存...")
 	cache, err := dao.NewFileCache("/config/cache/", true)
 	if err != nil {
@@ -43,14 +49,20 @@ func main() {
 		bootstrap.Installed = false
 		log.Println("检测到未安装，开始安装...")
 		log.Println("启动接口...")
-		router := router.InitRouter()
+		router := router.InitRouter(debug)
 		router.Run(":" + *port)
 	} else {
 		bootstrap.Installed = true
 	}
 
 	log.Println("加载数据库...")
-	dao.InitDB("/config/iptv.db")
+	if debug {
+		debug = true
+		dao.InitDBDebug("/config/iptv.db")
+	} else {
+		dao.InitDB("/config/iptv.db")
+	}
+
 	if !bootstrap.InitDB() {
 		log.Println("数据库初始化失败,请删除/config/iptv.db重新安装")
 		return
@@ -82,6 +94,6 @@ func main() {
 	}
 
 	log.Println("启动接口...")
-	router := router.InitRouter()
+	router := router.InitRouter(debug)
 	router.Run(":" + *port)
 }

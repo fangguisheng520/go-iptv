@@ -19,11 +19,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter() *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-
-	// r := gin.Default()
+func InitRouter(debug bool) *gin.Engine {
+	var r *gin.Engine
+	if debug {
+		r = gin.Default()
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+		r = gin.New()
+	}
 
 	r.SetTrustedProxies([]string{
 		"10.0.0.0/8",
