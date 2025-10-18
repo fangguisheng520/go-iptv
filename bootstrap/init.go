@@ -56,17 +56,6 @@ func InitDB() bool {
 	}
 	dao.DB.AutoMigrate(&models.IptvMeals{})
 	dao.DB.AutoMigrate(&models.IptvMovie{})
-	
-	// 确保 rawcount 字段存在（类型为 integer，默认值为 0）
-	if !dao.DB.Migrator().HasColumn(&models.IptvCategory{}, "rawcount") {
-		log.Printf("rawcount 字段不存在,开始添加")
-		// 添加字段
-		if err := dao.DB.Migrator().AddColumn(&models.IptvCategory{}, "rawcount"); err != nil {
-			log.Printf("添加 rawcount 字段失败: %v", err)
-			return false
-		}
-	}
-	
 	return true
 }
 
