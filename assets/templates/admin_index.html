@@ -92,7 +92,9 @@
                                 <tr>
                                     <td>{{.Num}}</td>
                                     <td>{{.Name}}</td>
+									{{ if .ShowRawCount }}
 									<td>{{.RawCount}}</td>
+									{{ end }}
                                     <td>{{.ChannelCount}}</td>
                                 </tr>
                                 {{end}}
