@@ -49,6 +49,9 @@ func Index(c *gin.Context) {
 			}
 			channelType.Num = int64(i + 1)
 			channelType.Name = categoryList[i].Name
+			if categoryList[i].Type == "add" {
+				channelType.ShowRawCount = true
+			}
 			channelType.RawCount = categoryList[i].Rawcount
 			pageData.ChannelTypeList = append(pageData.ChannelTypeList, channelType)
 			continue
@@ -64,6 +67,9 @@ func Index(c *gin.Context) {
 
 			channelType.Num = int64(i + 1)
 			channelType.Name = categoryList[i].Name
+			if categoryList[i].Type == "add" {
+				channelType.ShowRawCount = true
+			}
 			channelType.RawCount = categoryList[i].Rawcount
 			pageData.ChannelTypeList = append(pageData.ChannelTypeList, channelType)
 			continue
@@ -73,6 +79,9 @@ func Index(c *gin.Context) {
 		channelType.ChannelCount = count
 		channelType.Num = int64(i + 1)
 		channelType.Name = categoryList[i].Name
+		if categoryList[i].Type == "add" {
+			channelType.ShowRawCount = true
+		}
 		channelType.RawCount = categoryList[i].Rawcount
 		pageData.ChannelTypeList = append(pageData.ChannelTypeList, channelType)
 	}
