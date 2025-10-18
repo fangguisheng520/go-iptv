@@ -45,5 +45,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
           tags: |
-            v1st233/iptv:latest
-            v1st233/iptv:${{ env.IMAGE_VERSION }}
+            fangguisheng/iptv:latest
+            fangguisheng/iptv:${{ env.IMAGE_VERSION }}
