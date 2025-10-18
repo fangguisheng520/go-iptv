@@ -122,7 +122,7 @@ func GetChannels(channel dto.DataReqDto) string {
 	}
 
 	var categoryList []models.IptvCategory
-	dao.DB.Model(&models.IptvCategory{}).Where("name in ? and enable = ? and type = ?", cList, 1, "add").Order("sort asc").Find(&categoryList)
+	dao.DB.Model(&models.IptvCategory{}).Where("name in ? and enable = ? and type != ?", cList, 1, "import").Order("sort asc").Find(&categoryList)
 
 	for _, v := range categoryList {
 		var tmpData []dto.ChannelData
