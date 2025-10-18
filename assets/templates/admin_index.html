@@ -92,9 +92,11 @@
                                 <tr>
                                     <td>{{.Num}}</td>
                                     <td>{{.Name}}</td>
-									{{ if .ShowRawCount }}
-									<td>{{.RawCount}}</td>
-									{{ end }}
+					                {{ if .ShowRawCount }}
+					                    <td>{{.RawCount}}</td>
+					                {{ else }}
+					                    <td></td> <!-- 为空单元格保持列结构 -->
+					                {{ end }}
                                     <td>{{.ChannelCount}}</td>
                                 </tr>
                                 {{end}}
