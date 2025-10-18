@@ -676,8 +676,6 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 		channelName := parts[0]
 		source := parts[1]
 
-		sortIndex2++
-
 		srcList := strings.Split(source, "#")
 		for _, src := range srcList {
 			src2 := strings.Trim(strings.NewReplacer(`"`, "", "'", "", "}", "", "{", "").Replace(src), " \r\n\t")
