@@ -655,6 +655,7 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 	repetNum := 0
 	delIDs := make([]int64, 0)
 	var sortIndex int64 = 1
+	var sortIndex2 int64 = 0
 
 	// 先处理循环，准备新增和标记要删除的旧数据
 	for _, line := range lines {
@@ -673,6 +674,8 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 		parts := strings.SplitN(line, ",", 2)
 		channelName := parts[0]
 		source := parts[1]
+
+		sortIndex2++
 
 		srcList := strings.Split(source, "#")
 		for _, src := range srcList {
@@ -730,7 +733,7 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			sortIndex++
 		}
 	}
-	log.Println("频道数量:", sortIndex)
+	log.Println("频道数量:", sortIndex2)
 
 	// 批量删除数据库中当前分类但新列表中没有的 URL
 	for _, ch := range oldChannels {
