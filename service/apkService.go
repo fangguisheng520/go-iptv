@@ -342,6 +342,7 @@ func AddUser(user dto.ApkUser, ip string) models.IptvUser {
 
 	switch cfg.App.NeedAuthor {
 	case 0:
+		dbData.author = user.Name
 		dbData.Status = 999
 		dbData.Marks = "无需授权"
 		dbData.Exp = 0
