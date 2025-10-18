@@ -95,7 +95,7 @@ func Authors(c *gin.Context) {
 	dbQuery.Offset(int(recStart)).Limit(int(recCounts)).Order(pageData.Order).Find(&pageData.Users)
 	pageData.Users = until.CheckUserDay(pageData.Users)
 
-	dao.DB.Model(&models.IptvMeals{}).Where("status=1").Find(&pageData.Meals)
+	dao.DB.Model(&models.IptvMeals{}).Where("status = 1").Find(&pageData.Meals)
 
 	c.HTML(http.StatusOK, "admin_authors.html", pageData)
 }

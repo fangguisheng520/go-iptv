@@ -34,7 +34,7 @@ func Index(c *gin.Context) {
 	dao.DB.Model(&models.IptvMeals{}).Count(&pageData.MealsCount)
 
 	var categoryList []models.IptvCategory
-	dao.DB.Model(&models.IptvCategory{}).Where("type = ?", "add").Find(&categoryList)
+	dao.DB.Model(&models.IptvCategory{}).Where("type != ?", "import").Find(&categoryList)
 	for i := range categoryList {
 		var count int64
 		var channelType dto.ChannelType

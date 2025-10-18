@@ -75,11 +75,6 @@ func Users(c *gin.Context) {
 	dbQuery := dao.DB.Table(models.IptvUserShow{}.TableName()+" u").Select(`u.*, m.name AS mealname`).
 		Joins("LEFT JOIN iptv_meals m ON u.meal = m.id").Where("u.status > ?", 0)
 
-	// 如果不是 admin，增加 author 条件
-	if username != "admin" {
-		dbQuery = dbQuery.Where("author = ?", username)
-	}
-
 	// 增加搜索条件
 	dbQuery = dbQuery.Where(
 		"u.name LIKE ? OR u.deviceid LIKE ? OR u.mac LIKE ? OR u.model LIKE ? OR u.ip LIKE ? OR u.region LIKE ? OR u.author LIKE ? OR u.marks LIKE ? OR CAST(u.status AS CHAR) LIKE ?",

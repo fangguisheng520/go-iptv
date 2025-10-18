@@ -41,6 +41,7 @@ func InitRouter(debug bool) *gin.Engine {
 	r.SetFuncMap(template.FuncMap{
 		"SiteName": func() string { return "清和IPTV管理系统" },
 		"Version":  func() string { return "清和IPTV " + until.GetVersion() },
+		"Author":   func() int64 { return dao.GetConfig().App.NeedAuthor },
 		"Add":      func(a, b int64) int64 { return a + b },
 		"Sub":      func(a, b int64) int64 { return a - b },
 		"Prefix":   func(name string) string { return strings.SplitN(name, "-", 2)[0] },
@@ -217,6 +218,7 @@ func loadTemplates(r *gin.Engine) {
 		tmpl := template.New("").Funcs(template.FuncMap{
 			"SiteName": func() string { return "清和IPTV管理系统" },
 			"Version":  func() string { return "清和IPTV " + until.GetVersion() },
+			"Author":   func() int64 { return dao.GetConfig().App.NeedAuthor },
 			"Add":      func(a, b int64) int64 { return a + b },
 			"Sub":      func(a, b int64) int64 { return a - b },
 			"Prefix":   func(name string) string { return strings.SplitN(name, "-", 2)[0] },

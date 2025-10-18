@@ -406,11 +406,11 @@ func SubmitMoveUp(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	}
 	var current, prev models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type = ?", name, "add").First(&current).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type not in ?", name, []string{"import", "auto"}).First(&current).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
 	if err := dao.DB.Model(&models.IptvCategory{}).
-		Where("sort < ? and type = ?", current.Sort, "add").
+		Where("sort < ? and type not in ?", current.Sort, []string{"import", "auto"}).
 		Order("sort DESC").
 		First(&prev).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到可交换的记录", Type: "danger"}
@@ -451,13 +451,13 @@ func SubmitMoveDown(params url.Values) dto.ReturnJsonDto {
 	var current, next models.IptvCategory
 
 	// 获取当前记录
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type = ?", name, "add").First(&current).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("name = ? and type not in ?", name, []string{"import", "auto"}).First(&current).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
 
 	// 获取下一条记录（sort 大于当前记录）
 	if err := dao.DB.Model(&models.IptvCategory{}).
-		Where("sort > ? and type = ?", current.Sort, "add").
+		Where("sort > ? and type not in ?", current.Sort, []string{"import", "auto"}).
 		Order("sort ASC").
 		First(&next).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到可交换的记录", Type: "danger"}
@@ -492,14 +492,14 @@ func SubmitMoveTop(params url.Values) dto.ReturnJsonDto {
 	}
 
 	var current models.IptvCategory
-	if err := dao.DB.Where("name = ? and type = ?", categoryName, "add").First(&current).Error; err != nil {
+	if err := dao.DB.Where("name = ? and type not in ?", categoryName, []string{"import", "auto"}).First(&current).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "未找到当前记录", Type: "danger"}
 	}
 
 	err := dao.DB.Transaction(func(tx *gorm.DB) error {
 		// 将所有记录的 sort 增加 1（为当前记录腾出最上位置）
 		if err := tx.Model(&models.IptvCategory{}).
-			Where("id != ? and type = ?", current.ID, "add").
+			Where("id != ? and type not in ?", current.ID, []string{"import", "auto"}).
 			Update("sort", gorm.Expr("sort + 1")).Error; err != nil {
 			return err
 		}
