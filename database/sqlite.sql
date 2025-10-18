@@ -16,7 +16,8 @@ CREATE TABLE iptv_category (
     autocategory TEXT DEFAULT NULL,
     latesttime TEXT DEFAULT NULL,
     repeat INTEGER DEFAULT 0,
-    sort INTEGER
+    sort INTEGER,
+    rawcount INTEGER NOT NULL DEFAULT 1
 );
 INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'auto','','',0,'',0,-2);
 INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'auto','','',0,'',0,-1);
