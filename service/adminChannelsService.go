@@ -729,8 +729,8 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			existMap[src2] = channelName
 			sortIndex++
 		}
-		log.Println("频道数量:", sortIndex)
 	}
+	log.Println("频道数量:", sortIndex)
 
 	// 批量删除数据库中当前分类但新列表中没有的 URL
 	for _, ch := range oldChannels {
