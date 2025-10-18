@@ -11,7 +11,7 @@ type IptvCategory struct {
 	AutoCategory int64  `gorm:"column:autocategory" json:"autocategory"`
 	Repeat       int64  `gorm:"column:repeat" json:"repeat"`
 	Sort         int64  `gorm:"column:sort" json:"sort"`
-	Rawcount     int64  `gorm:"column:rawcount" json:"rawcount"`
+	Rawcount     int64  `gorm:"column:rawcount;default:0" json:"rawcount"`
 }
 
 func (IptvCategory) TableName() string {
