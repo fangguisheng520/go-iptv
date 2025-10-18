@@ -734,7 +734,7 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			sortIndex++
 		}
 	}
-	log.Println("原始有效频道数量:", rawCount) // 新增日志输出
+	log.Printf("%s 的订阅频道数量: %d", cname, rawCount) // 新增日志输出
 	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", cname).Update("rawcount", rawCount)
 
 	// 批量删除数据库中当前分类但新列表中没有的 URL
