@@ -655,7 +655,8 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 	repetNum := 0
 	delIDs := make([]int64, 0)
 	var sortIndex int64 = 1
-	var sortIndex2 int64 = 0
+	// +++ 新增：原始有效频道计数器 +++
+	var rawCount int64 = 0
 
 	// 先处理循环，准备新增和标记要删除的旧数据
 	for _, line := range lines {
@@ -683,6 +684,9 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			if src2 == "" || channelName == "" {
 				continue
 			}
+
+			// +++ 新增：每处理一个有效频道就计数 +++
+			rawCount++
 
 			srclistUrls[src2] = struct{}{}
 
@@ -733,7 +737,7 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			sortIndex++
 		}
 	}
-	log.Println("频道数量:", sortIndex2)
+	log.Println("原始有效频道数量:", rawCount) // 新增日志输出
 
 	// 批量删除数据库中当前分类但新列表中没有的 URL
 	for _, ch := range oldChannels {
