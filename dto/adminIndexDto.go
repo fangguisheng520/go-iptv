@@ -19,4 +19,5 @@ type ChannelType struct {
 	Name         string `json:"name"`
 	ChannelCount int64  `json:"channelcount"`
 	RawCount     int64  `json:"rawcount"`
+	ShowRawCount bool   `json:"showrawcount"`
 }
