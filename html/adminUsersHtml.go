@@ -77,7 +77,7 @@ func Users(c *gin.Context) {
 
 	// 如果不是 admin，增加 author 条件
 	if username != "admin" {
-		dbQuery = dbQuery.Where("author = ?", username)
+		dbQuery = dbQuery.Where("author = ? OR author IS NULL OR author = ''", username)
 	}
 
 	// 增加搜索条件
