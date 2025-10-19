@@ -11,7 +11,7 @@ type XmlTV struct {
 }
 
 type XmlChannel struct {
-	ID          string      `xml:"id,attr"`
+	ID          string        `xml:"id,attr"`
 	DisplayName []DisplayName `xml:"display-name"`
 }
 
