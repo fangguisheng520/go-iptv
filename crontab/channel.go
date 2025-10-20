@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -68,7 +69,7 @@ func UpdateList() {
 
 	client := &http.Client{}
 	for _, v := range lists {
-		req, err := http.NewRequest("GET", v.Url, nil)
+		req, err := http.NewRequest("GET", url.QueryEscape(strings.TrimSpace(v.Url)), nil)
 		if err != nil {
 			log.Println("更新频道列表失败--->创建请求错误:: ", err.Error(), " URL: ", v.Url)
 			continue
@@ -258,7 +259,7 @@ func AddChannelList(cname, srclist string, doRepeat bool) {
 			}
 			// +++ 新增：每处理一个有效频道就计数 +++
 			rawCount++
-			
+
 			srclistUrls[src2] = struct{}{}
 
 			if doRepeat {

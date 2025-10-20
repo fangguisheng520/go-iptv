@@ -3,6 +3,7 @@ package dto
 type AdminClientDto struct {
 	LoginUser   string   `json:"loginuser"`
 	Title       string   `json:"title"`
+	ServerUrl   string   `json:"serverurl"`
 	Build       Build    `json:"build"`
 	App         App      `json:"app"`
 	Tips        Tips     `json:"tips"`

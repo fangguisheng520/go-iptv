@@ -148,6 +148,7 @@ func SetAppInfo(params url.Values) dto.ReturnJsonDto {
 	if buildStatus == 1 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "正在打包中，请稍后再试", Type: "danger"}
 	}
+	appServerUrl := params.Get("serverUrl")
 	appName := params.Get("app_appname")
 	appPackag := params.Get("app_packagename")
 	appVersion := params.Get("app_version")
@@ -155,7 +156,7 @@ func SetAppInfo(params url.Values) dto.ReturnJsonDto {
 	upSet := params.Get("up_sets")
 	upText := params.Get("up_text")
 
-	if appName == "" || appPackag == "" || appVersion == "" || appSign == "" {
+	if appName == "" || appPackag == "" || appVersion == "" || appSign == "" || appServerUrl == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 	} else {
 		cfg := dao.GetConfig()
@@ -172,6 +173,10 @@ func SetAppInfo(params url.Values) dto.ReturnJsonDto {
 		}
 		if appSignInt < 1 || appSignInt > 65535 {
 			return dto.ReturnJsonDto{Code: 0, Msg: "签名参数超过范围", Type: "danger"}
+		}
+
+		if cfg.ServerUrl != appServerUrl {
+			cfg.ServerUrl = appServerUrl
 		}
 
 		if upSet == "on" || upSet == "1" || upSet == "true" {

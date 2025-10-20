@@ -182,59 +182,28 @@ func DeleteEpg(params url.Values) dto.ReturnJsonDto {
 
 func BindChannel() dto.ReturnJsonDto {
 	// ClearBind() // 清空绑定
-	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败", Type: "danger"}
-	}
-
-	var epgList []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Find(&epgList).Error; err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "查询EPG失败", Type: "danger"}
-	}
-
-	for _, epgData := range epgList {
-		var tmpList []string
-		for _, channelData := range channelList {
-
-			if strings.EqualFold(channelData.Name, epgData.Name) {
-				tmpList = append(tmpList, channelData.Name)
-				break
-			}
-
-			nameList := strings.Split(epgData.Remarks, "|")
-			for _, name := range nameList {
-				if strings.EqualFold(channelData.Name, name) {
-					tmpList = append(tmpList, channelData.Name)
-					break
-				}
-			}
-		}
-		epgData.Content = strings.Join(until.MergeAndUnique(strings.Split(epgData.Content, ","), tmpList), ",")
-		if epgData.Content != "" {
-			dao.DB.Save(&epgData)
-		}
-	}
-	go until.GetCCTVChannelList(true)
-	go until.GetProvinceChannelList(true)
-	go until.CleanMealsXmlCacheAll() // 清除缓存
-	go until.ClearAutoChannelCache() // 清除缓存
+	until.BindChannel() // 绑定频道
 
 	return dto.ReturnJsonDto{Code: 1, Msg: "绑定成功", Type: "success"}
 }
 
 func ClearBind() dto.ReturnJsonDto {
 	dao.DB.Model(&models.IptvEpg{}).Where("content != ''").Update("content", "")
+	until.BindChannel() // 绑定频道
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除绑定成功", Type: "success"}
 }
 
 func ClearCache() dto.ReturnJsonDto {
 	dao.Cache.Clear()
+	until.GetCCTVChannelList(true)
+	until.GetProvinceChannelList(true)
+	until.CleanMealsXmlCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除缓存成功", Type: "success"}
 }
 
 func EpgImport(params url.Values) dto.ReturnJsonDto {
 	listName := params.Get("epgfromname")
-	url := params.Get("epgfromurl")
+	url := url.QueryEscape(strings.TrimSpace(params.Get("epgfromurl")))
 	ua := params.Get("epgfromua")
 	eId := params.Get("eid")
 

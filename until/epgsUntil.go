@@ -9,6 +9,7 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"log"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,9 +25,10 @@ func ConvertCntvToXml(cntv dto.CntvJsonChannel, eName string) dto.XmlTV {
 	// 添加频道
 	tv.Channels = append(tv.Channels, dto.XmlChannel{
 		ID: eName,
-		DisplayName: dto.DisplayName{
-			Lang:  "zh",
-			Value: eName,
+		DisplayName: []dto.DisplayName{
+			{Lang: "zh",
+				Value: eName,
+			},
 		},
 	})
 
@@ -117,18 +119,23 @@ func CleanMealsXmlCacheAll() {
 	for _, meal := range meals {
 		dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(meal.ID, 10))
 	}
+
+	MakeMealsXmlCacheAll()
 }
 
 func MakeMealsXmlCacheAll() {
 	var meals []models.IptvMeals
-	dao.DB.Model(&models.IptvMeals{}).Find(&meals)
+	dao.DB.Model(&models.IptvMeals{}).Where("status = 1").Find(&meals)
+	log.Println("重建套餐EPG订阅缓存")
 	for _, meal := range meals {
 		GetEpg(meal.ID)
 	}
+	log.Println("重建套餐EPG订阅缓存完成")
 }
 
 func CleanMealsXmlCacheOne(id int64) {
 	dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(id, 10))
+	MakeMealsXmlCacheAll()
 }
 
 func UpdataEpgList() bool {
@@ -137,7 +144,7 @@ func UpdataEpgList() bool {
 	for _, list := range epgLists {
 		cacheKey := "epgXmlFrom_" + list.Name
 		dao.Cache.Delete(cacheKey)
-		xmlStr := GetUrlData(list.Url, list.UA)
+		xmlStr := GetUrlData(url.QueryEscape(strings.TrimSpace(list.Url)), list.UA)
 		if xmlStr != "" {
 			xmlByte := []byte(xmlStr)
 			if dao.Cache.Set(cacheKey, xmlByte) != nil {
@@ -154,7 +161,7 @@ func UpdataEpgList() bool {
 			// 2️⃣ 匹配字母台，如 CCTV4EUO、CCTV4AME、CCTVF、CCTVE 等
 			reAlpha := regexp.MustCompile(`(?i)CCTV(\d*[A-Z]+)`)
 			for _, channel := range xmlTV.Channels {
-				remarks := channel.DisplayName.Value
+				remarks := channel.DisplayName[0].Value
 				upper := strings.ToUpper(remarks)
 				if strings.Contains(upper, "CCTV") {
 					switch {
@@ -172,7 +179,7 @@ func UpdataEpgList() bool {
 					remarks = fmt.Sprintf("%s|%s 4K|%s HD", remarks, remarks, remarks)
 				}
 				epgs = append(epgs, models.IptvEpg{
-					Name:    list.Remarks + "-" + channel.DisplayName.Value,
+					Name:    list.Remarks + "-" + channel.DisplayName[0].Value,
 					Status:  1,
 					Remarks: remarks,
 				})
@@ -182,8 +189,8 @@ func UpdataEpgList() bool {
 				// dao.DB.Model(&models.IptvEpg{}).Where("name like ?", list.Remarks+"-%").Delete(&models.IptvEpg{})
 				// dao.DB.Model(&models.IptvEpg{}).Create(&epgs)
 				SyncEpgs(list.Remarks, epgs) // 同步
-				CleanMealsXmlCacheAll()      // 清除缓存
-				go BindChannel()             // 绑定频道
+				go BindChannel()
+				// CleanMealsXmlCacheAll() // 清除缓存
 			}
 		}
 	}
@@ -197,7 +204,7 @@ func UpdataEpgListOne(id int64) bool {
 	}
 	cacheKey := "epgXmlFrom_" + list.Name
 	dao.Cache.Delete(cacheKey)
-	xmlStr := GetUrlData(list.Url, list.UA)
+	xmlStr := GetUrlData(url.QueryEscape(strings.TrimSpace(list.Url)), list.UA)
 	if xmlStr != "" {
 		xmlByte := []byte(xmlStr)
 		if dao.Cache.Set(cacheKey, xmlByte) != nil {
@@ -214,7 +221,7 @@ func UpdataEpgListOne(id int64) bool {
 		// 2️⃣ 匹配字母台，如 CCTV4EUO、CCTV4AME、CCTVF、CCTVE 等
 		reAlpha := regexp.MustCompile(`(?i)CCTV(\d*[A-Z]+)`)
 		for _, channel := range xmlTV.Channels {
-			remarks := channel.DisplayName.Value
+			remarks := channel.DisplayName[0].Value
 			if remarks == "" {
 				continue
 			}
@@ -236,7 +243,7 @@ func UpdataEpgListOne(id int64) bool {
 			}
 
 			epgs = append(epgs, models.IptvEpg{
-				Name:    list.Remarks + "-" + channel.DisplayName.Value,
+				Name:    list.Remarks + "-" + channel.DisplayName[0].Value,
 				Status:  1,
 				Remarks: remarks,
 			})
@@ -258,7 +265,7 @@ func UpdataEpgListOne(id int64) bool {
 func BindChannel() bool {
 	// ClearBind() // 清空绑定
 	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Where("status = 1").Order("category,id").Find(&channelList).Error; err != nil {
 		return false
 	}
 
@@ -289,10 +296,10 @@ func BindChannel() bool {
 			dao.DB.Save(&epgData)
 		}
 	}
-	go GetCCTVChannelList(true)
-	go GetProvinceChannelList(true)
+	GetCCTVChannelList(true)
+	GetProvinceChannelList(true)
 	go CleanMealsXmlCacheAll()
-	go MakeMealsXmlCacheAll()
+	// go MakeMealsXmlCacheAll()
 	return true
 }
 
@@ -469,9 +476,9 @@ func CleanTV(tv dto.XmlTV) dto.XmlTV {
 	ids := make(map[string]int)
 	i := 1
 	for _, ch := range tv.Channels {
-		if !seen[ch.DisplayName.Value] {
-			seen[ch.DisplayName.Value] = true
-			ids[ch.DisplayName.Value] = i
+		if !seen[ch.ID] {
+			seen[ch.ID] = true
+			ids[ch.ID] = i
 			ch.ID = strconv.Itoa(i)
 			uniqueChannels = append(uniqueChannels, ch)
 			i++
@@ -486,7 +493,12 @@ func CleanTV(tv dto.XmlTV) dto.XmlTV {
 	for _, p := range tv.Programmes {
 		if seen[p.Channel] {
 			p.Channel = strconv.Itoa(ids[p.Channel])
-			key := p.Channel + "_" + p.Start + "_" + p.Title.Value // 唯一键
+			t, err := time.Parse("20060102150405 -0700", p.Start)
+			if err != nil {
+				log.Println("解析时间错误:", err)
+				continue
+			}
+			key := p.Channel + "_" + fmt.Sprintf("%d", t.Unix()) + "_" + p.Title.Value // 唯一键
 
 			if !progSet[key] {
 				validProgrammes = append(validProgrammes, p)
@@ -520,17 +532,33 @@ func GetCntvEpgXml() dto.XmlTV {
 		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
 			continue
 		}
+		dName := []dto.DisplayName{}
+		exists := false
 		for _, channel := range channelList {
 			tmpData, err := GetEpgCntv(eName)
 			if err == nil {
 				tmpXml := ConvertCntvToXml(tmpData, eName)
-				cntvXml.Channels = append(cntvXml.Channels, dto.XmlChannel{
-					ID: eName,
-					DisplayName: dto.DisplayName{
+				for k, c := range cntvXml.Channels {
+					if c.ID == eName {
+						exists = true
+						dName = append(c.DisplayName, dto.DisplayName{
+							Lang:  "zh",
+							Value: channel.Name,
+						})
+						cntvXml.Channels[k].DisplayName = dName
+					}
+				}
+
+				if !exists {
+					dName = append(dName, dto.DisplayName{
 						Lang:  "zh",
 						Value: channel.Name,
-					},
-				})
+					})
+					cntvXml.Channels = append(cntvXml.Channels, dto.XmlChannel{
+						ID:          eName,
+						DisplayName: dName,
+					})
+				}
 
 				for _, p := range tmpXml.Programmes {
 					p.Channel = channel.Name
@@ -572,18 +600,36 @@ func GetProvinceEpgXml() dto.XmlTV {
 		if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", eFrom).First(&epgList).Error; err != nil {
 			continue
 		}
+		dName := []dto.DisplayName{}
+		exists := false
 		for _, channel := range channelList {
 			tmpXml := GetEpgListXml(epgList.Name, epgList.Url)
-			epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
-				ID: eName,
-				DisplayName: dto.DisplayName{
+
+			for k, c := range epgXml.Channels {
+				if c.ID == eName {
+					exists = true
+					dName = append(c.DisplayName, dto.DisplayName{
+						Lang:  "zh",
+						Value: channel.Name,
+					})
+					epgXml.Channels[k].DisplayName = dName
+				}
+			}
+
+			if !exists {
+				dName = append(dName, dto.DisplayName{
 					Lang:  "zh",
 					Value: channel.Name,
-				},
-			})
+				})
+				epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
+					ID:          eName,
+					DisplayName: dName,
+				})
+			}
+
 			var cId string
 			for _, c := range tmpXml.Channels {
-				if c.DisplayName.Value == eName {
+				if c.DisplayName[0].Value == eName {
 					cId = c.ID
 					break
 				}
@@ -591,7 +637,7 @@ func GetProvinceEpgXml() dto.XmlTV {
 
 			for _, p := range tmpXml.Programmes {
 				if p.Channel == cId {
-					p.Channel = channel.Name
+					p.Channel = eName
 					epgXml.Programmes = append(epgXml.Programmes, p)
 				}
 			}
@@ -626,26 +672,43 @@ func GetEpgXml(cname string) dto.XmlTV {
 		for _, epg := range epgs {
 			eType := strings.SplitN(epg.Name, "-", 2)[0]
 			eName := strings.SplitN(epg.Name, "-", 2)[1]
+			dName := []dto.DisplayName{}
+			exists := false
 			if eType == "cntv" {
 				tmpData, err := GetEpgCntv(eName)
 				if err == nil {
 					tmpXml := ConvertCntvToXml(tmpData, eName)
-					epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
-						ID: epg.Name,
-						DisplayName: dto.DisplayName{
+					for k, c := range epgXml.Channels {
+						if c.ID == eName {
+							exists = true
+							dName = append(c.DisplayName, dto.DisplayName{
+								Lang:  "zh",
+								Value: channel.Name,
+							})
+							epgXml.Channels[k].DisplayName = dName
+						}
+					}
+
+					if !exists {
+						dName = append(dName, dto.DisplayName{
 							Lang:  "zh",
 							Value: channel.Name,
-						},
-					})
+						})
+						epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
+							ID:          eName,
+							DisplayName: dName,
+						})
+					}
+
 					for _, p := range tmpXml.Programmes {
-						p.Channel = channel.Name
+						p.Channel = eName
 						epgXml.Programmes = append(epgXml.Programmes, p)
 					}
+					if len(epgXml.Channels) > 0 && len(epgXml.Programmes) > 0 {
+						break
+					}
+					continue
 				}
-				if len(epgXml.Channels) > 0 && len(epgXml.Programmes) > 0 {
-					break
-				}
-				continue
 			}
 
 			var epgList models.IptvEpgList
@@ -653,18 +716,31 @@ func GetEpgXml(cname string) dto.XmlTV {
 				continue
 			}
 			tmpXml := GetEpgListXml(epgList.Name, epgList.Url)
+			for k, c := range epgXml.Channels {
+				if c.ID == eName {
+					exists = true
+					dName = append(c.DisplayName, dto.DisplayName{
+						Lang:  "zh",
+						Value: channel.Name,
+					})
+					epgXml.Channels[k].DisplayName = dName
+				}
+			}
 
-			epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
-				ID: epg.Name,
-				DisplayName: dto.DisplayName{
+			if !exists {
+				dName = append(dName, dto.DisplayName{
 					Lang:  "zh",
 					Value: channel.Name,
-				},
-			})
+				})
+				epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
+					ID:          eName,
+					DisplayName: dName,
+				})
+			}
 
 			var cId string
 			for _, c := range tmpXml.Channels {
-				if c.DisplayName.Value == eName {
+				if c.DisplayName[0].Value == eName {
 					cId = c.ID
 					break
 				}
@@ -672,7 +748,7 @@ func GetEpgXml(cname string) dto.XmlTV {
 
 			for _, p := range tmpXml.Programmes {
 				if p.Channel == cId {
-					p.Channel = channel.Name
+					p.Channel = eName
 					epgXml.Programmes = append(epgXml.Programmes, p)
 				}
 			}

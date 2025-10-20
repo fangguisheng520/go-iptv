@@ -102,7 +102,7 @@ func UpdateInterval(params url.Values) dto.ReturnJsonDto {
 
 func AddList(params url.Values) dto.ReturnJsonDto {
 	listName := params.Get("listname")
-	url := params.Get("listurl")
+	url := url.QueryEscape(strings.TrimSpace(params.Get("listurl")))
 	ua := params.Get("listua")
 	cId := params.Get("cId")
 	autocategory := params.Get("autocategory")
@@ -341,8 +341,7 @@ func ForbiddenChannels(params url.Values) dto.ReturnJsonDto {
 			return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("启用频道 %s 成功\n", channel.Name), Type: "success"}
 		}
 	}
-	go until.CleanMealsXmlCacheAll() // 清除缓存
-	go until.ClearAutoChannelCache() // 清除缓存
+	go until.BindChannel()
 	return dto.ReturnJsonDto{Code: 0, Msg: "参数错误", Type: "danger"}
 }
 
@@ -655,8 +654,6 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 	repetNum := 0
 	delIDs := make([]int64, 0)
 	var sortIndex int64 = 1
-	// +++ 新增：原始有效频道计数器 +++
-	var rawCount int64 = 0
 
 	// 先处理循环，准备新增和标记要删除的旧数据
 	for _, line := range lines {
@@ -682,8 +679,6 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			if src2 == "" || channelName == "" {
 				continue
 			}
-			// +++ 新增：每处理一个有效频道就计数 +++
-			rawCount++
 
 			srclistUrls[src2] = struct{}{}
 
@@ -734,8 +729,6 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 			sortIndex++
 		}
 	}
-	log.Printf("%s 的订阅频道数量: %d", cname, rawCount) // 新增日志输出
-	dao.DB.Model(&models.IptvCategory{}).Where("name = ?", cname).Update("rawcount", rawCount)
 
 	// 批量删除数据库中当前分类但新列表中没有的 URL
 	for _, ch := range oldChannels {
@@ -764,8 +757,6 @@ func AddChannelList(cname, srclist string, doRepeat bool) (int, error) {
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
 		go BindChannel()
-		go until.CleanMealsXmlCacheAll()
-		go until.ClearAutoChannelCache()
 	}
 	return repetNum, nil
 }
@@ -788,8 +779,7 @@ func CategoryChangeStatus(params url.Values) dto.ReturnJsonDto {
 		dao.DB.Model(&models.IptvCategory{}).Where("name = ?", name).Update("enable", 1)
 		dao.DB.Model(&models.IptvCategory{}).Where("name like ?", "%("+name+")").Update("enable", 1)
 	}
-	go until.CleanMealsXmlCacheAll() // 清除缓存
-	go until.ClearAutoChannelCache() // 清除缓存
+	go until.BindChannel()
 	return dto.ReturnJsonDto{Code: 1, Msg: "Category " + cateData.Name + "状态修改成功", Type: "success"}
 }
 

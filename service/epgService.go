@@ -262,7 +262,7 @@ func getEpgXml(epgFrom, epgName string) dto.Response {
 	pos := 0
 
 	for _, channel := range xmlTV.Channels {
-		if strings.EqualFold(channel.DisplayName.Value, epgName) {
+		if strings.EqualFold(channel.DisplayName[0].Value, epgName) {
 			for _, programme := range xmlTV.Programmes {
 				if programme.Channel == channel.ID {
 					tS, _ := time.Parse(layout, programme.Start)
@@ -314,7 +314,7 @@ func getSimpleEpg(epgFrom, epgName string) dto.SimpleResponse {
 	const layout = "20060102150405 -0700"
 
 	for _, channel := range xmlTV.Channels {
-		if strings.EqualFold(channel.DisplayName.Value, epgName) {
+		if strings.EqualFold(channel.DisplayName[0].Value, epgName) {
 			for _, programme := range xmlTV.Programmes {
 				if programme.Channel == channel.ID {
 					tS, _ := time.Parse(layout, programme.Start)

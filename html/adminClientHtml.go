@@ -20,6 +20,7 @@ func Client(c *gin.Context) {
 	var pageData = dto.AdminClientDto{
 		LoginUser:   username,
 		Title:       "客户端设置",
+		ServerUrl:   cfg.ServerUrl,
 		Build:       cfg.Build,
 		App:         cfg.App,
 		Tips:        cfg.Tips,

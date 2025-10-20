@@ -1084,3 +1084,39 @@ function getBuildStatus() {
         });
     }, 1000); // 每秒执行一次
 }
+
+function toggleLock(btn) {
+    const input = document.getElementById("serverUrl");
+    const icon = btn.querySelector("i");
+
+    if (input.hasAttribute("readonly")) {
+		$.confirm({
+			title: '操作确认',
+			content: '修改APK连接地址后，需要重新构建APK，且之前APK可能出现网络连接失败，确认修改吗？',
+			type: 'green',
+			buttons: {
+				confirm: {
+					text: '确认',
+					btnClass: 'btn-danger',
+					action: function () {
+						input.removeAttribute("readonly");
+						input.focus();
+						input.value = window.location.origin;
+						icon.className = "mdi mdi-lock-open"; // 图标变为“解锁”
+						btn.classList.remove("btn-danger");
+						btn.classList.add("btn-primary"); // 解锁蓝色
+					}
+				},
+				cancel: {
+					text: '取消',
+					btnClass: 'btn-success'
+				}
+			}
+		});
+    } else {
+        input.setAttribute("readonly", true);
+        icon.className = "mdi mdi-lock"; // 图标变为“锁定”
+		btn.classList.remove("btn-primary");
+        btn.classList.add("btn-danger"); // 锁定红色
+    }
+}
