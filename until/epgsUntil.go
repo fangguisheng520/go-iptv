@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func ConvertCntvToXml(cntv dto.CntvJsonChannel, eName string) dto.XmlTV {
@@ -265,7 +267,7 @@ func UpdataEpgListOne(id int64) bool {
 func BindChannel() bool {
 	// ClearBind() // 清空绑定
 	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Where("status = 1").Order("category,id").Find(&channelList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
 		return false
 	}
 
@@ -712,9 +714,13 @@ func GetEpgXml(cname string) dto.XmlTV {
 			}
 
 			var epgList models.IptvEpgList
-			if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", eType).First(&epgList).Error; err != nil {
+			result := dao.DB.Where("remarks = ? and status = 1", eType).First(&epgList)
+
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.Error != nil {
+				// 没找到，跳过或执行其他逻辑
 				continue
 			}
+
 			tmpXml := GetEpgListXml(epgList.Name, epgList.Url)
 			for k, c := range epgXml.Channels {
 				if c.ID == eName {
