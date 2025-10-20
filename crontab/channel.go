@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -69,7 +68,7 @@ func UpdateList() {
 
 	client := &http.Client{}
 	for _, v := range lists {
-		req, err := http.NewRequest("GET", url.QueryEscape(strings.TrimSpace(v.Url)), nil)
+		req, err := http.NewRequest("GET", strings.TrimSpace(v.Url), nil)
 		if err != nil {
 			log.Println("更新频道列表失败--->创建请求错误:: ", err.Error(), " URL: ", v.Url)
 			continue

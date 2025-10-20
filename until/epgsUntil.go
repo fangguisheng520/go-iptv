@@ -9,7 +9,6 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"log"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -146,7 +145,7 @@ func UpdataEpgList() bool {
 	for _, list := range epgLists {
 		cacheKey := "epgXmlFrom_" + list.Name
 		dao.Cache.Delete(cacheKey)
-		xmlStr := GetUrlData(url.QueryEscape(strings.TrimSpace(list.Url)), list.UA)
+		xmlStr := GetUrlData(strings.TrimSpace(list.Url), list.UA)
 		if xmlStr != "" {
 			xmlByte := []byte(xmlStr)
 			if dao.Cache.Set(cacheKey, xmlByte) != nil {
@@ -206,7 +205,7 @@ func UpdataEpgListOne(id int64) bool {
 	}
 	cacheKey := "epgXmlFrom_" + list.Name
 	dao.Cache.Delete(cacheKey)
-	xmlStr := GetUrlData(url.QueryEscape(strings.TrimSpace(list.Url)), list.UA)
+	xmlStr := GetUrlData(strings.TrimSpace(list.Url), list.UA)
 	if xmlStr != "" {
 		xmlByte := []byte(xmlStr)
 		if dao.Cache.Set(cacheKey, xmlByte) != nil {
@@ -543,11 +542,22 @@ func GetCntvEpgXml() dto.XmlTV {
 				for k, c := range cntvXml.Channels {
 					if c.ID == eName {
 						exists = true
-						dName = append(c.DisplayName, dto.DisplayName{
-							Lang:  "zh",
-							Value: channel.Name,
-						})
-						cntvXml.Channels[k].DisplayName = dName
+						var tmpExists bool
+						for _, v := range c.DisplayName {
+							if v.Value == channel.Name {
+								tmpExists = true
+								break
+							}
+						}
+						if !tmpExists {
+							dName = append(c.DisplayName, dto.DisplayName{
+								Lang:  "zh",
+								Value: channel.Name,
+							})
+							cntvXml.Channels[k].DisplayName = dName
+
+						}
+						break
 					}
 				}
 
@@ -610,11 +620,22 @@ func GetProvinceEpgXml() dto.XmlTV {
 			for k, c := range epgXml.Channels {
 				if c.ID == eName {
 					exists = true
-					dName = append(c.DisplayName, dto.DisplayName{
-						Lang:  "zh",
-						Value: channel.Name,
-					})
-					epgXml.Channels[k].DisplayName = dName
+					var tmpExists bool
+					for _, v := range c.DisplayName {
+						if v.Value == channel.Name {
+							tmpExists = true
+							break
+						}
+					}
+					if !tmpExists {
+						dName = append(c.DisplayName, dto.DisplayName{
+							Lang:  "zh",
+							Value: channel.Name,
+						})
+						epgXml.Channels[k].DisplayName = dName
+
+					}
+					break
 				}
 			}
 
@@ -683,11 +704,22 @@ func GetEpgXml(cname string) dto.XmlTV {
 					for k, c := range epgXml.Channels {
 						if c.ID == eName {
 							exists = true
-							dName = append(c.DisplayName, dto.DisplayName{
-								Lang:  "zh",
-								Value: channel.Name,
-							})
-							epgXml.Channels[k].DisplayName = dName
+							var tmpExists bool
+							for _, v := range c.DisplayName {
+								if v.Value == channel.Name {
+									tmpExists = true
+									break
+								}
+							}
+							if !tmpExists {
+								dName = append(c.DisplayName, dto.DisplayName{
+									Lang:  "zh",
+									Value: channel.Name,
+								})
+								epgXml.Channels[k].DisplayName = dName
+
+							}
+							break
 						}
 					}
 
