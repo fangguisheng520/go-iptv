@@ -203,7 +203,7 @@ func ClearCache() dto.ReturnJsonDto {
 
 func EpgImport(params url.Values) dto.ReturnJsonDto {
 	listName := params.Get("epgfromname")
-	url := url.QueryEscape(strings.TrimSpace(params.Get("epgfromurl")))
+	url := strings.TrimSpace(params.Get("epgfromurl"))
 	ua := params.Get("epgfromua")
 	eId := params.Get("eid")
 

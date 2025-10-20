@@ -102,7 +102,7 @@ func UpdateInterval(params url.Values) dto.ReturnJsonDto {
 
 func AddList(params url.Values) dto.ReturnJsonDto {
 	listName := params.Get("listname")
-	url := url.QueryEscape(strings.TrimSpace(params.Get("listurl")))
+	url := strings.TrimSpace(params.Get("listurl"))
 	ua := params.Get("listua")
 	cId := params.Get("cId")
 	autocategory := params.Get("autocategory")
