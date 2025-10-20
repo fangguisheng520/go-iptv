@@ -83,7 +83,8 @@
 							<tr>
 								<th>#</th>
 								<th>频道分类</th>
-								<th>分类频道数量</th>
+								<th>订阅源频道数量</th>
+								<th>分类频道数量(去重后)</th>
 							</tr>
 							</thead>
 							<tbody>
@@ -91,6 +92,11 @@
                                 <tr>
                                     <td>{{.Num}}</td>
                                     <td>{{.Name}}</td>
+					                {{ if .ShowRawCount }}
+					                    <td>{{.RawCount}}</td>
+					                {{ else }}
+					                    <td>-</td> <!-- 为空单元格保持列结构 -->
+					                {{ end }}
                                     <td>{{.ChannelCount}}</td>
                                 </tr>
                                 {{end}}
