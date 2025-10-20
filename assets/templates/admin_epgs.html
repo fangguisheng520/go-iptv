@@ -85,8 +85,8 @@
 														text-align:center; cursor:pointer;">×</span>
 												</div>
 											</td>
-                                            <td align="left">{{.Content}}</td>
-                                            <td align="left">
+                                            <td align="center">{{.Content}}</td>
+                                            <td align="right">
                                                 <button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.ID}}" class="btn btn-xs {{if eq .Status 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>&nbsp;
                                                 <button class="btn btn-xs btn-info" type="button" value="{{.ID}}" data-toggle="modal" onclick="epgEdit(this)" data-target="#editepg">编辑</button>&nbsp;
 												<button class="btn btn-xs btn-info" type="button" name="bdingepg" value="{{.ID}}" data-toggle="modal" onclick="epgsGetChannel(this)" data-target="#bdingepg">手动绑定</button>&nbsp;
