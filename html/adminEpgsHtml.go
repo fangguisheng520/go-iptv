@@ -84,16 +84,14 @@ func Epgs(c *gin.Context) {
 		log.Println("查询epg失败:", err)
 	}
 
-	logoList := until.GetLogs() // 获取logo列表
-
-	cfg := dao.GetConfig()
+	logoList := until.GetLogos() // 获取logo列表
 
 	for k, v := range pageData.Epgs {
 		epgName := strings.SplitN(v.Name, "-", 2)[1]
 		for _, logo := range logoList {
 			logoName := strings.Split(logo, ".")[0]
 			if strings.EqualFold(epgName, logoName) {
-				pageData.Epgs[k].Logo = cfg.ServerUrl + "/logo/" + logo
+				pageData.Epgs[k].Logo = "/logo/" + logo
 			}
 		}
 	}

@@ -430,7 +430,7 @@ func CheckLogo(path string) (bool, error) {
 	return false, nil
 }
 
-func GetLogs() []string {
+func GetLogos() []string {
 	// 获取指定目录下的所有png文件
 	dir := "/config/logo"
 	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
@@ -446,6 +446,32 @@ func GetLogs() []string {
 		pngs[i] = filepath.Base(file)
 	}
 	return pngs
+}
+
+func EpgNameGetLogo(eNmae string) string {
+	// 获取指定目录下的所有png文件
+	dir := "/config/logo"
+	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
+	if err != nil {
+		return ""
+	}
+	if len(files) == 0 {
+		return ""
+	}
+
+	pngs := make([]string, len(files))
+	for i, file := range files {
+		pngs[i] = filepath.Base(file)
+	}
+
+	epgName := strings.SplitN(eNmae, "-", 2)[1]
+	for _, logo := range pngs {
+		logoName := strings.Split(logo, ".")[0]
+		if strings.EqualFold(epgName, logoName) {
+			return "/logo/" + logo
+		}
+	}
+	return ""
 }
 
 func IsValidHost(host string) bool {

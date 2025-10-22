@@ -76,7 +76,7 @@
                                             <td align="center">{{ if eq .Status 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
 											<td align="center">
 												 <div id="logo_{{ .ID }}" style="position:relative; {{if eq .Logo ""}}display:none;{{end}}">
-													<img id="iconImg" src="{{ .Logo }}" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;">
+													<img id="logoImg" src="{{ .Logo }}" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;">
 													<!-- 删除按钮 -->
 													<span id="deleteIconView" onclick="deleteLogo('{{ .ID }}')" data-name="{{ .ID }}" id="{{ .ID }}" style="
 														position:absolute; top:-8px; right:-8px;

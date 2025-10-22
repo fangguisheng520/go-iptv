@@ -195,8 +195,6 @@ func ClearBind() dto.ReturnJsonDto {
 
 func ClearCache() dto.ReturnJsonDto {
 	dao.Cache.Clear()
-	until.GetCCTVChannelList(true)
-	until.GetProvinceChannelList(true)
 	until.CleanMealsXmlCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "清除缓存成功", Type: "success"}
 }

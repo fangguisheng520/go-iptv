@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -52,6 +54,17 @@ func (fc *FileCache) Get(key string) ([]byte, error) {
 	if fc.ExpireAtZero && expiredAtMidnight(info.ModTime()) {
 		os.Remove(path)
 		return nil, os.ErrNotExist
+	}
+
+	return os.ReadFile(path)
+}
+
+func (fc *FileCache) GetNotExpired(key string) ([]byte, error) {
+	path := filepath.Join(fc.Dir, key)
+
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil, err
 	}
 
 	return os.ReadFile(path)
@@ -117,4 +130,24 @@ func (fc *FileCache) GetJSON(key string, v interface{}) error {
 		return err
 	}
 	return json.Unmarshal(data, v)
+}
+
+// 保存任意结构体
+func (fc *FileCache) SetStruct(key string, v interface{}) error {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(v); err != nil {
+		return err
+	}
+	return fc.Set(key, buf.Bytes())
+}
+
+// 读取结构体
+func (fc *FileCache) GetStruct(key string, v interface{}) error {
+	data, err := fc.Get(key)
+	if err != nil {
+		return err
+	}
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	return dec.Decode(v)
 }

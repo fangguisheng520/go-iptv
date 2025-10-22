@@ -36,8 +36,9 @@ jobs:
         run: |
           echo "${{ env.IMAGE_VERSION }}" > Version
 
-      # 6. 构建并推送镜像
-      - name: Build and Push
+      # 6. 构建并推送（当 tag 中不包含 beta 时推送 latest）
+      - name: Build and Push (with latest)
+        if: ${{ !contains(env.IMAGE_VERSION, 'beta') }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -46,4 +47,16 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/iptv:latest
+            ${{ secrets.DOCKER_USERNAME }}/iptv:${{ env.IMAGE_VERSION }}
+
+      # 7. 构建并推送（当 tag 中包含 beta 时不推送 latest）
+      - name: Build and Push (beta only)
+        if: ${{ contains(env.IMAGE_VERSION, 'beta') }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
+          tags: |
             ${{ secrets.DOCKER_USERNAME }}/iptv:${{ env.IMAGE_VERSION }}

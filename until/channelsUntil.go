@@ -1,13 +1,15 @@
 package until
 
 import (
-	"bufio"
 	"fmt"
 	"go-iptv/dao"
 	"go-iptv/models"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 // convertListFormat 将 m3u 或 "频道,URL" 格式统一转换为 "频道,URL\n"
@@ -79,134 +81,6 @@ func ConvertDataToMap(data string) map[string]string {
 	}
 
 	return result
-}
-
-func GetCCTVChannelList(rebuild bool) string {
-	var res string
-	var channelCache = "cctv_channel_list"
-	if dao.Cache.ChannelExists(channelCache) && !rebuild {
-		data, err := dao.Cache.Get(channelCache)
-		if err == nil {
-			return string(data)
-		}
-	}
-
-	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "cntv-%").Find(&epgs).Error; err != nil {
-		return res
-	}
-
-	for _, epg := range epgs {
-		if epg.Content == "" {
-			continue
-		}
-		nameList := strings.Split(epg.Content, ",")
-		var channelList []models.IptvChannel
-		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
-			continue
-		}
-		for _, channel := range channelList {
-			res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
-		}
-	}
-	go dao.Cache.Set(channelCache, []byte(res))
-	return res
-}
-
-func GetProvinceChannelList(rebuild bool) string {
-	var res string
-	var channelCache = "province_channel_list"
-	if dao.Cache.ChannelExists(channelCache) && !rebuild {
-		data, err := dao.Cache.Get(channelCache)
-		if err == nil {
-			return string(data)
-		}
-	}
-
-	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "51zmt-%卫视%").Find(&epgs).Error; err != nil {
-		return res
-	}
-	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Find(&channelList).Error; err != nil {
-		return res
-	}
-
-	for _, epg := range epgs {
-		if epg.Content == "" {
-			continue
-		}
-		nameList := strings.Split(epg.Content, ",")
-		var channelList []models.IptvChannel
-		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
-			continue
-		}
-		for _, channel := range channelList {
-			res += fmt.Sprintf("%s,%s\n", channel.Name, channel.Url)
-		}
-	}
-	go dao.Cache.Set(channelCache, []byte(res))
-	return res
-}
-
-func ClearAutoChannelCache() {
-	dao.Cache.Delete("province_channel_list")
-	dao.Cache.Delete("cctv_channel_list")
-}
-
-func Txt2M3u8(txtData, host, token string) string {
-
-	epgURL := host + "/epg/" + token + "/e.xml" // ✅ 可自行修改 EPG 地址
-	logoBase := host + "/logo/"                 // ✅ 可自行修改 logo 前缀
-
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
-
-	scanner := bufio.NewScanner(strings.NewReader(txtData))
-	currentGroup := "未分组"
-	lineNum := 0
-
-	for scanner.Scan() {
-		lineNum++
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		// 检查是否为分组行（如 “中央台,#genre#”）
-		if strings.HasSuffix(line, "#genre#") {
-			group := strings.TrimSuffix(line, ",#genre#")
-			currentGroup = strings.TrimSpace(group)
-			continue
-		}
-
-		// 普通频道行
-		parts := strings.SplitN(line, ",", 2)
-		if len(parts) != 2 {
-			fmt.Printf("Txt2M3u8: 第 %d 行格式错误: %s\n", lineNum, line)
-			continue
-		}
-
-		name := strings.TrimSpace(parts[0])
-		url := strings.TrimSpace(parts[1])
-		epgName := GetEpgName(name)
-		var logo string
-		if epgName != "" {
-			logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", epgName)
-		}
-
-		// ✅ 生成 #EXTINF 信息
-		extinf := fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s",%s`,
-			name, name, logo, currentGroup, name)
-		builder.WriteString(extinf + "\n")
-		builder.WriteString(url + "\n\n")
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Println("Txt2M3u8: m3u8解析出错:", err)
-	}
-
-	return builder.String()
 }
 
 func M3UToGenreTXT(m3u string) string {
@@ -306,4 +180,269 @@ func IsM3UContent(data string) bool {
 	}
 
 	return true
+}
+
+func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
+
+	var result []models.IptvChannelShow
+
+	autoCaCheKey := "autoCategory_" + strconv.FormatInt(category.ID, 10)
+	if dao.Cache.Exists(autoCaCheKey) {
+		err := dao.Cache.GetStruct(autoCaCheKey, result)
+		if err == nil {
+			return result
+		}
+	}
+
+	var channelList []models.IptvChannelShow
+	if err := dao.DB.Table(models.IptvChannelShow{}.TableName() + " AS c").
+		Select("c.*, e.name AS epg_name").
+		Joins("LEFT JOIN " + models.IptvEpg{}.TableName() + " AS e ON c.e_id = e.id AND e.status = 1").
+		Where("c.e_id != 0 and c.status = 1").
+		Order("c_id,sort asc").
+		Find(&channelList).Error; err != nil {
+		log.Println("获取频道列表失败:", err)
+		return result
+	}
+
+	re := regexp.MustCompile(category.Rules)
+
+	for _, ch := range channelList {
+		if re.MatchString(ch.Name) {
+			if ch.EpgName != "" {
+				ch.Logo = EpgNameGetLogo(ch.EpgName)
+			}
+			result = append(result, ch)
+		}
+	}
+
+	if err := dao.Cache.SetStruct(autoCaCheKey, result); err != nil {
+		log.Println("epg缓存设置失败:", err)
+		dao.Cache.Delete(autoCaCheKey)
+	}
+
+	return result
+}
+
+func CaGetChannels(categoryDb models.IptvCategory) []models.IptvChannelShow {
+
+	if categoryDb.Type == "auto" {
+		return GetAutoChannelList(categoryDb)
+	} else {
+		var channels []models.IptvChannelShow
+		dao.DB.Table(models.IptvChannelShow{}.TableName()+" AS c").
+			Select("c.*, e.name AS epg_name").
+			Joins("LEFT JOIN "+models.IptvEpg{}.TableName()+" AS e ON c.e_id = e.id AND e.status = 1").
+			Where("c.c_id = ?", categoryDb.ID).
+			Order("sort asc").
+			Find(&channels)
+		for i, ch := range channels {
+			if ch.EpgName != "" {
+				channels[i].Logo = EpgNameGetLogo(ch.EpgName)
+			}
+		}
+		return channels
+	}
+
+}
+
+func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, error) {
+	if srclist == "" {
+		// 如果 srclist 为空，删除当前分类下所有数据
+		if err := dao.DB.Transaction(func(tx *gorm.DB) error {
+			return tx.Delete(&models.IptvChannel{}, "c_id = ?", cId).Error
+		}); err != nil {
+			return 0, err
+		}
+		go BindChannel()
+		return 0, nil
+	}
+
+	// 转换为 "频道,URL" 格式
+	srclist = ConvertListFormat(srclist)
+
+	// 获取 cname 分类下已有的频道
+	var oldChannels []models.IptvChannel
+	if err := dao.DB.Model(&models.IptvChannel{}).Where("c_id = ?", cId).Find(&oldChannels).Error; err != nil {
+		return 0, err
+	}
+
+	// 当前分类已有 URL -> channelName（大小写敏感）
+	existMap := make(map[string]string)
+	for _, ch := range oldChannels {
+		if ch.Url != "" && ch.Name != "" {
+			existMap[ch.Url] = ch.Name
+		}
+	}
+
+	existHandMap := make(map[string]string)
+	if doRepeat {
+		var handChannels []models.IptvChannel
+		dao.DB.Table(models.IptvChannel{}.TableName()+" AS c").
+			Select("c.name, c.url").
+			Joins("LEFT JOIN "+models.IptvCategory{}.TableName()+" AS cat ON c.c_id = cat.id and cat.enable = 1").
+			Where("cat.type = ?", "user").
+			Scan(&handChannels)
+
+		for _, ch := range handChannels {
+			if ch.Url != "" && ch.Name != "" {
+				existHandMap[ch.Url] = ch.Name
+			}
+		}
+	}
+
+	// 正则清洗
+	reSpaces := regexp.MustCompile(`\s+`)
+	reGenre := regexp.MustCompile(`#genre#`)
+	reVer := regexp.MustCompile(`ver\..*?\.m3u8`)
+	reTme := regexp.MustCompile(`t\.me.*?\.m3u8`)
+	reBbsok := regexp.MustCompile(`https(.*)www\.bbsok\.cf[^>]*`)
+
+	lines := strings.Split(srclist, "\n")
+	newChannels := make([]models.IptvChannel, 0)
+	srclistUrls := make(map[string]struct{})
+	repetNum := 0
+	delIDs := make([]int64, 0)
+	var sortIndex int64 = 1
+	var rawCount int64 = 0
+
+	// 先处理循环，准备新增和标记要删除的旧数据
+	for _, line := range lines {
+		line = strings.ReplaceAll(line, " ,", ",")
+		line = strings.ReplaceAll(line, "\r", "")
+		line = reSpaces.ReplaceAllString(line, "")
+		line = reGenre.ReplaceAllString(line, "")
+		line = reVer.ReplaceAllString(line, "")
+		line = reTme.ReplaceAllString(line, "")
+		line = reBbsok.ReplaceAllString(line, "")
+
+		log.Println(line)
+
+		if line == "" {
+			continue
+		}
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "http") {
+			if _, ok := srclistUrls[line]; ok {
+				repetNum++
+				continue
+			}
+			srclistUrls[line] = struct{}{}
+		}
+
+		parts := strings.SplitN(line, ",", 2)
+		channelName := parts[0]
+
+		var chStatus int64 = 1
+		if strings.Contains(channelName, "|") {
+			tmp := strings.SplitN(channelName, "|", 2)
+			if tmp[0] == "0" {
+				chStatus = 0
+			}
+			channelName = tmp[1]
+		}
+
+		source := parts[1]
+
+		srcList := strings.Split(source, "#")
+
+		for _, src := range srcList {
+			src2 := strings.Trim(strings.NewReplacer(`"`, "", "'", "", "}", "", "{", "").Replace(src), " \r\n\t")
+			if src2 == "" || channelName == "" {
+				continue
+			}
+			rawCount++
+
+			srclistUrls[src2] = struct{}{}
+
+			if doRepeat {
+				if _, exists := existHandMap[src2]; exists {
+					for _, ch := range oldChannels {
+						if ch.Url == src2 {
+							delIDs = append(delIDs, ch.ID)
+						}
+					}
+					repetNum++
+					continue
+				}
+			}
+
+			if oldName, exists := existMap[src2]; exists {
+				if oldName != channelName {
+					// URL 相同但 channelName 不同 → 删除旧数据
+					for _, ch := range oldChannels {
+						if ch.Url == src2 {
+							delIDs = append(delIDs, ch.ID)
+						}
+					}
+				} else {
+					// URL + channelName 相同 → 检查顺序
+					for _, ch := range oldChannels {
+						if ch.Url == src2 && ch.Name == channelName && ch.Sort != sortIndex || ch.Status != chStatus {
+							ch.Sort = sortIndex
+							if err := dao.DB.Model(&models.IptvChannel{}).
+								Where("id = ?", ch.ID).
+								Updates(map[string]interface{}{
+									"sort":   sortIndex,
+									"status": chStatus,
+								}).Error; err != nil {
+								log.Println("更新顺序失败:", err)
+							}
+							break
+						}
+					}
+					sortIndex++
+					continue
+				}
+			}
+
+			// 新增数据
+			newChannels = append(newChannels, models.IptvChannel{
+				Name:   channelName,
+				Url:    src2,
+				CId:    cId,
+				ListId: listId,
+				Sort:   sortIndex,
+				Status: chStatus,
+			})
+			existMap[src2] = channelName
+			sortIndex++
+		}
+	}
+
+	// 批量删除数据库中当前分类但新列表中没有的 URL
+	for _, ch := range oldChannels {
+		if _, ok := srclistUrls[ch.Url]; !ok {
+			delIDs = append(delIDs, ch.ID)
+		}
+	}
+
+	// 在事务中执行删除和新增
+	if err := dao.DB.Transaction(func(tx *gorm.DB) error {
+		if len(delIDs) > 0 {
+			if err := tx.Delete(&models.IptvChannel{}, delIDs).Error; err != nil {
+				return err
+			}
+		}
+		if len(newChannels) > 0 {
+			if err := tx.Create(&newChannels).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return repetNum, err
+	}
+
+	// 只有当有新增或删除时才执行异步更新
+	if len(newChannels) > 0 || len(delIDs) > 0 {
+		go BindChannel()
+	}
+	log.Printf("订阅频道数量: %d", rawCount) // 新增日志输出
+	dao.DB.Model(&models.IptvCategory{}).Where("id = ?", cId).Update("rawcount", rawCount)
+	return repetNum, nil
 }

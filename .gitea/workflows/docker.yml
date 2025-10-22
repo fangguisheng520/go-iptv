@@ -49,6 +49,7 @@ jobs:
 
       # 7. 构建并推送镜像
       - name: Build and Push
+        if: ${{ !contains(env.IMAGE_VERSION, 'beta') }} # 排除 beta 版本
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -59,4 +60,18 @@ jobs:
             network=host
           tags: |
             ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ vars.DOCKER_USERNAME }}/iptv:latest
+            ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ vars.DOCKER_USERNAME }}/iptv:${{ env.IMAGE_VERSION }}
+      
+      # 8. 构建并推送镜像
+      - name: Build and Push (beta only)
+        if: ${{ contains(env.IMAGE_VERSION, 'beta') }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile-cn
+          push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          driver-opts: |
+            network=host
+          tags: |
             ${{ vars.DOCKER_REGISTRY || 'docker.io' }}/${{ vars.DOCKER_USERNAME }}/iptv:${{ env.IMAGE_VERSION }}

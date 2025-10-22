@@ -9,7 +9,7 @@
 		<div class="row">
 			<div class="col-lg-12">
 				<div class="card">
-					<div class="card-header"><h4>频道设置</h4></div>
+					<div class="card-header"><h4>频道源设置</h4></div>
 					<div class="tab-content">
 						<div class="tab-pane active">
 	                		<div class="table-responsive" >
@@ -19,7 +19,7 @@
 											<form class="form-inline" method="post" id='autoupdate_form' action="/admin/channels">
 											<label>列表设置：</label>
 												<span>更新间隔</span>
-												<input type="text" name='updateinterval' style="width: 50px;height: 20px;" value="{{ .UpdateInterval }}" size="5"><span>&nbsp;分</span>
+												<input type="text" class="form-control" name='updateinterval' style="width: 60px;height: 25px;" value="{{ .UpdateInterval }}" size="5"><span>&nbsp;分</span>
 												<label class="lyear-checkbox checkbox-inline">
 													<input type="checkbox" name="autoupdate" {{ if .AutoUpdate }} checked="checked"{{ end }}>
 													<span>自动更新</span>
@@ -27,12 +27,6 @@
 												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="update_interval">保存设定</button>
 												<button class="btn btn-xs btn-info btn-default" type="button" onclick="submitFormPOST(this)" name="updatelistall">更新全部</button>
 												<button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addlist">添加列表</button>
-											<!-- </form>
-											<form class="form-inline" method="post" id='paylistfile_form'> -->
-												<label class="btn btn-xs btn-info btn-default" style="margin:0;">
-													<span>文件导入</span>
-													<input type="file" name="paylistfile" onchange="uploadPayList(event)" id="paylistfile" style="display:none;">
-												</label>
 											</form>
 										</td>
 									</tr>
@@ -51,19 +45,19 @@
 									{{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
 									{{if .Url }}
 									<tr>
-										<td style="display:none;" class="c-id" data-value="{{ .ID }}">{{ .ID }}</td>
-										<td style="display:none;" class="c-ua" data-value="{{ .UA }}">{{ .UA }}</td>
-										<td align="center" class="c-name" data-value="{{ .Name }}">{{ .Name }}</td>
-										<td align="center" class="c-url" data-value="{{ .Url }}">{{ .Url }}</td>
+										<td style="display:none;" class="cl-id" data-value="{{ .ID }}">{{ .ID }}</td>
+										<td style="display:none;" class="cl-ua" data-value="{{ .UA }}">{{ .UA }}</td>
+										<td align="center" class="cl-name" data-value="{{ .Name }}">{{ .Name }}</td>
+										<td align="center" class="cl-url" data-value="{{ .Url }}">{{ .Url }}</td>
 										<td align="center">{{ .LatestTime }}</td>
-										<td align="center" class="c-a" data-value="{{ .AutoCategory }}">{{if eq .AutoCategory 1 }}启用{{else}}关闭{{ end }}</td>
-										<td align="center" class="c-r" data-value="{{ .Repeat }}">{{if eq .Repeat 1 }}启用{{else}}关闭{{ end }}</td>
-										<td align="center" style="font-size:12px;font-weight: bold;">{{if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
+										<td align="center" class="cl-a" data-value="{{ .AutoCategory }}">{{if eq .AutoCategory 1 }}启用{{else}}关闭{{ end }}</td>
+										<td align="center" class="cl-r" data-value="{{ .Repeat }}">{{if eq .Repeat 1 }}启用{{else}}关闭{{ end }}</td>
+										<td align="center" class="status-show" style="font-size:12px;font-weight: bold;">{{if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
 										<td>
-											<button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.Name}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
-											<button class="btn btn-xs btn-info" type="button" name="updatelist" value="{{.Name}}" onclick="tdBtnPOST(this)">更新</button>
-											<button class="btn btn-xs btn-info" type="button" name="editCategory" value="{{.Name}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addlist">编辑</button>
-											<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="{{.Name}}">删除</button>
+											<button type="button" onclick="tdBtnPOST(this)" name="categoryListStatus" value="{{.ID}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
+											<button class="btn btn-xs btn-info" type="button" name="updatelist" value="{{.ID}}" onclick="tdBtnPOST(this)">更新</button>
+											<button class="btn btn-xs btn-info" type="button" name="editCategory" value="{{.ID}}" data-toggle="modal" onclick="getCategoryList(this)" data-target="#addlist">编辑</button>
+											<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="{{.ID}}">删除</button>
 										</td>
 									</tr>
 									{{ end }}{{ end }}{{end}}
@@ -73,12 +67,12 @@
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#cId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#repeat').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#clId').val('');$('#listname').val('');$('#listurl').val('');$('#autocategory').prop('checked', false);$('#repeat').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
 												<h4 class="modal-title">外部列表</h4>
 											</div>
 											<form method="post" action="/admin/channels">
 												<div class="modal-body">
-													<input type="hidden" id="cId" data-value="" name="cId" value="">
+													<input type="hidden" id="clId" data-value="" name="clId" value="">
 													<div class="form-group">
 														<label for="recipient-name" class="control-label">分类名称：</label>
 														<input type="text" class="form-control" id="listname" name="listname" placeholder="分类名称">
@@ -94,12 +88,12 @@
 													</div>
 													<div class="form-group">
    														<input type="checkbox" id="autocategory" name="autocategory" value="on"></input>
-   														<label for="message-text" class="control-label">启用自动分组</label>
+   														<label for="autocategory" class="control-label">启用自动分组</label>
 														<small class="help-block">支持txt格式#genre#分组、支持m3u8格式group-title分组</small>
 													</div>
 													<div class="form-group">
    														<input type="checkbox" id="repeat" name="repeat" value="on"></input>
-   														<label for="message-text" class="control-label">启用去重</label>
+   														<label for="repeat" class="control-label">启用去重</label>
 														<small class="help-block">更新源数据时，判断频道链接是否和手动添加的列表是否重复</small>
 													</div>
 												</div>
@@ -115,75 +109,269 @@
 						</div>
 					</div>
 				</div>
+			</div>
+			<div class="col-lg-12">
 				<div class="card">
-					<div class="card-header">
-						<h4>
-							默认频道
-						</h4>
-					</div>
-            			<div class="card-body">
-	                		<div class="table-responsive" >
-								<table class="table table-bordered table-vcenter" style="min-width:750px;">
-										    <tr>
-											    <td colspan="5">
-							<form class="form-inline" method="post" style="padding: 0 15px 0 15px;" action="/admin/channels">
-								<label class="control-label">分类管理：</label>
-								<div class="input-group">
-									<div class="input-group-btn">
-                                        <input type="hidden" id="typename0" name="old_name" value=""/>
-										<input class="form-control" style="width: 200px;height: 30px;" id="typename" type="text" size="10" name="category" value="" placeholder="分类名称"/>
-										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_addtype">增加分类</button>
-										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this)" name="submit_deltype">删除分类</button>
-										<button class="btn btn-sm btn-default" type="button" onclick="submitFormPOST(this,true)" name="submit_modifytype">修改分类</button>
-										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this,true)" name="submit_moveup">上移分类</button>
-										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this,true)" name="submit_movedown">下移分类</button>
-										<button class="btn btn-sm btn-default showlist" type="button" onclick="submitFormPOST(this,true)" name="submit_movetop">移至最上</button>
-									</div>
-								</div>
-							</form>
-							</td>
-							</tr>
-							<tr>
-							<td align="center" valign="top" style="float: left;padding: 40px 0 0 0;border-width: 0px;height: 800px;overflow:auto;">
-								<div id="tip"></div>
-								<div class="btn-group-vertical categorylist" style="padding-left: 15px;">
-									<label class="btn-block">分类列表</label>
-                                    {{ if gt (len .CategoryList) 0 }}{{ range .CategoryList }}
-                                    {{if ne .Type "import" }}
-                                        <button class="btn btn-default categorylist-btn" data-value="{{.Name}}" type="button" onclick="showlist({{.Sort}},'{{.Name}}')">
-                                            <div style='text-align:left;padding: 5px;'>
-                                                <label class="lyear-checkbox checkbox-inline checkbox-cyan">
-                                                    <input type="checkbox" {{if eq .Enable 1}}checked="checked"{{end}} value="{{.Name}}" name="category" id="category" onclick='categorycheck("{{.Name}}")'>
-                                                    <span></span>
-                                                </label>
-                                                {{.Name}}
-                                            </div>
-                                        </button>
-                                    {{ end }}{{end}}{{end}}
-								</div>
-							</td>
-							<td align="center" valign="top" style="padding-top: 5px;width: 100%;">
-								<form method="post" action="/admin/channels">
-									<div class="input-group">
-										<div class="input-group-btn">
-											<div class="col-xs-12" style="padding: 15px;">
-												<input type="hidden" id="categoryname" name="categoryname" value=""/>
-												<button class="btn btn-sm btn-default showlist" id="updatesrc" style="width:100%;" type="button" onclick="submitFormPOST(this, true)" name="submitsave">保存</button>
+					<div class="card-header"><h4>频道分类管理</h4></div>
+					<div class="tab-content">
+						<div class="tab-pane active">
+	                		<div class="table-responsive">
+								<table class="table table-bordered table-vcenter">
+									<tr>
+										<td>
+											<form class="form-inline" method="post" id='cclass_form' action="/admin/channels">
+												<button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addclass">新增分类</button>
+												<label class="btn btn-xs btn-info btn-default" style="margin:0;">
+													<span>文件导入</span>
+													<input type="file" name="paylistfile" onchange="uploadPayList(event)" id="paylistfile" style="display:none;">
+												</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="caMoveup()" name="moveup">上移分类</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="caMovedown()" name="movedown">下移分类</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="caMovetop()" name="movetop">移动到顶</button>
+											</form>
+										</td>
+									</tr>
+								</table>
+								<table class="table table-hover table-vcenter">
+									<thead>
+										<tr>
+											<th style="text-align:center;">#</th>
+											<th style="text-align:center;">分组名称</th>
+											<th style="text-align:center;">分组类型</th>
+											<th style="text-align:center;">状态</th>
+											<th style="text-align:center;">代理访问</th>
+											<th style="text-align:center;">聚合规则</th>
+											<th style="text-align:center;">操作</th>
+										</tr>
+									</thead>
+									<tbody id="categorylist_tbody">
+										{{ if gt (len .Categorys) 0 }}{{ range .Categorys }}
+										<tr align="center">
+											<td align="center">
+												<label class="lyear-checkbox checkbox-inline">
+													<input type="checkbox" data-value="{{ .ID }}" value="{{ .ID }}">
+													<span></span>
+												</label>
+											</td>
+											<td style="display:none;" class="ca-id" data-value="{{ .ID }}">{{ .ID }}</td>
+											<td style="display:none;" class="ca-ua" data-value="{{ .UA }}">{{ .UA }}</td>
+											<td class="ca-name" data-value="{{ .Name }}">{{ .Name }}</td>
+											<td class="ca-type" data-value="{{ .Type }}">
+											{{ if eq .Type "add" }}
+												源导入
+											{{ else if eq .Type "file" }}
+												文件导入
+											{{ else if eq .Type "user" }}
+												手动添加
+											{{ else if eq .Type "auto" }}
+												自动聚合
+											{{ end }}
+											</td>
+											<td class="status-show">{{ if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
+											<td class="ca-proxy" data-value="{{ .Proxy }}">{{ if eq .Proxy 1 }}<font color="#33a996">启用</font>{{else}}<font color="red">关闭</font>{{end}}</td>
+											<td class="ca-rules" data-value="{{ .Rules }}">{{ .Rules }}</td>
+											<td>
+												<button type="button" onclick="tdBtnPOST(this)" name="categoryStatus" value="{{.ID}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
+												<button class="btn btn-xs btn-info" type="button" value="{{.ID}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addclass">编辑</button>
+												<button class="btn btn-xs btn-info" type="button" data-toggle="modal" onclick="getChannelsTxt(this)" data-target="#showtxt">编辑频道</button>
+												<button class="btn btn-xs btn-info" type="button" data-toggle="modal" onclick="getChannels('{{.ID}}')" data-target="#showlist">EPG管理</button>
+												<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="delca" value="{{.ID}}">删除</button>
+											</td>
+										{{ end }}{{ end }}
+									</tbody>
+								</table>
+
+								<div class="modal fade" id="addclass" tabindex="-1" role="dialog">
+									<div class="modal-dialog" role="document">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title">分组编辑</h4>
 											</div>
-											<div class="col-xs-12">
-												<textarea class="form-control" id="srclist" name="srclist" rows="35" placeholder="节目列表"></textarea>
-											</div>
+											<form method="post" action="/admin/channels">
+												<div class="modal-body">
+													<input type="hidden" id="caId" data-value="" name="caId" value="">
+													<div class="form-group">
+														<label for="recipient-name" class="control-label">分组名称：</label>
+														<input type="text" class="form-control" id="caname" name="caname" placeholder="分组名称">
+													</div>
+													<!-- <div class="form-group">
+														<label for="message-text" class="control-label">User-Agent: </label>
+														<input class="form-control" id="caua" name="caua" placeholder="Go-http-client/1.1"></input>
+														<small class="help-block">APTV源的UA样例为: AptvPlayer/1.4.10</small>
+													</div> -->
+													<div class="form-group">
+														<label for="rules" class="control-label">自动聚合规则: </label>
+														<input class="form-control" id="rules" name="rules" placeholder="正则表达式" disabled></input>
+														<small class="help-block">自动聚合规则为正则表达式</small>
+													</div>
+													<div class="form-group">
+   														<input type="checkbox" id="autoagg" name="autoagg" value="on" onclick="document.getElementById('rules').disabled = !this.checked"></input>
+   														<label for="autoagg" class="control-label">启用自动聚合</label>
+														<small class="help-block">提取所有符合自动聚合规则的频道到该分组，频道所在的原分组不受影响。注意：当前分组如果已有频道，将会全部清空！</small>
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="saveCa">确定</button>
+													<button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;" data-dismiss="modal">关闭</button>
+												</div>
+											</form>
 										</div>
 									</div>
-								</form>
-							</td>
-							</tr>
-						</table>
+								</div>
+								<div class="modal fade" id="showtxt" tabindex="-1" role="dialog">
+									<div class="modal-dialog modal-lg" role="document" style="height:70vh; margin:5vh auto; display:flex; flex-direction:column;">
+										<div class="modal-content" style="flex:1; display:flex; flex-direction:column; overflow:visible;">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#channellist_tbody').html('');"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title">频道列表</h4>
+											</div>
+											<form method="post" action="/admin/channels">
+												<div class="modal-body" style="flex:1; overflow-y:auto; overflow-x:hidden; padding:15px;">
+													<input type="hidden" id="showtxtcaId" name="caId" value="">
+													<div class="form-group col-xs-12">
+														<label for="rules" class="control-label">分组名称: </label>
+														<input class="form-control" id="showtxtCaname" placeholder="分组名称" disabled></input>
+													</div>
+													<div class="form-group col-xs-12">
+														<label>URL:</label>
+														
+															<textarea class="form-control" rows="20" id="srclist" name="srclist" placeholder="请输入频道"></textarea>
+															<small class="help-block">状态|频道名称|URL</small>
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="saveChannels">确定</button>
+													<button type="button" class="btn btn-default" data-dismiss="modal" onclick="">关闭</button>
+												</div>
+											</form>
+										</div>
+									</div>
+								</div>
+								<div class="modal fade" id="showlist" tabindex="-1" role="dialog">
+									<div class="modal-dialog modal-lg" role="document">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#channellist_tbody').html('');"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title">频道列表</h4>
+											</div>
+											<form method="post" action="/admin/channels">
+												<input type="hidden" id="showcaId" name="caId" value="">
+												<div class="modal-body">
+													<table class="table table-bordered table-striped table-vcenter" align="center">
+														<tr>
+															<td>
+																<div class="input-group">
+																</div>
+															</td>
+														</tr>
+													</table>
+													<div class="table-responsive">
+													<table class="table table-hover  table-vcenter">
+														<thead>
+															<tr>
+																<th style="text-align:center;">频道名称</th>
+																<th style="text-align:center;">URL</th>
+																<th style="text-align:center;">状态</th>
+																<th style="text-align:center;">EPG</th>
+																<th style="text-align:center;">LOGO</th>
+																<th style="text-align:center;">操作</th>
+															</tr>
+														</thead>
+														<tbody id="channellist_tbody">
+														</tbody>
+													</table>
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" class="btn btn-default" data-dismiss="modal" onclick="">关闭</button>
+												</div>
+											</form>
+										</div>
+									</div>
+								</div>
+								<div class="modal fade" id="editchannel" tabindex="-1" role="dialog" aria-hidden="true" style="overflow:visible;">
+									<div class="modal-dialog" role="document"
+										style="height:70vh; margin:5vh auto; display:flex; flex-direction:column;">
+										
+										<div class="modal-content" style="flex:1; display:flex; flex-direction:column; overflow:visible;">
+										
+										<div class="modal-header" style="flex-shrink:0;">
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close"
+											onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;">
+											<span aria-hidden="true">&times;</span>
+											</button>
+											<h4 class="modal-title">EPG编辑</h4>
+										</div>
+
+										<form method="post" action="/admin/channels" style="flex:1; display:flex; flex-direction:column;">
+											<div class="modal-body" style="flex:1; overflow-y:auto; overflow-x:hidden; padding:15px;">
+												<input type="hidden" id="editcaId" name="caId" value="">
+												<input type="hidden" id="chId" name="chId" value="">
+												
+												<div class="form-group">
+													<label for="recipient-name" class="control-label">频道名称:</label>
+													<input type="text" class="form-control" id="chname" name="chname" placeholder="频道名称">
+												</div>
+
+												<div class="form-group">
+													<label for="recipient-name" class="control-label">URL:</label>
+													<input type="text" class="form-control" id="chURL" name="chURL" placeholder="URL">
+												</div>
+
+												<div class="form-group">
+													<label>EPG：</label>
+													<select class="form-control selectpicker" id="e_id" name="e_id" onchange="getLogo()" data-live-search="true" data-none-results-text="未找到匹配项" style="--max-height:300px;">
+													<option value="0"data-value="">无</option>
+													{{ range .Epgs }}
+													<option value="{{.ID}}" data-value="{{ .Logo }}">{{.Name}}</option>
+													{{end}}
+													</select>
+												</div>
+												<div style="display: flex; align-items: center; gap: 10px;">
+													<label>台标:</label>
+													<!-- 上传按钮 -->
+													<label class="btn btn-primary" style="margin:0;">
+														上传台标
+														<input type="file" name="logofile" accept="image/png" onchange="uploadLogo(event)" id="logoInput" style="display:none;">
+													</label>
+
+													<!-- 预览图 -->
+													<div id="logoContainerEdit" style="position:relative;">
+														<img id="logoImg" src="" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;">
+														<!-- 删除按钮 -->
+														<span id="deleteIconView" onclick="" style="
+															position:absolute; top:-8px; right:-8px;
+															background:#f00; color:#fff; border-radius:50%;
+															font-size:14px; line-height:16px; width:16px; height:16px;
+															text-align:center; cursor:pointer;">×</span>
+													</div>
+												</div>
+											</div>
+
+											<div class="modal-footer" style="flex-shrink:0; margin-top:auto;">
+											<button type="button" onclick="saveChannelsOne(this)" class="btn btn-primary" name="saveCa">确定</button>
+											<button type="button" class="btn btn-default"
+												onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"
+												data-dismiss="modal">关闭</button>
+											</div>
+										</form>
+
+										</div>
+									</div>
+									</div>
+
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+	<style>
+	.bootstrap-select .dropdown-menu.inner {
+	max-height: var(--max-height, 240px) !important;
+	}
+	</style>
 </main>
 {{ template "admin_footer" . }}

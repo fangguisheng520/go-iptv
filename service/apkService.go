@@ -130,55 +130,11 @@ func GetChannels(channel dto.DataReqDto) string {
 		var dataMap = make(map[string][]string)
 		var tmpMap = make(map[string]int64)
 
-		if v.Sort == -2 {
-			text := until.GetCCTVChannelList(false)
-			text = strings.TrimSpace(text)     // 去掉结尾多余换行
-			parts := strings.Split(text, "\n") // 按换行符分割
-			if len(parts) == 1 && parts[0] == "" {
-				resList = append(resList, dto.ChannelListDto{
-					ID:   int64(v.Sort + 3),
-					Name: v.Name,
-					Data: tmpData,
-				})
-				continue
-			}
-			for _, part := range parts {
-				data := strings.Split(part, ",")
-				dataMap[data[0]] = append(dataMap[data[0]], strings.TrimSpace(data[1]))
-				if _, ok := tmpMap[data[0]]; !ok {
-					tmpMap[data[0]] = i
-					i++
-				}
-			}
-		} else if v.Sort == -1 {
-			text := until.GetProvinceChannelList(false)
-			text = strings.TrimSpace(text)     // 去掉结尾多余换行
-			parts := strings.Split(text, "\n") // 按换行符分割
-			if len(parts) == 1 && parts[0] == "" {
-				resList = append(resList, dto.ChannelListDto{
-					ID:   int64(v.Sort + 3),
-					Name: v.Name,
-					Data: tmpData,
-				})
-				continue
-			}
-			for _, part := range parts {
-				data := strings.Split(part, ",")
-				dataMap[data[0]] = append(dataMap[data[0]], strings.TrimSpace(data[1]))
-				if _, ok := tmpMap[data[0]]; !ok {
-					tmpMap[data[0]] = i
-					i++
-				}
-			}
-		} else {
-			for _, channel := range channelList {
-				if v.Name == channel.Category {
-					dataMap[channel.Name] = append(dataMap[channel.Name], strings.TrimSpace(channel.Url))
-					if _, ok := tmpMap[channel.Name]; !ok {
-						tmpMap[channel.Name] = i
-						i++
-					}
-				}
+		for _, channel := range until.CaGetChannels(v) {
+			dataMap[channel.Name] = append(dataMap[channel.Name], strings.TrimSpace(channel.Url))
+			if _, ok := tmpMap[channel.Name]; !ok {
+				tmpMap[channel.Name] = i
+				i++
 			}
 		}
 

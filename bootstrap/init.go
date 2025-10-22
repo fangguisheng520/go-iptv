@@ -11,11 +11,40 @@ import (
 	"gorm.io/gorm"
 )
 
+type IptvCategory struct {
+	ID           int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name         string `gorm:"unique;column:name" json:"name"`
+	Enable       int64  `gorm:"column:enable;default:1" json:"enable"`
+	Type         string `gorm:"default:hand;column:type" json:"type"`
+	Url          string `gorm:"column:url" json:"url"`
+	UA           string `gorm:"column:ua" json:"ua"`
+	LatestTime   string `gorm:"column:latesttime" json:"latesttime"`
+	AutoCategory int64  `gorm:"column:autocategory" json:"autocategory"`
+	Repeat       int64  `gorm:"column:repeat" json:"repeat"`
+	Sort         int64  `gorm:"column:sort" json:"sort"`
+	Rawcount     int64  `gorm:"column:rawcount;default:0" json:"rawcount"`
+}
+
+func (IptvCategory) TableName() string {
+	return "iptv_category"
+}
+
+type IptvChannel struct {
+	ID       int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name     string `gorm:"column:name" json:"name"`
+	Url      string `gorm:"column:url" json:"url"`
+	Category string `gorm:"column:category" json:"category"`
+}
+
+func (IptvChannel) TableName() string {
+	return "iptv_channels"
+}
+
 func InitDB() bool {
 	dao.DB.AutoMigrate(&models.IptvAdmin{})
 	dao.DB.AutoMigrate(&models.IptvUser{})
 
-	has := dao.DB.Migrator().HasColumn(&models.IptvChannel{}, "sort")
+	has := dao.DB.Migrator().HasColumn(&IptvChannel{}, "sort")
 	if !has {
 		dao.DB.AutoMigrate(&models.IptvChannel{})
 		if err := dao.DB.Transaction(func(tx *gorm.DB) error {
@@ -33,6 +62,40 @@ func InitDB() bool {
 		}); err != nil {
 			return false
 		}
+	}
+
+	has = dao.DB.Migrator().HasColumn(&models.IptvChannel{}, "category")
+	if has {
+		dao.DB.Exec("ALTER TABLE iptv_channels DROP COLUMN category;")
+	}
+
+	dao.DB.AutoMigrate(&models.IptvChannel{})
+	dao.DB.AutoMigrate(&models.IptvCategoryList{})
+
+	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "url")
+	if has {
+
+		var categories []IptvCategory
+		dao.DB.Model(&IptvCategory{}).Where("url != ?", "").Find(&categories)
+		var list []models.IptvCategoryList
+		for _, category := range categories {
+			list = append(list, models.IptvCategoryList{
+				Name:         category.Name,
+				Url:          category.Url,
+				Enable:       category.Enable,
+				AutoCategory: category.AutoCategory,
+				Repeat:       category.Repeat,
+				UA:           category.UA,
+			})
+		}
+		if len(list) > 0 {
+			dao.DB.Create(&list)
+		}
+	}
+
+	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "latesttime")
+	if has {
+		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN url DROP COLUMN latesttime DROP COLUMN autocategory DROP COLUMN repeat;")
 	}
 	dao.DB.AutoMigrate(&models.IptvCategory{})
 	dao.DB.AutoMigrate(&models.IptvEpg{})

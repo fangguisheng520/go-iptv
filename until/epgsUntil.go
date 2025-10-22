@@ -1,6 +1,7 @@
 package until
 
 import (
+	"bufio"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"go-iptv/models"
 	"log"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -114,31 +116,6 @@ func GetEpgCntv(name string) (dto.CntvJsonChannel, error) {
 	return cntvJson[name], nil
 }
 
-func CleanMealsXmlCacheAll() {
-	var meals []models.IptvMeals
-	dao.DB.Model(&models.IptvMeals{}).Find(&meals)
-	for _, meal := range meals {
-		dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(meal.ID, 10))
-	}
-
-	MakeMealsXmlCacheAll()
-}
-
-func MakeMealsXmlCacheAll() {
-	var meals []models.IptvMeals
-	dao.DB.Model(&models.IptvMeals{}).Where("status = 1").Find(&meals)
-	log.Println("重建套餐EPG订阅缓存")
-	for _, meal := range meals {
-		GetEpg(meal.ID)
-	}
-	log.Println("重建套餐EPG订阅缓存完成")
-}
-
-func CleanMealsXmlCacheOne(id int64) {
-	dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(id, 10))
-	MakeMealsXmlCacheAll()
-}
-
 func UpdataEpgList() bool {
 	var epgLists []models.IptvEpgList
 	dao.DB.Model(&models.IptvEpgList{}).Find(&epgLists)
@@ -157,7 +134,7 @@ func UpdataEpgList() bool {
 			}
 			var epgs []models.IptvEpg
 			// 1️⃣ 匹配数字台，如 CCTV1、CCTV-5+、CCTV13 等
-			reNum := regexp.MustCompile(`(?i)CCTV-?(\d+\+?)`)
+			reNum := regexp.MustCompile(`(?i)CCTV-?(\d+\+?)$`)
 
 			// 2️⃣ 匹配字母台，如 CCTV4EUO、CCTV4AME、CCTVF、CCTVE 等
 			reAlpha := regexp.MustCompile(`(?i)CCTV(\d*[A-Z]+)`)
@@ -266,7 +243,7 @@ func UpdataEpgListOne(id int64) bool {
 func BindChannel() bool {
 	// ClearBind() // 清空绑定
 	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channelList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("c_id,id").Find(&channelList).Error; err != nil {
 		return false
 	}
 
@@ -292,15 +269,16 @@ func BindChannel() bool {
 				}
 			}
 		}
-		epgData.Content = strings.Join(MergeAndUnique(strings.Split(epgData.Content, ","), tmpList), ",")
+		chNameList := MergeAndUnique(strings.Split(epgData.Content, ","), tmpList)
+		if len(chNameList) > 0 {
+			dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", chNameList).Update("e_id", epgData.ID)
+		}
+		epgData.Content = strings.Join(chNameList, ",")
 		if epgData.Content != "" {
 			dao.DB.Save(&epgData)
 		}
 	}
-	GetCCTVChannelList(true)
-	GetProvinceChannelList(true)
-	go CleanMealsXmlCacheAll()
-	// go MakeMealsXmlCacheAll()
+	go CleanAutoCacheAll() // 清理缓存
 	return true
 }
 
@@ -363,6 +341,15 @@ func SyncEpgs(prefix string, epgs []models.IptvEpg) error {
 
 func GetTxt(id int64) string {
 	var res string
+
+	txtCaCheKey := "rssMealTxt_" + strconv.FormatInt(id, 10)
+	if dao.Cache.Exists(txtCaCheKey) {
+		cacheData, err := dao.Cache.GetNotExpired(txtCaCheKey)
+		if err == nil {
+			return string(cacheData)
+		}
+	}
+
 	var meal models.IptvMeals
 	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
 		return res
@@ -374,38 +361,85 @@ func GetTxt(id int64) string {
 	}
 
 	for _, category := range categoryList {
-		switch category.Sort {
-		case -2:
-			data := GetCCTVChannelList(false)
-			if data != "" {
-				res += category.Name + ",#genre#\n"
-				res += data
-
-			}
-		case -1:
-			data := GetProvinceChannelList(false)
-			if data != "" {
-				res += category.Name + ",#genre#\n"
-				res += data
-
-			}
-		default:
-			var channels []models.IptvChannel
-			if err := dao.DB.Model(&models.IptvChannel{}).
-				Where("category = ?", category.Name).
-				Order("sort asc").Find(&channels).Error; err != nil {
-				continue
-			}
-			if len(channels) == 0 {
-				continue
-			}
-			res += category.Name + ",#genre#\n"
-			for _, channel := range channels {
+		var channels []models.IptvChannelShow
+		if category.Type != "auto" {
+			dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&channels)
+		} else {
+			channels = GetAutoChannelList(category)
+		}
+		if len(channels) == 0 {
+			continue
+		}
+		res += category.Name + ",#genre#\n"
+		for _, channel := range channels {
+			if channel.Status == 1 {
 				res += channel.Name + "," + channel.Url + "\n"
 			}
+
 		}
 	}
+
+	if err := dao.Cache.Set(txtCaCheKey, []byte(res)); err != nil {
+		log.Println("epg缓存设置失败:", err)
+		dao.Cache.Delete(txtCaCheKey)
+	}
+
 	return res
+}
+
+func Txt2M3u8(txtData, host, token string) string {
+
+	epgURL := host + "/epg/" + token + "/e.xml" // ✅ 可自行修改 EPG 地址
+	logoBase := host + "/logo/"                 // ✅ 可自行修改 logo 前缀
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("#EXTM3U url-tvg=\"%s\"\n\n", epgURL))
+
+	scanner := bufio.NewScanner(strings.NewReader(txtData))
+	currentGroup := "未分组"
+	lineNum := 0
+
+	for scanner.Scan() {
+		lineNum++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		// 检查是否为分组行（如 “中央台,#genre#”）
+		if strings.HasSuffix(line, "#genre#") {
+			group := strings.TrimSuffix(line, ",#genre#")
+			currentGroup = strings.TrimSpace(group)
+			continue
+		}
+
+		// 普通频道行
+		parts := strings.SplitN(line, ",", 2)
+		if len(parts) != 2 {
+			fmt.Printf("Txt2M3u8: 第 %d 行格式错误: %s\n", lineNum, line)
+			continue
+		}
+
+		name := strings.TrimSpace(parts[0])
+		url := strings.TrimSpace(parts[1])
+		epgName := GetEpgName(name)
+		var logo string
+		if epgName != "" {
+			logo = fmt.Sprintf("%s%s.png", strings.TrimRight(logoBase, "/")+"/", epgName)
+		}
+
+		// ✅ 生成 #EXTINF 信息
+		extinf := fmt.Sprintf(`#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s" group-title="%s",%s`,
+			name, name, logo, currentGroup, name)
+		builder.WriteString(extinf + "\n")
+		builder.WriteString(url + "\n\n")
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println("Txt2M3u8: m3u8解析出错:", err)
+	}
+
+	return builder.String()
 }
 
 func GetEpg(id int64) dto.XmlTV {
@@ -431,30 +465,29 @@ func GetEpg(id int64) dto.XmlTV {
 		return res
 	}
 	categoryNameList := strings.Split(meal.Content, "_")
+	categoryNameList = slices.DeleteFunc(categoryNameList, func(s string) bool {
+		return strings.TrimSpace(s) == ""
+	})
+	if len(categoryNameList) == 0 {
+		return res
+	}
 	var categoryList []models.IptvCategory
 	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?) and enable = 1", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
 	}
-	for _, category := range categoryList {
-		switch category.Sort {
-		case -2:
-			tvData := GetCntvEpgXml()
-			res.Channels = append(res.Channels, tvData.Channels...)
-			res.Programmes = append(res.Programmes, tvData.Programmes...)
-		case -1:
-			tvData := GetProvinceEpgXml()
-			res.Channels = append(res.Channels, tvData.Channels...)
-			res.Programmes = append(res.Programmes, tvData.Programmes...)
-		default:
-			tvData := GetEpgXml(category.Name)
-			// output, _ := xml.MarshalIndent(tvData, "", "  ")
-			// log.Println(string(output))
 
-			res.Channels = append(res.Channels, tvData.Channels...)
-			res.Programmes = append(res.Programmes, tvData.Programmes...)
+	var channels []models.IptvChannelShow
+	for _, category := range categoryList {
+		if category.Type != "auto" {
+			var tmpChannels []models.IptvChannelShow
+			dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&tmpChannels)
+			channels = append(channels, tmpChannels...)
+		} else {
+			channels = GetAutoChannelList(category)
 		}
 	}
-	res = CleanTV(res)
+
+	res = CleanTV(GetEpgXml(channels))
 
 	data, err := xml.Marshal(res)
 	if err == nil {
@@ -512,184 +545,18 @@ func CleanTV(tv dto.XmlTV) dto.XmlTV {
 	return tv
 }
 
-func GetCntvEpgXml() dto.XmlTV {
-	cntvXml := dto.XmlTV{
-		GeneratorName: "清和IPTV管理系统",
-		GeneratorURL:  "https://www.qingh.xyz",
-	}
-
-	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "cntv-%").Find(&epgs).Error; err != nil {
-		return cntvXml
-	}
-
-	for _, epg := range epgs {
-		if epg.Content == "" {
-			continue
-		}
-		eName := strings.SplitN(epg.Name, "-", 2)[1]
-		nameList := strings.Split(epg.Content, ",")
-		var channelList []models.IptvChannel
-		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
-			continue
-		}
-		dName := []dto.DisplayName{}
-		exists := false
-		for _, channel := range channelList {
-			tmpData, err := GetEpgCntv(eName)
-			if err == nil {
-				tmpXml := ConvertCntvToXml(tmpData, eName)
-				for k, c := range cntvXml.Channels {
-					if c.ID == eName {
-						exists = true
-						var tmpExists bool
-						for _, v := range c.DisplayName {
-							if v.Value == channel.Name {
-								tmpExists = true
-								break
-							}
-						}
-						if !tmpExists {
-							dName = append(c.DisplayName, dto.DisplayName{
-								Lang:  "zh",
-								Value: channel.Name,
-							})
-							cntvXml.Channels[k].DisplayName = dName
-
-						}
-						break
-					}
-				}
-
-				if !exists {
-					dName = append(dName, dto.DisplayName{
-						Lang:  "zh",
-						Value: channel.Name,
-					})
-					cntvXml.Channels = append(cntvXml.Channels, dto.XmlChannel{
-						ID:          eName,
-						DisplayName: dName,
-					})
-				}
-
-				for _, p := range tmpXml.Programmes {
-					p.Channel = channel.Name
-					cntvXml.Programmes = append(cntvXml.Programmes, p)
-				}
-			}
-		}
-	}
-	return cntvXml
-}
-
-func GetProvinceEpgXml() dto.XmlTV {
+func GetEpgXml(channelList []models.IptvChannelShow) dto.XmlTV {
 	epgXml := dto.XmlTV{
 		GeneratorName: "清和IPTV管理系统",
 		GeneratorURL:  "https://www.qingh.xyz",
-	}
-
-	var epgs []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Where("name like ? and status = 1", "%"+"-%卫视%").Find(&epgs).Error; err != nil {
-		return epgXml
-	}
-
-	for _, epg := range epgs {
-		if epg.Content == "" {
-			continue
-		}
-		nameList := strings.Split(epg.Content, ",")
-		var channelList []models.IptvChannel
-		if err := dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", nameList).Order("sort asc").Find(&channelList).Error; err != nil {
-			continue
-		}
-		if len(channelList) == 0 {
-			continue
-		}
-		eFrom := strings.SplitN(epg.Name, "-", 2)[0]
-		eName := strings.SplitN(epg.Name, "-", 2)[1]
-
-		var epgList models.IptvEpgList
-		if err := dao.DB.Model(&models.IptvEpgList{}).Where("remarks = ? and status = 1", eFrom).First(&epgList).Error; err != nil {
-			continue
-		}
-		dName := []dto.DisplayName{}
-		exists := false
-		for _, channel := range channelList {
-			tmpXml := GetEpgListXml(epgList.Name, epgList.Url)
-
-			for k, c := range epgXml.Channels {
-				if c.ID == eName {
-					exists = true
-					var tmpExists bool
-					for _, v := range c.DisplayName {
-						if v.Value == channel.Name {
-							tmpExists = true
-							break
-						}
-					}
-					if !tmpExists {
-						dName = append(c.DisplayName, dto.DisplayName{
-							Lang:  "zh",
-							Value: channel.Name,
-						})
-						epgXml.Channels[k].DisplayName = dName
-
-					}
-					break
-				}
-			}
-
-			if !exists {
-				dName = append(dName, dto.DisplayName{
-					Lang:  "zh",
-					Value: channel.Name,
-				})
-				epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
-					ID:          eName,
-					DisplayName: dName,
-				})
-			}
-
-			var cId string
-			for _, c := range tmpXml.Channels {
-				if c.DisplayName[0].Value == eName {
-					cId = c.ID
-					break
-				}
-			}
-
-			for _, p := range tmpXml.Programmes {
-				if p.Channel == cId {
-					p.Channel = eName
-					epgXml.Programmes = append(epgXml.Programmes, p)
-				}
-			}
-		}
-
-	}
-	return epgXml
-}
-
-func GetEpgXml(cname string) dto.XmlTV {
-	epgXml := dto.XmlTV{
-		GeneratorName: "清和IPTV管理系统",
-		GeneratorURL:  "https://www.qingh.xyz",
-	}
-
-	var channelList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).
-		Where("category = ?", cname).
-		Order("sort asc").
-		Find(&channelList).Error; err != nil {
-		return epgXml
-	}
-	if len(channelList) == 0 {
-		return epgXml
 	}
 
 	for _, channel := range channelList {
+		if channel.EId <= 0 {
+			continue
+		}
 		var epgs []models.IptvEpg
-		if err := dao.DB.Model(&models.IptvEpg{}).Where("content like ? and status = 1", "%"+channel.Name+"%").Find(&epgs).Error; err != nil {
+		if err := dao.DB.Model(&models.IptvEpg{}).Where("id = ? and status = 1", channel.EId).Find(&epgs).Error; err != nil {
 			continue
 		}
 		for _, epg := range epgs {

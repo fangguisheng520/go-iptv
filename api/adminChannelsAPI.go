@@ -31,26 +31,27 @@ func Channels(c *gin.Context) {
 		case "dellist":
 			res = service.DelList(params)
 		case "getchannels":
-			c.String(200, service.AdminGetChannels(params))
-			return
-		case "forbiddenchannels":
-			res = service.ForbiddenChannels(params)
-		case "submit_addtype":
-			res = service.SubmitAddType(params)
-		case "submit_deltype":
-			res = service.SubmitDelType(params)
-		case "submit_modifytype":
-			res = service.SubmitModifyType(params)
-		case "submit_moveup":
+			res = service.CaGetChannels(params)
+		case "delca":
+			res = service.DelCa(params)
+		case "moveup":
 			res = service.SubmitMoveUp(params)
-		case "submit_movedown":
+		case "movedown":
 			res = service.SubmitMoveDown(params)
-		case "submit_movetop":
+		case "movetop":
 			res = service.SubmitMoveTop(params)
-		case "submitsave":
+		case "saveChannels":
 			res = service.SubmitSave(params)
-		case "change_status":
+		case "saveChannelsOne":
+			res = service.SaveChannelsOne(params)
+		case "categoryStatus":
 			res = service.CategoryChangeStatus(params)
+		case "categoryListStatus":
+			res = service.CategoryListChangeStatus(params)
+		case "channelsStatus":
+			res = service.ChannelsChangeStatus(params)
+		case "saveCa":
+			res = service.SaveCategory(params)
 		}
 	}
 

@@ -3,16 +3,12 @@ function updateYear() {
 }
 updateYear();
 
-$(function() {
-	$(".categorylist-btn").first().click();
-});
 
 // 替换 main 和 copyright
 function replaceContent(html) {
 	var $temp = $('<div>').html(html);
 	var $newMain = $temp.find('main');
 	if ($newMain.length) $('main').replaceWith($newMain);
-	// $(".categorylist-btn").first().click();
 
 	// var $newCopyright = $temp.find('p.copyright');
 	// if ($newCopyright.length) $('p.copyright').replaceWith($newCopyright);
@@ -45,10 +41,11 @@ function updateMenuActive(url) {
 	$link.parent("li").addClass('active');
 	$link.closest(".nav-item-has-subnav").addClass("open");
 	$link.closest('.nav-item').addClass('active'); // 父菜单高亮
+	$('.selectpicker').selectpicker('refresh');
 }
 
 // 加载页面函数
-function loadPage(url, pushHistory = true, showName = "") {
+function loadPage(url, pushHistory = true) {
 	if (!url || url === "javascript:;" || url === "javascript:void(0)") return;
 	$.ajax({
 		url: url,
@@ -96,11 +93,6 @@ function loadPage(url, pushHistory = true, showName = "") {
 
 			if (pushHistory) history.pushState(null, '', url);
 			updateMenuActive(url);
-			if (showName !== "") {
-				showlist(0,showName);
-			}else{
-				$(".categorylist-btn").first().click();
-			}
 		},
 		error: function(err) {
 			console.error('请求失败:', err);
@@ -109,21 +101,16 @@ function loadPage(url, pushHistory = true, showName = "") {
 	});
 }
 
-function submitFormPOST(btn, showChannel = false) {
+function submitFormPOST(btn) {
 
 	// 获取按钮所在的 form
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
 		return;
 	}
 
 	var action = form.action || window.location.pathname; // 默认当前路径
-
-	let showName = "";
 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
@@ -133,19 +120,7 @@ function submitFormPOST(btn, showChannel = false) {
 		params.append(key, value);
 	});
 	params.append(btn.name, "");
-
-	if(showChannel && (btn.name === "submit_addtype" || 
-		btn.name  === "submit_modifytype" || 
-		btn.name  === "submit_moveup" ||
-		btn.name  === "submit_movedown" ||
-		btn.name  === "submit_movetop"
-	)){
-		showName = params.get("category");
-	}
-
-	if(showChannel && btn.name === "submitsave"){
-		showName = params.get("categoryname");
-	}
+	
 	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
@@ -166,20 +141,13 @@ function submitFormPOST(btn, showChannel = false) {
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
-			loadPage(window.location.href, true, showName);
-			if ($('.modal-backdrop').length > 0) {
-				document.querySelector('.modal-backdrop').remove();
-				document.body.classList.remove('modal-open');
-				document.body.style.overflow = ''; // 恢复滚动条
-			}
+			var sub = $(btn).closest('.modal');
+			sub.modal('hide');
+			loadPage(window.location.href);
 		}
 	})
 	.catch(err => {
-		// console.error("提交失败:", err);
 		lightyear.notify("提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
 	});
 }
 
@@ -188,9 +156,7 @@ function submitFormGET(btn) {
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
+		return;
 	}
 
 	// 获取 form 的 action，默认当前路径
@@ -322,28 +288,6 @@ function clearCheck(){
 	}
 }
 
-function showlist(sort,name){
-	$("#srclist").val("正在加载中...");
-	$.ajax({
-		url: "/admin/channels",
-		type: "POST",
-		data: { category: name, getchannels: "" },
-		success: function(data) {
-			$("#srclist").val(data);
-		}
-	});
-
-	$("#typename").val(name);
-	$("#typename0").val(name);
-	$("#categoryname").val(name);
-
-	var $btn = $(".showlist");
-	if (sort == -1 || sort == -2){
-		$btn.prop("disabled", true); // 禁用按钮
-	} else {
-		$btn.prop("disabled", false); // 启用按钮（可选）
-	}
-}
 
 function categorycheck(name){
 	$.ajax({
@@ -359,10 +303,8 @@ function categorycheck(name){
 function tdBtnPOST(btn) {
 
 	var action =  window.location.href; // 默认当前路径
-
 	var params = new URLSearchParams();
 
-	
 	if ($(btn).is(":checkbox")) {
 		params.append(btn.name, btn.checked ? 1 : 0);
 	}else{
@@ -386,39 +328,52 @@ function tdBtnPOST(btn) {
 		return JSON.parse(text); // 或 response.json()
 	})
 	.then(data => {
-		lightyear.notify(data.msg, data.type, 1000);
+		
 		if (data.type === "success") {
-			if ($('.modal-backdrop').length > 0) {
-				document.querySelector('.modal-backdrop').remove();
-				document.body.classList.remove('modal-open');
-				document.body.style.overflow = ''; // 恢复滚动条
-			}
+			lightyear.notify(data.msg, data.type, 1000);
 			if (btn.name.includes("del")) {
-				// 删除按钮所在的 tr
 				const tr = btn.closest("tr");
 				if (tr) tr.remove();
-				if (btn.name === "dellist"){
-					$('.categorylist-btn').each(function() {
-						var $this = $(this);
-						var dataValue = $this.data('value'); // 获取 data-value
-						// 判断是否等于 btn.value 或包含 "(btn.value)"
-						if (dataValue == btn.value || (dataValue && dataValue.includes('(' + btn.value + ')'))) {
-							$this.remove(); // 删除元素及所有子元素
-						}
-					});
+			}else if (btn.name.includes("Status")) {
+				const tr = btn.closest("tr");
+				console.log(tr);
+				const statusTd = tr.querySelector("td.status-show");
+				console.log(statusTd);
+    			const font = statusTd.querySelector("font");
+				console.log(font);
+
+				// 判断当前状态文字
+				if (font && font.textContent.includes("上线")) {
+					// 改为下线
+					font.textContent = "下线";
+					font.color = "red";
+
+					// 按钮状态切换：警告→成功
+					btn.classList.remove("btn-warning");
+					btn.classList.add("btn-success");
+					btn.textContent = "上线"; // 按钮显示改为“上线”
+				} else {
+					// 改为上线
+					font.textContent = "上线";
+					font.color = "#33a996";
+
+					// 按钮状态切换：成功→警告
+					btn.classList.remove("btn-success");
+					btn.classList.add("btn-warning");
+					btn.textContent = "下线"; // 按钮显示改为“下线”
 				}
 			}else{
+				var sub = $(btn).closest('.modal');
+				sub.modal('hide');
 				loadPage(action);
 			}
 			
+		}else {
+			lightyear.notify(data.msg, data.type, 3000);
 		}
 	})
 	.catch(err => {
-		// console.error("提交失败:", err);
-		lightyear.notify("提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
+		lightyear.notify("提交失败"+err, "danger", 3000);
 	});
 }
 
@@ -435,9 +390,6 @@ function mealsGetCategory(btn) {
 		params.append(btn.name, "");
 	}else{
 		lightyear.notify("表单提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
 		return ;
 	}
 
@@ -469,9 +421,6 @@ function mealsGetCategory(btn) {
 	.then(res => {
 		
 		if (res.type === "success") {
-			// if ($('.modal-backdrop').length > 0) {
-			// 	document.querySelector('.modal-backdrop').remove();
-			// }
 			if (res.data && res.data.length > 0) {
 				var html = "";
 				res.data.forEach(function(item) {
@@ -526,9 +475,6 @@ function epgsGetChannel(btn) {
 		params.append(btn.name, "");
 	}else{
 		lightyear.notify("表单提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
 		return ;
 	}
 
@@ -569,9 +515,6 @@ function epgsGetChannel(btn) {
 	.then(res => {
 		lightyear.notify(res.msg, res.type, 1000);
 		if (res.type === "success") {
-			// if ($('.modal-backdrop').length > 0) {
-			// 	document.querySelector('.modal-backdrop').remove();
-			// }
 			if (res.data && res.data.length > 0) {
 				var html = "";
 				res.data.forEach(function(item) {
@@ -758,16 +701,16 @@ function confirmAndSubmit(btn ,msg) {
     });
 }
 
-function getCategory(btn) {
+function getCategoryList(btn) {
 	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
-	var cid = $tr.find(".c-id").data("value");
-	var cname = $tr.find(".c-name").data("value");
-	var curl = $tr.find(".c-url").data("value");
-	var cua = $tr.find(".c-ua").data("value");
-	var ca = $tr.find(".c-a").data("value");
-	var cr = $tr.find(".c-r").data("value");
+	var cid = $tr.find(".cl-id").data("value");
+	var cname = $tr.find(".cl-name").data("value");
+	var curl = $tr.find(".cl-url").data("value");
+	var cua = $tr.find(".cl-ua").data("value");
+	var ca = $tr.find(".cl-a").data("value");
+	var cr = $tr.find(".cl-r").data("value");
 
-	$("#cId").val(cid);
+	$("#clId").val(cid);
 	$("#listname").val(cname);
 	$("#listurl").val(curl);
 	$("#listua").val(cua);
@@ -775,6 +718,176 @@ function getCategory(btn) {
 	$("#repeat").prop("checked", cr === 1);
 }
 
+function getCategory(btn) {
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var cid = $tr.find(".ca-id").data("value");
+	var cname = $tr.find(".ca-name").data("value");
+	var ctype = $tr.find(".ca-type").data("value");
+	var cua = $tr.find(".ca-ua").data("value");
+	var crules = $tr.find(".ca-rules").data("value");
+	var cproxy = $tr.find(".ca-proxy").data("value");
+
+	$("#caId").val(cid);
+	$("#caname").val(cname);
+	$("#caua").val(cua);
+	$("#rules").val(crules);
+	if (ctype === "auto") {
+		document.getElementById('rules').disabled = false;
+	}else{
+		document.getElementById('rules').disabled = true;
+	}
+	$("#autoagg").prop("checked", ctype === "auto");
+	$("#proxy").prop("checked", cproxy === 1);
+}
+
+function getChannels(id){
+	$("#showcaId").val(id);
+	$.ajax({
+		url: "/admin/channels",
+		type: "POST",
+		data: { caId: id, getchannels: "" },
+		success: function(data) {
+			lightyear.notify(data.msg, data.type, 3000);
+			if (data.type === "success") {
+				const tbody = document.getElementById("channellist_tbody");
+				tbody.innerHTML = "";
+				data.data.forEach(item => {
+					const tr = document.createElement("tr");
+
+					tr.innerHTML = `
+					<tr align="center">
+						<td style="display:none;" class="ch-id" data-value="${item.id}">${item.id}</td>
+						<td style="display:none;" class="ch-eid" data-value="${item.e_id}">${item.e_id}</td>
+						<td align="center" class="ch-name" data-value="${item.name}">${item.name}</td>
+						<td align="center" class="ch-url" data-value="${item.url}"><a href="${item.url}" target="_blank">${item.url}</a></td>
+						<td align="center" class="status-show">${item.status === 1 ? '<font color="#33a996">上线</font>' : '<font color="red">下线</font>'}</td>
+						<td align="center">${item.epg_name || "未绑定"}</td>
+						<td align="center">${item.logo === "" ? "无" : `<div id="logo_${item.id}" style="position:relative;"><img class="ch-logo" src="${item.logo}" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;"></div>`}
+						</td>
+						<td align="center">
+						<button type="button" onclick="tdBtnPOST(this)" name="channelsStatus" value="${item.id}" class="btn btn-xs ${item.status === 1 ? 'btn-warning">下线': 'btn-success">上线'}</button>
+						<button class="btn btn-xs btn-info" type="button" value="${item.id}" data-toggle="modal" onclick="editChannel(this)" data-target="#editchannel">编辑</button>
+						<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="${item.id}">删除</button>
+						</td>
+					</tr>
+					`;
+					tbody.appendChild(tr);
+					$('.selectpicker').selectpicker('refresh'); // 刷新 selectpicker
+				});
+			}
+		},
+		error: function() {
+			lightyear.notify("请求失败", "danger", 3000);
+		}
+	});
+}
+
+function getChannelsTxt(btn){
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var cid = $tr.find(".ca-id").data("value");
+	var cname = $tr.find(".ca-name").data("value");
+	$("#showtxtcaId").val(cid);
+	$("#showtxtCaname").val(cname);
+	$.ajax({
+		url: "/admin/channels",
+		type: "POST",
+		data: { caId: cid, getchannels: "" },
+		success: function(data) {
+			lightyear.notify(data.msg, data.type, 3000);
+			if (data.type === "success") {
+				const tbody = document.getElementById("channellist_tbody");
+				var result = "";
+				data.data.forEach(item => {
+					result += item.status + "|" + item.name + "," + item.url + "\n";
+				});
+				$("#srclist").val(result);
+			}
+		},
+		error: function() {
+			lightyear.notify("请求失败", "danger", 3000);
+		}
+	});
+}
+
+function editChannel(btn) {
+	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var chid = $tr.find(".ch-id").data("value");
+	var cname = $tr.find(".ch-name").data("value");
+	var curl = $tr.find(".ch-url").data("value");
+	var ceid = $tr.find(".ch-eid").data("value");
+	var logoSrc = $(btn).closest("tr").find("td div img.ch-logo").attr("src") || "";
+
+	var form = btn.closest("form");
+	if (!form) {
+		lightyear.notify("表单提交失败", "danger", 3000);
+		return;
+	}
+
+	const params = new URLSearchParams();
+	new FormData(form).forEach((value, key) => {
+		params.append(key, value);
+	})
+
+	$("#editcaId").val(params.get("caId"));
+	$("#chId").val(chid);
+	$("#chname").val(cname);
+	$("#chURL").val(curl);
+	$("#e_id").val(ceid);
+	$("#e_id").selectpicker('refresh');
+	if (!logoSrc) {
+    	$("#logoContainerEdit").hide();
+	} else {
+		$("#logoContainerEdit").show().find("img").attr("src", logoSrc);
+	}
+}
+
+function saveChannelsOne(btn){
+
+	var form = btn.closest("form");
+	if (!form) {
+		lightyear.notify("表单提交失败", "danger", 3000);
+		return;
+	}
+
+	const params = new URLSearchParams();
+	new FormData(form).forEach((value, key) => {
+		if (key === "logofile") {
+			return;
+		}
+		params.append(key, value);
+	})
+
+	params.append("saveChannelsOne", "");
+
+	var editchmodal = $(btn).closest('.modal');
+
+	$.ajax({
+		url: "/admin/channels",
+		type: "POST",
+		data: params.toString(),
+		success: function(data) {
+			lightyear.notify(data.msg, data.type, 3000);
+			if (data.type === "success") {
+				editchmodal.modal('hide');
+				getChannels(params.get("caId"));
+			}
+		},
+		error: function() {
+			lightyear.notify("请求失败", "danger", 3000);
+		}
+	});
+}
+
+function getLogo(){
+	var $select = $("#e_id");
+    var logoSrc = $select.find("option:selected").data("value") || "";
+
+    if (logoSrc) {
+        $("#logoContainerEdit").show().find("img").attr("src", logoSrc);
+    } else {
+        $("#logoContainerEdit").hide().find("img").attr("src", "");
+    }
+}
 
 function rssPOST(btn) {
 	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
@@ -1119,4 +1232,148 @@ function toggleLock(btn) {
 		btn.classList.remove("btn-primary");
         btn.classList.add("btn-danger"); // 锁定红色
     }
+}
+
+function caMoveup() {
+
+	const tbody = document.getElementById("categorylist_tbody");
+    if (!tbody) return;
+
+    // 找到第一个被选中的 checkbox
+    const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
+    if (!firstChecked) {
+		lightyear.notify("请先选择一个分类", 'danger', 1000);
+        return;
+    }
+
+	const tr = firstChecked.closest("tr");
+    if (!tr) {
+		lightyear.notify("未找到对应行", 'danger', 1000);
+        return;
+	};
+
+	const prevTr = tr.previousElementSibling;
+    if (!prevTr) {
+		lightyear.notify("已经是第一行了", 'danger', 1000);
+		return;// 已经是第一行了
+	}; 
+
+    // 获取 value
+    const value = firstChecked.value;
+
+	const params = new URLSearchParams();
+	params.append("moveup", value);
+
+    $.ajax({
+        url: "/admin/channels",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+                lightyear.notify(data.msg, data.type, 1000);
+				tbody.insertBefore(tr, prevTr); // 移动到 prevTr 之前
+            } else {
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+			lightyear.notify("操作失败", 'danger', 1000);
+		}
+    });
+}
+
+function caMovedown() {
+    const tbody = document.getElementById("categorylist_tbody");
+    if (!tbody) return;
+
+    // 找到第一个被选中的 checkbox
+    const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
+    if (!firstChecked) {
+        lightyear.notify("请先选择一个分类", 'danger', 1000);
+        return;
+    }
+
+    const tr = firstChecked.closest("tr");
+    if (!tr) {
+        lightyear.notify("未找到对应行", 'danger', 1000);
+        return;
+    }
+
+    // 找到下一行
+    const nextTr = tr.nextElementSibling;
+    if (!nextTr) {
+        lightyear.notify("已经是最后一行了", 'danger', 1000);
+        return; // 已经是最后一行
+    }
+
+    // 获取 value
+    const value = firstChecked.value;
+
+    const params = new URLSearchParams();
+    params.append("movedown", value);
+
+    $.ajax({
+        url: "/admin/channels",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+                lightyear.notify(data.msg, data.type, 1000);
+                // 下移：把下一行的下一个位置插入当前 tr
+                tbody.insertBefore(tr, nextTr.nextElementSibling);
+            } else {
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+            lightyear.notify("操作失败", 'danger', 1000);
+        }
+    });
+}
+
+function caMovetop() {
+    const tbody = document.getElementById("categorylist_tbody");
+    if (!tbody) return;
+
+    // 找到第一个被选中的 checkbox
+    const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
+    if (!firstChecked) {
+        lightyear.notify("请先选择一个分类", 'danger', 1000);
+        return;
+    }
+
+    const tr = firstChecked.closest("tr");
+    if (!tr) {
+        lightyear.notify("未找到对应行", 'danger', 1000);
+        return;
+    }
+
+    // 如果已经在第一行，不操作
+    if (tr === tbody.firstElementChild) {
+        lightyear.notify("已经在最顶端了", 'danger', 1000);
+        return;
+    }
+
+    // 获取 value
+    const value = firstChecked.value;
+    const params = new URLSearchParams();
+    params.append("movetop", value);
+
+    $.ajax({
+        url: "/admin/channels",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+                lightyear.notify(data.msg, data.type, 1000);
+                // 移动到 tbody 的第一个位置
+                tbody.insertBefore(tr, tbody.firstElementChild);
+            } else {
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+            lightyear.notify("操作失败", 'danger', 1000);
+        }
+    });
 }

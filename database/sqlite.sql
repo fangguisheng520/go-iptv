@@ -10,23 +10,38 @@ CREATE TABLE iptv_category (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL UNIQUE,
     enable INTEGER NOT NULL DEFAULT 1,
-    type TEXT NOT NULL DEFAULT 'add',
-    url TEXT DEFAULT NULL,
+    type TEXT NOT NULL DEFAULT 'user',
+    proxy TEXT,
     ua TEXT,
-    autocategory TEXT DEFAULT NULL,
-    latesttime TEXT DEFAULT NULL,
-    repeat INTEGER DEFAULT 0,
     sort INTEGER,
+    rules TEXT,
+    list_id INTEGER DEFAULT 0,
     rawcount INTEGER DEFAULT 0
 );
-INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'auto','','',0,'',0,-2,0);
-INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'auto','','',0,'',0,-1,0);
+
+INSERT INTO iptv_category VALUES(1,'央视频道(自动聚合)',1,'auto','','',0,'(?i)CCTV-?(\d+\+?)$',0,0);
+INSERT INTO iptv_category VALUES(2,'卫视频道(自动聚合)',1,'auto','','',1,'卫视',0,0);
+
+CREATE TABLE iptv_category_list (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
+    enable INTEGER NOT NULL DEFAULT 1,
+    url TEXT DEFAULT NULL,
+    ua TEXT,
+    autocategory INTEGER DEFAULT 0,
+    latesttime TEXT DEFAULT NULL,
+    repeat INTEGER DEFAULT 0
+);
+
 CREATE TABLE iptv_channels (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
     url TEXT DEFAULT NULL,
-    category TEXT NOT NULL,
-    sort INTEGER
+    sort INTEGER,
+    status INTEGER NOT NULL DEFAULT 1,
+    e_id INTEGER DEFAULT 0,
+    c_id INTEGER DEFAULT 0,
+    list_id INTEGER DEFAULT 0
 );
 
 CREATE TABLE iptv_epg_list (

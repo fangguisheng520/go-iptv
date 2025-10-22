@@ -20,7 +20,10 @@ import (
 )
 
 func InitRouter(debug bool) *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
+	if os.Getenv("IPTVDEV") != "true" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	var r *gin.Engine
 	if debug {
 		r = gin.Default()

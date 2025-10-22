@@ -5,6 +5,7 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +31,20 @@ func Channels(c *gin.Context) {
 
 	pageData.UpdateInterval = cfg.Channel.Interval
 
-	dao.DB.Model(&models.IptvCategory{}).Order("sort ASC").Find(&pageData.CategoryList)
+	dao.DB.Model(&models.IptvCategoryList{}).Find(&pageData.CategoryList)
+	dao.DB.Model(&models.IptvCategory{}).Order("sort ASC").Find(&pageData.Categorys)
+	dao.DB.Model(&models.IptvEpg{}).Where("status = 1").Find(&pageData.Epgs)
+
+	logoList := until.GetLogos()
+	for i, v := range pageData.Epgs {
+		epgName := strings.SplitN(v.Name, "-", 2)[1]
+		for _, logo := range logoList {
+			logoName := strings.Split(logo, ".")[0]
+			if strings.EqualFold(epgName, logoName) {
+				pageData.Epgs[i].Logo = "/logo/" + logo
+			}
+		}
+	}
 
 	c.HTML(200, "admin_channels.html", pageData)
 }

@@ -5,7 +5,6 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,55 +33,18 @@ func Index(c *gin.Context) {
 	dao.DB.Model(&models.IptvMeals{}).Count(&pageData.MealsCount)
 
 	var categoryList []models.IptvCategory
-	dao.DB.Model(&models.IptvCategory{}).Where("type != ?", "import").Find(&categoryList)
-	for i := range categoryList {
-		var count int64
+	dao.DB.Model(&models.IptvCategory{}).Find(&categoryList)
+	for i, c := range categoryList {
 		var channelType dto.ChannelType
-		if categoryList[i].Sort == -2 {
-			text := until.GetCCTVChannelList(false)
-			text = strings.TrimSpace(text) // 去掉结尾多余换行
-			parts := strings.Split(text, "\n")
-			if len(parts) == 1 && parts[0] == "" {
-				channelType.ChannelCount = 0
-			} else {
-				channelType.ChannelCount = int64(len(parts))
-			}
-			channelType.Num = int64(i + 1)
-			channelType.Name = categoryList[i].Name
-			if categoryList[i].Type == "add" {
-				channelType.ShowRawCount = true
-			}
-			channelType.RawCount = categoryList[i].Rawcount
-			pageData.ChannelTypeList = append(pageData.ChannelTypeList, channelType)
-			continue
-		} else if categoryList[i].Sort == -1 {
-			text := until.GetProvinceChannelList(false)
-			text = strings.TrimSpace(text) // 去掉结尾多余换行
-			parts := strings.Split(text, "\n")
-			if len(parts) == 1 && parts[0] == "" {
-				channelType.ChannelCount = 0
-			} else {
-				channelType.ChannelCount = int64(len(parts))
-			}
 
-			channelType.Num = int64(i + 1)
-			channelType.Name = categoryList[i].Name
-			if categoryList[i].Type == "add" {
-				channelType.ShowRawCount = true
-			}
-			channelType.RawCount = categoryList[i].Rawcount
-			pageData.ChannelTypeList = append(pageData.ChannelTypeList, channelType)
-			continue
-		}
-
-		dao.DB.Model(&models.IptvChannel{}).Where("category = ?", categoryList[i].Name).Count(&count)
-		channelType.ChannelCount = count
+		tmpCh := until.CaGetChannels(c)
+		channelType.ChannelCount = int64(len(tmpCh))
 		channelType.Num = int64(i + 1)
-		channelType.Name = categoryList[i].Name
-		if categoryList[i].Type == "add" {
+		channelType.Name = c.Name
+		if c.Type == "add" {
 			channelType.ShowRawCount = true
 		}
-		channelType.RawCount = categoryList[i].Rawcount
+		channelType.RawCount = c.Rawcount
 		pageData.ChannelTypeList = append(pageData.ChannelTypeList, channelType)
 	}
 
