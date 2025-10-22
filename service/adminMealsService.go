@@ -47,7 +47,7 @@ func MealsEdit(params url.Values, editType int) dto.ReturnJsonDto {
 			return dto.ReturnJsonDto{Code: 0, Msg: "套餐 " + mealId + " 不存在", Type: "danger"}
 		}
 		var categoryList []models.IptvCategory
-		if err := dao.DB.Model(&models.IptvCategory{}).Where("type != ?", "import").Find(&categoryList).Error; err != nil {
+		if err := dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Find(&categoryList).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "没有频道分类信息，无法生成套餐", Type: "danger"}
 		}
 

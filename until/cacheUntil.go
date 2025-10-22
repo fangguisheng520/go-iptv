@@ -49,7 +49,7 @@ func CleanMealsTxtCacheOne(id int64) {
 
 func CleanAutoCacheAll() {
 	var ca []models.IptvCategory
-	dao.DB.Model(&models.IptvCategory{}).Where("status = 1 and type = ?", "auto").Find(&ca)
+	dao.DB.Model(&models.IptvCategory{}).Where("enable = 1 and type = ?", "auto").Find(&ca)
 	for _, ca := range ca {
 		dao.Cache.Delete("autoCategory_" + strconv.FormatInt(ca.ID, 10))
 	}

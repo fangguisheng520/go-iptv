@@ -753,13 +753,16 @@ function getChannels(id){
 				tbody.innerHTML = "";
 				data.data.forEach(item => {
 					const tr = document.createElement("tr");
+					const displayUrl = item.url.length > 20 
+						? item.url.substring(0, 10) + "..." + item.url.slice(-10) 
+						: item.url;
 
 					tr.innerHTML = `
 					<tr align="center">
 						<td style="display:none;" class="ch-id" data-value="${item.id}">${item.id}</td>
 						<td style="display:none;" class="ch-eid" data-value="${item.e_id}">${item.e_id}</td>
 						<td align="center" class="ch-name" data-value="${item.name}">${item.name}</td>
-						<td align="center" class="ch-url" data-value="${item.url}"><a href="${item.url}" target="_blank">${item.url}</a></td>
+						<td align="center" class="ch-url" data-value="${item.url}"><a href="${item.url}" target="_blank">${displayUrl}</a></td>
 						<td align="center" class="status-show">${item.status === 1 ? '<font color="#33a996">上线</font>' : '<font color="red">下线</font>'}</td>
 						<td align="center">${item.epg_name || "未绑定"}</td>
 						<td align="center">${item.logo === "" ? "无" : `<div id="logo_${item.id}" style="position:relative;"><img class="ch-logo" src="${item.logo}" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;"></div>`}

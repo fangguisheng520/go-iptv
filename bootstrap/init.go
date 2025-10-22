@@ -90,6 +90,7 @@ func InitDB() bool {
 		}
 		if len(list) > 0 {
 			dao.DB.Create(&list)
+			dao.DB.Model(&IptvCategory{}).Where("url != ?", "").Delete(&IptvCategory{})
 		}
 	}
 
