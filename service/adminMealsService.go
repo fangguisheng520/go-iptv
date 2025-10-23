@@ -5,6 +5,7 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -26,11 +27,11 @@ func MealsChangeStatus(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "套餐 " + mealId + " 不存在", Type: "danger"}
 	}
 	if meals.Status == 1 {
-		go until.CleanMealsXmlCacheOne(meals.ID)
+		go until.CleanMealsTxtCacheOne(meals.ID)
 		dao.DB.Model(&models.IptvMeals{}).Where("id = ?", meals.ID).Update("status", 0)
 		return dto.ReturnJsonDto{Code: 1, Msg: "套餐 " + meals.Name + " 下线", Type: "success"}
 	} else {
-		go until.CleanMealsXmlCacheOne(meals.ID)
+		go until.CleanMealsTxtCacheOne(meals.ID)
 		dao.DB.Model(&models.IptvMeals{}).Where("id = ?", meals.ID).Update("status", 1)
 		return dto.ReturnJsonDto{Code: 1, Msg: "套餐 " + meals.Name + " 上线", Type: "success"}
 	}
@@ -95,7 +96,7 @@ func MealsDel(params url.Values) dto.ReturnJsonDto {
 	if err := dao.DB.Where("id = ?", mealId).Delete(&models.IptvMeals{}).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "删除失败", Type: "danger"}
 	}
-	go until.CleanMealsXmlCacheAll()
+	go until.CleanMealsTxtCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "删除成功", Type: "success"}
 }
 
@@ -103,11 +104,6 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 	mealId := params.Get("mealId")
 	mealName := params.Get("mealName")
 	namesList := params["ids[]"]
-
-	mealIdInt64, err := strconv.ParseInt(mealId, 10, 64)
-	if err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "套餐ID 错误", Type: "danger"}
-	}
 
 	if mealName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "套餐名称不能为空", Type: "danger"}
@@ -127,9 +123,13 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 		if err := dao.DB.Create(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "添加失败", Type: "danger"}
 		}
-		go until.CleanMealsXmlCacheOne(iptvMeals.ID)
+		go until.CleanMealsTxtCacheOne(iptvMeals.ID)
 		return dto.ReturnJsonDto{Code: 1, Msg: "添加成功", Type: "success"}
 	} else {
+		mealIdInt64, err := strconv.ParseInt(mealId, 10, 64)
+		if err != nil {
+			return dto.ReturnJsonDto{Code: 0, Msg: "套餐ID 错误", Type: "danger"}
+		}
 		var iptvMeals models.IptvMeals
 		dao.DB.Model(&models.IptvMeals{}).Where("id = ?", mealId).First(&iptvMeals)
 
@@ -145,7 +145,8 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 		if err := dao.DB.Save(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "编辑失败", Type: "danger"}
 		}
-		go until.CleanMealsXmlCacheOne(iptvMeals.ID)
+		log.Println("iptvMeals.ID", iptvMeals.ID)
+		go until.CleanMealsTxtCacheOne(iptvMeals.ID)
 		return dto.ReturnJsonDto{Code: 1, Msg: "编辑成功", Type: "success"}
 	}
 

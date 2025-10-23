@@ -28,6 +28,7 @@ func MakeMealsXmlCacheAll() {
 }
 
 func CleanMealsXmlCacheOne(id int64) {
+	log.Println("删除套餐EPG订阅缓存: ", id)
 	dao.Cache.Delete("rssEpgXml_" + strconv.FormatInt(id, 10))
 	GetEpg(id)
 }
@@ -43,6 +44,7 @@ func CleanMealsTxtCacheAll() {
 }
 
 func CleanMealsTxtCacheOne(id int64) {
+	log.Println("删除套餐TXT订阅缓存: ", id)
 	dao.Cache.Delete("rssEpgTxt_" + strconv.FormatInt(id, 10))
 	CleanMealsXmlCacheOne(id)
 }
@@ -51,6 +53,7 @@ func CleanAutoCacheAll() {
 	var ca []models.IptvCategory
 	dao.DB.Model(&models.IptvCategory{}).Where("enable = 1 and type = ?", "auto").Find(&ca)
 	for _, ca := range ca {
+		log.Println("删除自动聚合缓存: ", ca.Name)
 		dao.Cache.Delete("autoCategory_" + strconv.FormatInt(ca.ID, 10))
 	}
 	CleanMealsTxtCacheAll()

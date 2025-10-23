@@ -223,7 +223,7 @@
 									<div class="modal-dialog modal-lg" role="document" style="height:70vh; margin:5vh auto; display:flex; flex-direction:column;">
 										<div class="modal-content" style="flex:1; display:flex; flex-direction:column; overflow:visible;">
 											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#channellist_tbody').html('');"><span aria-hidden="true">&times;</span></button>
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#srclist').val('');"><span aria-hidden="true">&times;</span></button>
 												<h4 class="modal-title">频道列表</h4>
 											</div>
 											<form method="post" action="/admin/channels">
@@ -242,7 +242,7 @@
 												</div>
 												<div class="modal-footer">
 													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="saveChannels">确定</button>
-													<button type="button" class="btn btn-default" data-dismiss="modal" onclick="">关闭</button>
+													<button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#srclist').val('');">关闭</button>
 												</div>
 											</form>
 										</div>

@@ -44,11 +44,10 @@ func InitDB() bool {
 	dao.DB.AutoMigrate(&models.IptvAdmin{})
 	dao.DB.AutoMigrate(&models.IptvUser{})
 
-	initIptvChannel()
-
 	dao.DB.AutoMigrate(&models.IptvCategoryList{})
 
 	initIptvCategory()
+	initIptvChannel()
 
 	dao.DB.AutoMigrate(&models.IptvEpg{})
 	dao.DB.AutoMigrate(&models.IptvEpgList{})
@@ -136,8 +135,23 @@ func initIptvChannel() {
 		})
 	}
 
-	has = dao.DB.Migrator().HasColumn(&models.IptvChannel{}, "category")
+	has = dao.DB.Migrator().HasColumn(&IptvChannel{}, "category")
 	if has {
+		var ch []IptvChannel
+		dao.DB.Model(&IptvChannel{}).Distinct("category").Find(&ch)
+		var ca []models.IptvCategory
+		dao.DB.Model(&models.IptvCategory{}).Find(&ca)
+		for _, c := range ch {
+			for _, cc := range ca {
+				if c.Category == cc.Name {
+					dao.DB.Model(&models.IptvChannel{}).Where("category = ?", c.Name).Updates(map[string]interface{}{
+						"c_id":    cc.ID,
+						"list_id": cc.ListId,
+						"status":  1,
+					})
+				}
+			}
+		}
 		dao.DB.Exec("ALTER TABLE iptv_channels DROP COLUMN category;")
 	}
 

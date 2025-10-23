@@ -2,12 +2,16 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"go-iptv/dao"
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"log"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func GetWeather() map[string]interface{} {
@@ -28,28 +32,15 @@ func GetEpg(name string) dto.Response {
 	res.Code = 200
 	res.Msg = "请求成功!"
 
-	var epgs []models.IptvEpg
+	var epg models.IptvEpg
 	name = strings.ToLower(name)
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+name+"%").Find(&epgs)
-
-	var epgName string
-	for _, epg := range epgs {
-		for _, v := range strings.Split(epg.Content, ",") {
-			if strings.EqualFold(v, name) {
-				epgName = epg.Name
-				break
-			}
-		}
-		if epgName != "" {
-			break
-		}
-	}
+	dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "%-"+name).First(&epg)
+	epgFrom := strings.SplitN(epg.Name, "-", 2)[0]
+	epgName := strings.SplitN(epg.Name, "-", 2)[1]
 
 	if epgName == "" {
 		return res
 	}
-	epgFrom := strings.SplitN(epgName, "-", 2)[0]
-	epgName = strings.SplitN(epgName, "-", 2)[1]
 
 	if strings.Contains(epgFrom, "cntv") {
 		res = getEpgCntv(epgName)
@@ -68,27 +59,20 @@ func GetSimpleEpg(name string) dto.SimpleResponse {
 	res.Code = 200
 	res.Msg = "请求成功!"
 
-	var epgs []models.IptvEpg
+	var epg models.IptvEpg
 	name = strings.ToLower(name)
-	dao.DB.Model(&models.IptvEpg{}).Where("content like ?", "%"+name+"%").Find(&epgs)
-	var epgName string
-	for _, epg := range epgs {
-
-		for _, v := range strings.Split(epg.Content, ",") {
-			if strings.EqualFold(v, name) {
-				epgName = epg.Name
-				break
-			}
+	err := dao.DB.Model(&models.IptvEpg{}).Where("name like ?", "%-"+name).First(&epg).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Println("APK获取 EPG 失败--未找到数据:", err)
+			return res
 		}
-		if epgName != "" {
-			break
-		}
-	}
-	if epgName == "" {
+		log.Println("APK获取 EPG 失败--数据库错误:", err)
 		return res
 	}
-	epgFrom := strings.SplitN(epgName, "-", 2)[0]
-	epgName = strings.SplitN(epgName, "-", 2)[1]
+
+	epgFrom := strings.SplitN(epg.Name, "-", 2)[0]
+	epgName := strings.SplitN(epg.Name, "-", 2)[1]
 
 	if strings.Contains(epgFrom, "cntv") {
 		res = getSimpleEpgCntv(epgName)
@@ -153,11 +137,14 @@ func getEpgCntv(name string) dto.Response {
 			return res
 		}
 		currentTime := time.Now()
+		log.Println("当前时间：", currentTime.Format("15:04"))
 		zoneName, _ := currentTime.Zone()
+		log.Println("时区：", zoneName)
 		if zoneName == "UTC" {
 			currentTime = currentTime.Add(8 * time.Hour)
 		}
 		nowTime := currentTime.Format("15:04")
+		log.Println("当前时间：", nowTime)
 		for _, item := range epgData["program"].([]interface{}) {
 			if dataMap, ok := item.(map[string]interface{}); ok {
 				data := dto.Program{}
@@ -251,35 +238,40 @@ func getEpgXml(epgFrom, epgName string) dto.Response {
 	if isXmlTVEmpty(xmlTV) {
 		return res
 	}
-	currentTime := time.Now()
-	zoneName, _ := currentTime.Zone()
-	if zoneName == "UTC" {
-		currentTime = currentTime.Add(8 * time.Hour)
-	}
-	nowTime := currentTime.Format("15:04")
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	currentTime := time.Now().In(loc)
+
+	// nowTime := currentTime.Format("15:04")
 	const layout = "20060102150405 -0700"
 	dataList := make([]dto.Program, 0)
 	pos := 0
 
 	for _, channel := range xmlTV.Channels {
 		if strings.EqualFold(channel.DisplayName[0].Value, epgName) {
+			var a = 0
 			for _, programme := range xmlTV.Programmes {
 				if programme.Channel == channel.ID {
-					tS, _ := time.Parse(layout, programme.Start)
-					tE, _ := time.Parse(layout, programme.Stop)
+					tS, _ := time.ParseInLocation(layout, programme.Start, loc)
+					// tE, _ := time.Parse(layout, programme.Stop)
 					StartTime := tS.Format("15:04")
-					EndTime := tE.Format("15:04")
+					// EndTime := tE.Format("15:04")
 
 					data := dto.Program{}
 					data.Name = programme.Title.Value
 					data.StartTime = StartTime
+					data.Pos = a
 
 					dataList = append(dataList, data)
 
-					if nowTime < EndTime {
+					if currentTime.After(tS) {
+						a++
 						pos += 1
 					}
 				}
+			}
+
+			if pos > 1 {
+				pos = pos - 1
 			}
 			res.Pos = pos
 			res.Data = dataList
@@ -306,11 +298,14 @@ func getSimpleEpg(epgFrom, epgName string) dto.SimpleResponse {
 		return res
 	}
 	currentTime := time.Now()
+	log.Println("当前时间：", currentTime.Format("15:04"))
 	zoneName, _ := currentTime.Zone()
+	log.Println("时区：", zoneName)
 	if zoneName == "UTC" {
 		currentTime = currentTime.Add(8 * time.Hour)
 	}
 	nowTime := currentTime.Format("15:04")
+	log.Println("当前时间11：", nowTime)
 	const layout = "20060102150405 -0700"
 
 	for _, channel := range xmlTV.Channels {

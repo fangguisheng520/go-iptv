@@ -80,6 +80,7 @@ type DataReqDto struct {
 }
 type Program struct {
 	Name      string `json:"name"`
+	Pos       int    `json:"pos"`
 	StartTime string `json:"starttime"`
 }
 
