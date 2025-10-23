@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func ConvertCntvToXml(cntv dto.CntvJsonChannel, eName string) dto.XmlTV {
@@ -621,6 +623,9 @@ func GetEpgXml(channelList []models.IptvChannelShow) dto.XmlTV {
 		var epgList models.IptvEpgList
 		err := dao.DB.Where("remarks = ? and status = 1", eType).First(&epgList).Error
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
 			log.Println("获取 EPG 列表失败:", err)
 			continue
 		}

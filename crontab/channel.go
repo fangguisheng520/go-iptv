@@ -1,6 +1,7 @@
 package crontab
 
 import (
+	"errors"
 	"fmt"
 	"go-iptv/dao"
 	"go-iptv/models"
@@ -10,6 +11,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -138,7 +141,14 @@ func UpdateList() {
 		}
 
 		var oldC models.IptvCategory
-		dao.DB.Model(&models.IptvCategory{}).Where("list_id = ?", v.ID).First(&oldC)
+		err = dao.DB.Model(&models.IptvCategory{}).Where("list_id = ?", v.ID).First(&oldC).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
+			log.Println("获取 EPG 列表失败:", err)
+			continue
+		}
 
 		if v.AutoCategory == 1 {
 			if !strings.Contains(urlData, "#genre#") {

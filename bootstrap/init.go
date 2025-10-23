@@ -7,8 +7,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -55,7 +53,6 @@ func InitDB() bool {
 	dao.DB.AutoMigrate(&models.IptvEpg{})
 	dao.DB.AutoMigrate(&models.IptvEpgList{})
 	dao.DB.AutoMigrate(&models.IptvMeals{})
-	initIptvMeals()
 	dao.DB.AutoMigrate(&models.IptvMovie{})
 	return true
 }
@@ -87,33 +84,6 @@ func InitLogo() bool {
 	return true
 }
 
-func initIptvMeals() {
-	var meals []models.IptvMeals
-	if err := dao.DB.Model(&models.IptvMeals{}).Find(&meals).Error; err != nil {
-		return
-	}
-	if len(meals) > 0 {
-		var tmpCas []models.IptvCategory
-		dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Find(&tmpCas)
-		for _, v := range meals {
-			v.Content = ""
-			caName := strings.Split(v.Content, "_")
-			for _, v2 := range tmpCas {
-				for _, v3 := range caName {
-					if v2.Name == v3 {
-						v.Content += strconv.FormatInt(v2.ID, 10) + ","
-					}
-				}
-
-			}
-			if len(v.Content) > 0 {
-				v.Content = v.Content[:len(v.Content)-1]
-				dao.DB.Model(&models.IptvMeals{}).Where("id = ?", v.ID).Update("content", v.Content)
-			}
-		}
-	}
-}
-
 func initIptvCategory() {
 	has := dao.DB.Migrator().HasColumn(&IptvCategory{}, "url")
 	if has {
@@ -139,7 +109,10 @@ func initIptvCategory() {
 
 	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "latesttime")
 	if has {
-		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN url, DROP COLUMN latesttime, DROP COLUMN autocategory, DROP COLUMN repeat;")
+		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN url")
+		dao.DB.Exec("ALTER TABLE iptv_category DROP DROP COLUMN latesttime;")
+		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN autocategory;")
+		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN repeat;")
 	}
 	dao.DB.AutoMigrate(&models.IptvCategory{})
 }
