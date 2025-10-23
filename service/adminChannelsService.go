@@ -330,7 +330,6 @@ func DelList(params url.Values) dto.ReturnJsonDto {
 	if res.RowsAffected == 0 {
 		return dto.ReturnJsonDto{Code: 0, Msg: "频道列表不存在", Type: "danger"}
 	}
-	log.Println(listId)
 
 	dao.DB.Where("id = ?", iptvCategoryList.ID).Delete(&models.IptvCategoryList{})
 	dao.DB.Where("list_id = ?", iptvCategoryList.ID).Delete(&models.IptvCategory{})

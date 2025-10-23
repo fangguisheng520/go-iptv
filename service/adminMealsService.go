@@ -5,7 +5,6 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -146,7 +145,6 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 		if err := dao.DB.Save(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "编辑失败", Type: "danger"}
 		}
-		log.Println("iptvMeals.ID", iptvMeals.ID)
 		go until.CleanMealsXmlCacheOne(iptvMeals.ID)
 		return dto.ReturnJsonDto{Code: 1, Msg: "编辑成功", Type: "success"}
 	}
