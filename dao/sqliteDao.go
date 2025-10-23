@@ -15,6 +15,7 @@ var DB *gorm.DB
 func InitDB(dbPath string) {
 	var err error
 	DB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Warn),
 		// Logger: logger.New(
 		// 	log.New(log.Writer(), "\r\n", log.LstdFlags), // 使用标准日志输出
 		// 	logger.Config{

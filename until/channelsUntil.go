@@ -261,7 +261,7 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 		}); err != nil {
 			return 0, err
 		}
-		go BindChannel()
+		BindChannel()
 		return 0, nil
 	}
 
@@ -445,7 +445,7 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
-		go BindChannel()
+		BindChannel()
 	}
 	log.Printf("订阅频道数量: %d", rawCount) // 新增日志输出
 	dao.DB.Model(&models.IptvCategory{}).Where("id = ?", cId).Update("rawcount", rawCount)

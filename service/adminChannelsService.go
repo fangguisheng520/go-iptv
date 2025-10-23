@@ -334,7 +334,7 @@ func DelList(params url.Values) dto.ReturnJsonDto {
 	dao.DB.Where("id = ?", iptvCategoryList.ID).Delete(&models.IptvCategoryList{})
 	dao.DB.Where("list_id = ?", iptvCategoryList.ID).Delete(&models.IptvCategory{})
 	dao.DB.Where("list_id = ?", iptvCategoryList.ID).Delete(&models.IptvChannel{})
-	// go BindChannel()
+	go until.CleanMealsTxtCacheAll() // 删除缓存
 	return dto.ReturnJsonDto{Code: 1, Msg: fmt.Sprintf("删除列表 %s 成功\n", iptvCategoryList.Name), Type: "success"}
 }
 
@@ -393,6 +393,7 @@ func SubmitMoveUp(params url.Values) dto.ReturnJsonDto {
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "交换排序失败", Type: "danger"}
 	} else {
+		go until.CleanMealsTxtCacheAll()
 		return dto.ReturnJsonDto{Code: 1, Msg: "交换排序成功", Type: "success"}
 	}
 }
@@ -437,6 +438,7 @@ func SubmitMoveDown(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "交换排序失败", Type: "danger"}
 	}
 
+	go until.CleanMealsTxtCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "交换排序成功", Type: "success"}
 }
 
@@ -472,6 +474,7 @@ func SubmitMoveTop(params url.Values) dto.ReturnJsonDto {
 	if err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "移动到最上失败", Type: "danger"}
 	}
+	go until.CleanMealsTxtCacheAll()
 	return dto.ReturnJsonDto{Code: 1, Msg: "已移动到最上", Type: "success"}
 }
 

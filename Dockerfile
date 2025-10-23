@@ -14,7 +14,6 @@ RUN  go build -o iptv main.go
 FROM alpine:latest
 WORKDIR /app
 
-COPY --from=builder /app/iptv .
 COPY ./client /client
 COPY ./apktool/* /usr/bin/
 COPY ./static /app/static
@@ -31,5 +30,7 @@ RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
     # mkdir -p /config/images/icon ; \
     # mkdir -p /config/images/bj ; \
     chmod 777 -R /app/iptv /usr/bin/apktool* 
+
+COPY --from=builder /app/iptv .
 
 CMD ["./iptv"]

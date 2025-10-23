@@ -84,6 +84,7 @@ function submitFormPOST(btn) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return;
 	}
+	lightyear.loading('show');
 	var action = form.action || window.location.pathname; 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
@@ -111,6 +112,7 @@ function submitFormPOST(btn) {
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
+			lightyear.loading('hide');
 			var sub = $(btn).closest('.modal');
 			sub.modal('hide');
 			loadPage(window.location.href);
