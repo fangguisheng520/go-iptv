@@ -271,7 +271,7 @@ func BindChannel() bool {
 		}
 		chNameList := MergeAndUnique(strings.Split(epgData.Content, ","), tmpList)
 		if len(tmpList) > 0 {
-			dao.DB.Model(&models.IptvChannel{}).Where("name in (?) and e_id == 0", chNameList).Update("e_id", epgData.ID)
+			dao.DB.Model(&models.IptvChannel{}).Where("name in (?) and e_id = 0", chNameList).Update("e_id", epgData.ID)
 
 			if !EqualStringSets(strings.Split(epgData.Content, ","), chNameList) {
 				epgData.Content = strings.Join(chNameList, ",")
