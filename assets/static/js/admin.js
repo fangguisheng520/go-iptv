@@ -197,7 +197,7 @@ function checkboxall(a){
 	}
 }
 function checkboxAllName(a){
-	var ck=document.getElementsByName("ids[]");
+	var ck=document.getElementsByName("names[]");
 	for (var i = 0; i < ck.length; i++) {
 		if(a.checked){
 			ck[i].checked=true;
@@ -206,27 +206,11 @@ function checkboxAllName(a){
 		}
 	}
 }
-function autoCheck(){
-	var ck=document.getElementsByName("names[]");
-	for (var i = 0; i < ck.length; i++) {
-		ck[i].checked=false;
-	}
-}
 function clearCheck(){
 	var ck=document.getElementsByName("names[]");
 	for (var i = 0; i < ck.length; i++) {
 		ck[i].checked=false;
 	}
-}
-function categorycheck(name){
-	$.ajax({
-		url: "/admin/channels",
-		type: "POST",
-		data: { category: name, forbiddenchannels: "" },
-		success: function(data) {
-			lightyear.notify(data.msg, data.type, 1000); 
-		}
-	});
 }
 function tdBtnPOST(btn) {
 	var action =  window.location.href; 

@@ -27,7 +27,7 @@ func GetEpgData(params url.Values) dto.ReturnJsonDto {
 	}
 
 	var channeList []models.IptvChannel
-	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("category,id").Find(&channeList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvChannel{}).Select("distinct name").Order("c_id,id").Find(&channeList).Error; err != nil {
 		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败", Type: "danger"}
 	}
 

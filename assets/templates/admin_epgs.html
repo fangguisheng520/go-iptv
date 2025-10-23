@@ -196,7 +196,7 @@
                                                                     <div class="input-group">
                                                                         <div class="input-group-btn">
 																			<input type="hidden" id="epgId1" name="epgId" style="width: 0px;" value="">
-                                                                            <select class="form-control btn btn-default dropdown-toggle" style="width: 150px;" id="bdingepgselect">
+                                                                            <select class="form-control btn btn-default dropdown-toggle" style="width: 150px;" id="bdingepgselect" disabled>
                                                                                 <option value="">请选EPG来源</option>
                                                                                 <option value="cntv">CCTV官网</option>
                                                                                 {{ if gt (len .EpgFromList) 0 }}{{ range $key, $value := .EpgFromList }}
