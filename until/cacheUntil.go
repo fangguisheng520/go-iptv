@@ -37,7 +37,7 @@ func CleanMealsTxtCacheAll() {
 	var meals []models.IptvMeals
 	dao.DB.Model(&models.IptvMeals{}).Find(&meals)
 	for _, meal := range meals {
-		dao.Cache.Delete("rssEpgTxt_" + strconv.FormatInt(meal.ID, 10))
+		dao.Cache.Delete("rssMealTxt_" + strconv.FormatInt(meal.ID, 10))
 	}
 
 	CleanMealsXmlCacheAll()
@@ -45,7 +45,7 @@ func CleanMealsTxtCacheAll() {
 
 func CleanMealsTxtCacheOne(id int64) {
 	log.Println("删除套餐TXT订阅缓存: ", id)
-	dao.Cache.Delete("rssEpgTxt_" + strconv.FormatInt(id, 10))
+	dao.Cache.Delete("rssMealTxt_" + strconv.FormatInt(id, 10))
 	CleanMealsXmlCacheOne(id)
 }
 
