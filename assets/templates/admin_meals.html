@@ -27,12 +27,13 @@
 										</tr>
 										<tbody style="font-size:12px;font-weight: bold;">
 										{{ if gt (len .Meals) 0 }}
+										{{ $root := . }}
 										{{range .Meals}}
 											<tr>
 												<td class="meal-id" align="center" style="font-size:12px;height:35px;font-weight: bold;" data-value="{{.ID}}">{{.ID}}</td>
 												<td class="meal-name" align="center" style="font-size:12px;font-weight: bold;" data-value="{{.Name}}">{{.Name}}</td>
 												<td align="center" style="font-size:12px;font-weight: bold;">{{if eq .Status 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
-												<td align="left" style="font-size:12px;font-weight: bold;">{{.Content}}</td>
+												<td class="meal-cids" align="left" style="font-size:12px;font-weight: bold;" data-value="{{ .Content }}">{{ .CaName }}</td>
 												<td>
 													<button type="button" onclick="tdBtnPOST(this)" name="change_status" value="{{.ID}}" class="btn btn-xs {{if eq .Status 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
 													<button class="btn btn-xs btn-info" type="button" name="editmeal" value="{{.ID}}" data-toggle="modal" onclick="mealsGetCategory(this)" data-target="#editmeal">编辑</button>

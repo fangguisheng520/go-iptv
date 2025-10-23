@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"go-iptv/dao"
+	"go-iptv/models"
 	"go-iptv/until"
 	"log"
 	"os"
@@ -77,5 +78,26 @@ func Install() (bool, string) {
 	}
 	defer file.Close()
 	InitJwtKey()
+	initIptvEpgList()
 	return true, "success"
+}
+
+func initIptvEpgList() {
+	var epgList []models.IptvEpgList
+	if err := dao.DB.Model(&models.IptvEpgList{}).Find(&epgList).Error; err != nil {
+		return
+	}
+	if len(epgList) == 0 {
+		dao.DB.Where("name like ?", "51zmt-%").Delete(&models.IptvEpg{})
+		var update = models.IptvEpgList{
+			Name:    "51zmt",
+			Remarks: "51zmt",
+			Url:     "http://epg.51zmt.top:8000/e.xml",
+			Status:  1,
+		}
+		dao.DB.Model(&models.IptvEpgList{}).Save(&update)
+		if !until.UpdataEpgListOne(update.ID) {
+			log.Println("初始化51zmt失败")
+		}
+	}
 }

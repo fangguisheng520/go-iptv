@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -44,81 +46,16 @@ func InitDB() bool {
 	dao.DB.AutoMigrate(&models.IptvAdmin{})
 	dao.DB.AutoMigrate(&models.IptvUser{})
 
-	has := dao.DB.Migrator().HasColumn(&IptvChannel{}, "sort")
-	if !has {
-		dao.DB.AutoMigrate(&models.IptvChannel{})
-		if err := dao.DB.Transaction(func(tx *gorm.DB) error {
-			var channels []models.IptvChannel
-			if err := tx.Model(&models.IptvChannel{}).Order("id").Find(&channels).Error; err != nil {
-				return err
-			}
+	initIptvChannel()
 
-			for _, ch := range channels {
-				if err := tx.Model(&models.IptvChannel{}).Where("id = ?", ch.ID).Update("sort", ch.ID).Error; err != nil {
-					return err
-				}
-			}
-			return nil
-		}); err != nil {
-			return false
-		}
-	}
-
-	has = dao.DB.Migrator().HasColumn(&models.IptvChannel{}, "category")
-	if has {
-		dao.DB.Exec("ALTER TABLE iptv_channels DROP COLUMN category;")
-	}
-
-	dao.DB.AutoMigrate(&models.IptvChannel{})
 	dao.DB.AutoMigrate(&models.IptvCategoryList{})
 
-	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "url")
-	if has {
+	initIptvCategory()
 
-		var categories []IptvCategory
-		dao.DB.Model(&IptvCategory{}).Where("url != ?", "").Find(&categories)
-		var list []models.IptvCategoryList
-		for _, category := range categories {
-			list = append(list, models.IptvCategoryList{
-				Name:         category.Name,
-				Url:          category.Url,
-				Enable:       category.Enable,
-				AutoCategory: category.AutoCategory,
-				Repeat:       category.Repeat,
-				UA:           category.UA,
-			})
-		}
-		if len(list) > 0 {
-			dao.DB.Create(&list)
-			dao.DB.Model(&IptvCategory{}).Where("url != ?", "").Delete(&IptvCategory{})
-		}
-	}
-
-	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "latesttime")
-	if has {
-		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN url DROP COLUMN latesttime DROP COLUMN autocategory DROP COLUMN repeat;")
-	}
-	dao.DB.AutoMigrate(&models.IptvCategory{})
 	dao.DB.AutoMigrate(&models.IptvEpg{})
 	dao.DB.AutoMigrate(&models.IptvEpgList{})
-	var epgList []models.IptvEpgList
-	if err := dao.DB.Model(&models.IptvEpgList{}).Find(&epgList).Error; err != nil {
-		return false
-	}
-	if len(epgList) == 0 {
-		dao.DB.Where("name like ?", "51zmt-%").Delete(&models.IptvEpg{})
-		var update = models.IptvEpgList{
-			Name:    "51zmt",
-			Remarks: "51zmt",
-			Url:     "http://epg.51zmt.top:8000/e.xml",
-			Status:  1,
-		}
-		dao.DB.Model(&models.IptvEpgList{}).Save(&update)
-		if !until.UpdataEpgListOne(update.ID) {
-			log.Println("初始化51zmt失败")
-		}
-	}
 	dao.DB.AutoMigrate(&models.IptvMeals{})
+	initIptvMeals()
 	dao.DB.AutoMigrate(&models.IptvMovie{})
 	return true
 }
@@ -148,4 +85,85 @@ func InitLogo() bool {
 		// }
 	}
 	return true
+}
+
+func initIptvMeals() {
+	var meals []models.IptvMeals
+	if err := dao.DB.Model(&models.IptvMeals{}).Find(&meals).Error; err != nil {
+		return
+	}
+	if len(meals) > 0 {
+		var tmpCas []models.IptvCategory
+		dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Find(&tmpCas)
+		for _, v := range meals {
+			v.Content = ""
+			caName := strings.Split(v.Content, "_")
+			for _, v2 := range tmpCas {
+				if until.InStringSlice(v2.Name, caName) {
+					v.Content += strconv.FormatInt(v2.ID, 10) + ","
+				}
+			}
+			if len(v.Content) > 0 {
+				v.Content = v.Content[:len(v.Content)-1]
+				dao.DB.Model(&models.IptvMeals{}).Where("id = ?", v.ID).Update("content", v.Content)
+			}
+		}
+	}
+}
+
+func initIptvCategory() {
+	has := dao.DB.Migrator().HasColumn(&IptvCategory{}, "url")
+	if has {
+
+		var categories []IptvCategory
+		dao.DB.Model(&IptvCategory{}).Where("url != ?", "").Find(&categories)
+		var list []models.IptvCategoryList
+		for _, category := range categories {
+			list = append(list, models.IptvCategoryList{
+				Name:         category.Name,
+				Url:          category.Url,
+				Enable:       category.Enable,
+				AutoCategory: category.AutoCategory,
+				Repeat:       category.Repeat,
+				UA:           category.UA,
+			})
+		}
+		if len(list) > 0 {
+			dao.DB.Create(&list)
+			dao.DB.Model(&IptvCategory{}).Where("url != ?", "").Delete(&IptvCategory{})
+		}
+	}
+
+	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "latesttime")
+	if has {
+		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN url DROP COLUMN latesttime DROP COLUMN autocategory DROP COLUMN repeat;")
+	}
+	dao.DB.AutoMigrate(&models.IptvCategory{})
+}
+
+func initIptvChannel() {
+	has := dao.DB.Migrator().HasColumn(&IptvChannel{}, "sort")
+	if !has {
+		dao.DB.AutoMigrate(&models.IptvChannel{})
+		dao.DB.Transaction(func(tx *gorm.DB) error {
+			var channels []models.IptvChannel
+			if err := tx.Model(&models.IptvChannel{}).Order("id").Find(&channels).Error; err != nil {
+				return err
+			}
+
+			for _, ch := range channels {
+				if err := tx.Model(&models.IptvChannel{}).Where("id = ?", ch.ID).Update("sort", ch.ID).Error; err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}
+
+	has = dao.DB.Migrator().HasColumn(&models.IptvChannel{}, "category")
+	if has {
+		dao.DB.Exec("ALTER TABLE iptv_channels DROP COLUMN category;")
+	}
+
+	dao.DB.AutoMigrate(&models.IptvChannel{})
 }

@@ -5,7 +5,9 @@ import (
 	"go-iptv/dto"
 	"go-iptv/models"
 	"go-iptv/until"
+	"log"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -51,31 +53,31 @@ func MealsEdit(params url.Values, editType int) dto.ReturnJsonDto {
 			return dto.ReturnJsonDto{Code: 0, Msg: "没有频道分类信息，无法生成套餐", Type: "danger"}
 		}
 
-		mealList := strings.Split(meal.Content, "_")
+		mealList := strings.Split(meal.Content, ",")
 
 		var dataList []dto.MealsReturnDto
 		for _, v := range categoryList {
 			var data dto.MealsReturnDto
+			data.Id = v.ID
 			data.Name = v.Name
 			data.Checked = false
-			for _, v2 := range mealList {
-				if v.Name == v2 {
-					data.Checked = true
-				}
+			if until.Int64InStringSlice(v.ID, mealList) {
+				data.Checked = true
 			}
 			dataList = append(dataList, data)
 		}
 		return dto.ReturnJsonDto{Code: 1, Data: dataList, Msg: "获取成功", Type: "success"}
 	} else {
 		var categoryList []models.IptvCategory
-		if err := dao.DB.Model(&models.IptvCategory{}).Where("type != ?", "import").Find(&categoryList).Error; err != nil {
+		if err := dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Find(&categoryList).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "没有频道分类信息，无法生成套餐", Type: "danger"}
 		}
 		var dataList []dto.MealsReturnDto
 		for _, v := range categoryList {
 			var data dto.MealsReturnDto
+			data.Id = v.ID
 			data.Name = v.Name
-			data.Checked = true
+			data.Checked = false
 
 			dataList = append(dataList, data)
 		}
@@ -101,7 +103,12 @@ func MealsDel(params url.Values) dto.ReturnJsonDto {
 func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 	mealId := params.Get("mealId")
 	mealName := params.Get("mealName")
-	namesList := params["names[]"]
+	namesList := params["ids[]"]
+
+	mealIdInt64, err := strconv.ParseInt(mealId, 10, 64)
+	if err != nil {
+		return dto.ReturnJsonDto{Code: 0, Msg: "套餐ID 错误", Type: "danger"}
+	}
 
 	if mealName == "" {
 		return dto.ReturnJsonDto{Code: 0, Msg: "套餐名称不能为空", Type: "danger"}
@@ -112,20 +119,34 @@ func MealsSubmit(params url.Values) dto.ReturnJsonDto {
 
 	iptvMeals := models.IptvMeals{
 		Name:    mealName,
-		Content: strings.Join(namesList, "_"),
+		Content: strings.Join(namesList, ","),
+		Status:  1,
 	}
 
 	if mealId == "" {
-		iptvMeals.Status = 1
+
 		if err := dao.DB.Create(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "添加失败", Type: "danger"}
 		}
 		go until.CleanMealsXmlCacheOne(iptvMeals.ID)
 		return dto.ReturnJsonDto{Code: 1, Msg: "添加成功", Type: "success"}
 	} else {
-		if err := dao.DB.Where("id = ?", mealId).Updates(&iptvMeals).Error; err != nil {
+		var iptvMeals models.IptvMeals
+		dao.DB.Model(&models.IptvMeals{}).Where("id = ?", mealId).First(&iptvMeals)
+
+		if iptvMeals.ID == 0 {
+			return dto.ReturnJsonDto{Code: 0, Msg: "套餐不存在", Type: "danger"}
+		}
+		iptvMeals = models.IptvMeals{
+			Name:    mealName,
+			Content: strings.Join(namesList, ","),
+			Status:  1,
+		}
+		iptvMeals.ID = mealIdInt64
+		if err := dao.DB.Save(&iptvMeals).Error; err != nil {
 			return dto.ReturnJsonDto{Code: 0, Msg: "编辑失败", Type: "danger"}
 		}
+		log.Println("iptvMeals.ID", iptvMeals.ID)
 		go until.CleanMealsXmlCacheOne(iptvMeals.ID)
 		return dto.ReturnJsonDto{Code: 1, Msg: "编辑成功", Type: "success"}
 	}

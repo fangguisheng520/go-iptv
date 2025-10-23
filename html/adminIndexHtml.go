@@ -27,13 +27,13 @@ func Index(c *gin.Context) {
 
 	dao.DB.Model(&models.IptvUser{}).Count(&pageData.UserTotal)
 	dao.DB.Model(&models.IptvUser{}).Where("lasttime > ?", today).Count(&pageData.UserToday)
-	dao.DB.Model(&models.IptvCategory{}).Where("autocategory IS NULL OR autocategory!='on'").Count(&pageData.ChannelTypeCount)
-	dao.DB.Model(&models.IptvChannel{}).Count(&pageData.ChannelCount)
-	dao.DB.Model(&models.IptvEpg{}).Count(&pageData.EpgCount)
-	dao.DB.Model(&models.IptvMeals{}).Count(&pageData.MealsCount)
+	dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Count(&pageData.ChannelTypeCount)
+	dao.DB.Model(&models.IptvChannel{}).Where("status = 1").Count(&pageData.ChannelCount)
+	dao.DB.Model(&models.IptvEpg{}).Where("status = 1").Count(&pageData.EpgCount)
+	dao.DB.Model(&models.IptvMeals{}).Where("status = 1").Count(&pageData.MealsCount)
 
 	var categoryList []models.IptvCategory
-	dao.DB.Model(&models.IptvCategory{}).Find(&categoryList)
+	dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Find(&categoryList)
 	for i, c := range categoryList {
 		var channelType dto.ChannelType
 

@@ -19,7 +19,7 @@
 											<form class="form-inline" method="post" id='autoupdate_form' action="/admin/channels">
 											<label>列表设置：</label>
 												<span>更新间隔</span>
-												<input type="text" class="form-control" name='updateinterval' style="width: 60px;height: 25px;" value="{{ .UpdateInterval }}" size="5"><span>&nbsp;分</span>
+												<input type="text" class="form-control" name='updateinterval' style="width: 60px;height: 25px;" value="{{ .UpdateInterval }}" size="5"><span>&nbsp;小时</span>
 												<label class="lyear-checkbox checkbox-inline">
 													<input type="checkbox" name="autoupdate" {{ if .AutoUpdate }} checked="checked"{{ end }}>
 													<span>自动更新</span>

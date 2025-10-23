@@ -2,49 +2,32 @@ function updateYear() {
 	$('#year').text(new Date().getFullYear());
 }
 updateYear();
-
-
-// 替换 main 和 copyright
 function replaceContent(html) {
 	var $temp = $('<div>').html(html);
 	var $newMain = $temp.find('main');
 	if ($newMain.length) $('main').replaceWith($newMain);
-
-	// var $newCopyright = $temp.find('p.copyright');
-	// if ($newCopyright.length) $('p.copyright').replaceWith($newCopyright);
-
 	updateYear();
 }
-
 function getPath(url) {
     try {
-        const u = new URL(url, window.location.origin); // 兼容相对路径
-        return u.pathname; // 只保留路径
+        const u = new URL(url, window.location.origin); 
+        return u.pathname; 
     } catch (e) {
-        // 如果是纯相对路径，直接处理
         return url.split(/[?#]/)[0];
     }
 }
-
-// 更新菜单 active 状态
 function updateMenuActive(url) {
 	url = getPath(url);
-
-	// 移除所有已有 active
 	$('.nav-drawer a').removeClass('active');
 	$('.nav-drawer a').closest('li').removeClass('active');
 	$('.nav-item-has-subnav').removeClass('open');
 	$('.nav-drawer .nav-item').removeClass('active');
-
-	// 给当前链接及其父菜单添加 active
 	var $link = $('.nav-drawer a[href="' + url + '"]');
 	$link.parent("li").addClass('active');
 	$link.closest(".nav-item-has-subnav").addClass("open");
-	$link.closest('.nav-item').addClass('active'); // 父菜单高亮
+	$link.closest('.nav-item').addClass('active'); 
 	$('.selectpicker').selectpicker('refresh');
 }
-
-// 加载页面函数
 function loadPage(url, pushHistory = true) {
 	if (!url || url === "javascript:;" || url === "javascript:void(0)") return;
 	$.ajax({
@@ -60,9 +43,7 @@ function loadPage(url, pushHistory = true) {
 			if (url.hash === '#bottom') {
                 const images = document.querySelectorAll('img');
                 let loadedCount = 0;
-
                 if (images.length === 0) {
-                    // 没有图片直接滚动
                     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
                 } else {
                     images.forEach(img => {
@@ -83,35 +64,27 @@ function loadPage(url, pushHistory = true) {
                             });
                         }
                     });
-
-                    // 如果所有图片已经加载完成
                     if (loadedCount === images.length) {
                         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
                     }
                 }
             }
-
 			if (pushHistory) history.pushState(null, '', url);
 			updateMenuActive(url);
 		},
 		error: function(err) {
 			console.error('请求失败:', err);
-			return false; // 返回 false 表示失败
+			return false; 
 		}
 	});
 }
-
 function submitFormPOST(btn) {
-
-	// 获取按钮所在的 form
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return;
 	}
-
-	var action = form.action || window.location.pathname; // 默认当前路径
-
+	var action = form.action || window.location.pathname; 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
 		if (key === "iconfile" || key === "bjfile" || key === "paylistfile") {
@@ -120,8 +93,6 @@ function submitFormPOST(btn) {
 		params.append(key, value);
 	});
 	params.append(btn.name, "");
-	
-	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -130,14 +101,13 @@ function submitFormPOST(btn) {
 		body: params.toString()
 	})
 	.then(async response => {
-		const text = await response.text(); // 先拿到响应内容
+		const text = await response.text(); 
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
 		}
-		return JSON.parse(text); // 或 response.json()
+		return JSON.parse(text); 
 	})
-	// .then(response => response.json())
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
@@ -150,44 +120,28 @@ function submitFormPOST(btn) {
 		lightyear.notify("提交失败", "danger", 3000);
 	});
 }
-
 function submitFormGET(btn) {
-	// 获取按钮所在的 form
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return;
 	}
-
-	// 获取 form 的 action，默认当前路径
 	var action = form.action || window.location.pathname;
-
-	// 把表单数据拼接成 query string
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
 		params.append(key, value);
 	});
-	// 把当前按钮的 name 加进去（通常用于区分提交动作）
 	if (btn.name) {
 		params.append(btn.name, "");
 	}
-
-	// 拼接到 URL
 	const url = action + (action.includes("?") ? "&" : "?") + params.toString();
-
 	loadPage(url);
 }
-
-
-
-// 菜单点击事件
 $('.nav-drawer .nav-item > a, .nav-drawer .nav-subnav a').click(function(e) {
 	e.preventDefault();
 	var url = $(this).attr('href');
 	loadPage(url);
 });
-
-// 页面首次加载时高亮当前菜单
 var path = window.location.pathname;
 $('.nav-drawer a').each(function() {
 	var href = $(this).attr('href');
@@ -195,63 +149,43 @@ $('.nav-drawer a').each(function() {
 		updateMenuActive(href);
 	}
 });
-
-// 处理浏览器前进/后退
 window.addEventListener('popstate', function() {
 	loadPage(location.pathname, false);
 });
-
-// 注销
 $('#logout').click(function() {
 	$.get('/admin/logout', function() {
 		location.reload();
 	});
 });
-
 document.addEventListener("click", function(e) {
-    // 找到点击的 <a>，并且包含 loaduser 类
 	let  link = e.target.closest("a.aboutbottom");
     if (link) {
 		e.preventDefault();
 		const url = new URL(link.href, window.location.origin);
 		loadPage(url);
-		
-		return; // 不是目标元素，忽略
+		return; 
 	}
     link = e.target.closest("a.loaduser");
-    if (!link) return; // 不是目标元素，忽略
-
-    // 确保 <a> 在 main 容器内
+    if (!link) return; 
     const mainContainer = document.querySelector("main.lyear-layout-content");
     if (!mainContainer || !mainContainer.contains(link)) return;
-
-    e.preventDefault(); // 阻止默认跳转
-
+    e.preventDefault(); 
     const url = new URL(link.href, window.location.origin);
-
-    // 获取当前搜索关键词（可选）
     const keywords = document.querySelector("input[name='keywords']")?.value || "";
     if (keywords) url.searchParams.set("keywords", keywords);
-
-    loadPage(url); // 调用你的 AJAX 加载函数
+    loadPage(url); 
 });
-
-
-
 function submitFormCounts(){
 	const form = document.getElementById("recCounts");
 	const url = new URL(window.location.href);
 	const keywords = document.querySelector("input[name='keywords']")?.value || "";
         if (keywords) url.searchParams.set("keywords", keywords);
-
 	const recCountsSelect = document.querySelector("select[name='recCounts']");
 	if (recCountsSelect && recCountsSelect.value) {
 		url.searchParams.set("recCounts", recCountsSelect.value);
 	}
-
 	loadPage(url);
 }
-
 function checkboxall(a){
 	var ck=document.getElementsByName("ids[]");
 	for (var i = 0; i < ck.length; i++) {
@@ -262,9 +196,8 @@ function checkboxall(a){
 		}
 	}
 }
-
 function checkboxAllName(a){
-	var ck=document.getElementsByName("names[]");
+	var ck=document.getElementsByName("ids[]");
 	for (var i = 0; i < ck.length; i++) {
 		if(a.checked){
 			ck[i].checked=true;
@@ -273,45 +206,36 @@ function checkboxAllName(a){
 		}
 	}
 }
-
 function autoCheck(){
 	var ck=document.getElementsByName("names[]");
 	for (var i = 0; i < ck.length; i++) {
 		ck[i].checked=false;
 	}
 }
-
 function clearCheck(){
 	var ck=document.getElementsByName("names[]");
 	for (var i = 0; i < ck.length; i++) {
 		ck[i].checked=false;
 	}
 }
-
-
 function categorycheck(name){
 	$.ajax({
 		url: "/admin/channels",
 		type: "POST",
 		data: { category: name, forbiddenchannels: "" },
 		success: function(data) {
-			lightyear.notify(data.msg, data.type, 1000); // success, warning, danger, info
+			lightyear.notify(data.msg, data.type, 1000); 
 		}
 	});
 }
-
 function tdBtnPOST(btn) {
-
-	var action =  window.location.href; // 默认当前路径
+	var action =  window.location.href; 
 	var params = new URLSearchParams();
-
 	if ($(btn).is(":checkbox")) {
 		params.append(btn.name, btn.checked ? 1 : 0);
 	}else{
 		params.append(btn.name, btn.value);
 	}
-
-	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -320,15 +244,14 @@ function tdBtnPOST(btn) {
 		body: params.toString()
 	})
 	.then(async response => {
-		const text = await response.text(); // 先拿到响应内容
+		const text = await response.text(); 
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
 		}
-		return JSON.parse(text); // 或 response.json()
+		return JSON.parse(text); 
 	})
 	.then(data => {
-		
 		if (data.type === "success") {
 			lightyear.notify(data.msg, data.type, 1000);
 			if (btn.name.includes("del")) {
@@ -341,33 +264,24 @@ function tdBtnPOST(btn) {
 				console.log(statusTd);
     			const font = statusTd.querySelector("font");
 				console.log(font);
-
-				// 判断当前状态文字
 				if (font && font.textContent.includes("上线")) {
-					// 改为下线
 					font.textContent = "下线";
 					font.color = "red";
-
-					// 按钮状态切换：警告→成功
 					btn.classList.remove("btn-warning");
 					btn.classList.add("btn-success");
-					btn.textContent = "上线"; // 按钮显示改为“上线”
+					btn.textContent = "上线"; 
 				} else {
-					// 改为上线
 					font.textContent = "上线";
 					font.color = "#33a996";
-
-					// 按钮状态切换：成功→警告
 					btn.classList.remove("btn-success");
 					btn.classList.add("btn-warning");
-					btn.textContent = "下线"; // 按钮显示改为“下线”
+					btn.textContent = "下线"; 
 				}
 			}else{
 				var sub = $(btn).closest('.modal');
 				sub.modal('hide');
 				loadPage(action);
 			}
-			
 		}else {
 			lightyear.notify(data.msg, data.type, 3000);
 		}
@@ -376,14 +290,9 @@ function tdBtnPOST(btn) {
 		lightyear.notify("提交失败"+err, "danger", 3000);
 	});
 }
-
-
 function mealsGetCategory(btn) {
-
 	var action = window.location.pathname;
-
 	const params = new URLSearchParams();
-
 	if (btn.name && btn.value) {
 		params.append(btn.name, btn.value);
 	}else if (btn.name) {
@@ -392,17 +301,13 @@ function mealsGetCategory(btn) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return ;
 	}
-
 	if (btn.name === "editmeal") {
-		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+		var $tr = $(btn).closest("tr"); 
 		var mealid = $tr.find(".meal-id").data("value");
 		var mealname = $tr.find(".meal-name").data("value");
-		
 		$("#mealId").val(mealid);
 		$("#mealName").val(mealname);
 	}
-
-	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -411,21 +316,20 @@ function mealsGetCategory(btn) {
 		body: params.toString()
 	})
 	.then(async response => {
-		const text = await response.text(); // 先拿到响应内容
+		const text = await response.text(); 
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
 		}
-		return JSON.parse(text); // 或 response.json()
+		return JSON.parse(text); 
 	})
 	.then(res => {
-		
 		if (res.type === "success") {
 			if (res.data && res.data.length > 0) {
 				var html = "";
 				res.data.forEach(function(item) {
 					html += '<label class="lyear-checkbox checkbox-inline">';
-					html += '<input type="checkbox" name="names[]" value="' + item.name + '"' 
+					html += '<input type="checkbox" name="ids[]" value="' + item.id + '"' 
 							+ (item.checked ? ' checked="checked"' : '') + '>';
 					html += '<span>' + item.name + '</span>';
 					html += '</label>';
@@ -434,19 +338,16 @@ function mealsGetCategory(btn) {
 			}else{
 				$(".form-inline.meal-checkbox").html("<span>无数据</span>");
 			}
-			// loadPage(action);
 		}else{
 			lightyear.notify(res.msg, res.type, 3000);
 		}
 	})
 }
-
 function epgEdit(btn) {
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var epgid = $tr.find(".epg-id").data("value");
 	var epgname = $tr.find(".epg-name").data("value");
 	var epgremarks = $tr.find(".epg-remarks").data("value");
-
 	var index = epgname.indexOf("-");
 	var prefix, name;
 	if (index !== -1) {
@@ -456,19 +357,14 @@ function epgEdit(btn) {
 		prefix = epgname;
 		name = "";
 	}
-	
 	$("#editepgselect").val(prefix);
 	$("#epgId").val(epgid);
 	$("#epgName").val(name);
 	$("#epgRemarks").val(epgremarks);
 }
-
 function epgsGetChannel(btn) {
-
 	var action = window.location.pathname;
-
 	const params = new URLSearchParams();
-
 	if (btn.name && btn.value) {
 		params.append(btn.name, btn.value);
 	}else if (btn.name) {
@@ -477,11 +373,9 @@ function epgsGetChannel(btn) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return ;
 	}
-
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var epgid = $tr.find(".epg-id").data("value");
 	var epgname = $tr.find(".epg-name").data("value");
-
 	var index = epgname.indexOf("-");
 	var prefix, name;
 	if (index !== -1) {
@@ -491,12 +385,9 @@ function epgsGetChannel(btn) {
 		prefix = epgname;
 		name = "";
 	}
-	
 	$("#bdingepgselect").val(prefix);
 	$("#epgId1").val(epgid);
 	$("#epgName1").val(name);
-
-	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -505,12 +396,12 @@ function epgsGetChannel(btn) {
 		body: params.toString()
 	})
 	.then(async response => {
-		const text = await response.text(); // 先拿到响应内容
+		const text = await response.text(); 
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
 		}
-		return JSON.parse(text); // 或 response.json()
+		return JSON.parse(text); 
 	})
 	.then(res => {
 		lightyear.notify(res.msg, res.type, 1000);
@@ -529,19 +420,16 @@ function epgsGetChannel(btn) {
 			}else{
 				$(".form-inline.epg-checkbox").html("<span>无数据</span>");
 			}
-			// loadPage(action);
 		}else{
 			lightyear.notify(res.msg, res.type, 3000);
 		}
 	})
 }
-
 function uploadIcon(event) {
 	const file = event.target.files[0];
 	if (!file) return;
-
 	const formData = new FormData();
-	const fileInput = document.querySelector('input[name="iconfile"]'); // 获取文件输入框
+	const fileInput = document.querySelector('input[name="iconfile"]'); 
 	if (fileInput && fileInput.files.length > 0) {
 	formData.append("iconfile", fileInput.files[0]);
 	}else{
@@ -549,14 +437,14 @@ function uploadIcon(event) {
 		return;
 	}
 	$.ajax({
-		url: '/admin/client/uploadIcon',  // ✅ 上传接口
+		url: '/admin/client/uploadIcon',  
 		type: 'POST',
 		data: formData,
 		contentType: false,
 		processData: false,
 		success: function(res) {
-			$('#iconInput').val(''); // ✅ 清空文件输入框
-			lightyear.notify(res.msg, res.type, 1000); // ✅ 上传成功后，显示提示信息
+			$('#iconInput').val(''); 
+			lightyear.notify(res.msg, res.type, 1000); 
 			if (res.code === 1) {
 				$('#iconImg').attr('src', res.data.url);
 				$('#iconContainer').show();
@@ -569,21 +457,17 @@ function uploadIcon(event) {
 		}
 	});
 };
-
 function deleteIcon() {
-	src = $("#iconImg").attr("src"); // 获取图片的src属性值
-
+	src = $("#iconImg").attr("src"); 
 	if (src.trim() === "") {
 		$('#iconContainer').hide();
 		$('#iconInput').val('');
 		return;
 	}
-
 	const params = new URLSearchParams();
 	params.append("deleteIcon", "");
-
 	$.ajax({
-		url: '/admin/client',   // ✅ 删除接口
+		url: '/admin/client',   
 		type: 'POST',
 		data: params.toString(),
 		contentType: 'application/x-www-form-urlencoded',
@@ -594,60 +478,48 @@ function deleteIcon() {
 			$('#iconInput').val('');
 		},
 		error: function(res) {
-			lightyear.notify(res.msg, res.type, 3000); // ✅ 上传失败后，显示提示信息
+			lightyear.notify(res.msg, res.type, 3000); 
 		}
 	});
 };
-
 function uploadBj(event) {
 	const file = event.target.files[0];
 	if (!file) return;
-
 	const formData = new FormData();
-	const fileInput = document.querySelector('input[name="bjfile"]'); // 获取文件输入框
+	const fileInput = document.querySelector('input[name="bjfile"]'); 
 	if (fileInput && fileInput.files.length > 0) {
-	formData.append("bjfile", fileInput.files[0]);
-	}else{
+		formData.append("bjfile", fileInput.files[0]);
+	} else {
 		lightyear.notify("❌ 请选择文件！", "danger", 1000);
 		return;
 	}
 	$.ajax({
-		url: '/admin/client/uploadBj',  // ✅ 上传接口
+		url: '/admin/client/uploadBj',  
 		type: 'POST',
 		data: formData,
 		contentType: false,
 		processData: false,
 		success: function(res) {
-			$('#bjInput').val(''); // ✅ 清空文件输入框
-			lightyear.notify(res.msg, res.type, 1000); // ✅ 上传成功后，显示提示信息
+			$('#bjInput').val(''); 
+			lightyear.notify(res.msg, res.type, 1000); 
 			if (res.code === 1) {
-				imgName = res.data.name;
-					$('.reload-bj').append(`
-						<div class="form-group" id="bj_`+imgName+`" style="position:relative; margin-right: 5px;">
-							<img id="`+imgName+`" src="/images/`+imgName+`.png" alt="预览" style="height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;">
-							<!-- 删除按钮 -->
-							<span class="delete-btn" onclick="deleteBj('`+imgName+`')" data-name="`+imgName+`" id="`+imgName+`" style="
-								position:absolute; top:-8px; right:-8px;
-								background:#f00; color:#fff; border-radius:50%;
-								font-size:14px; line-height:16px; width:16px; height:16px;
-								text-align:center; cursor:pointer;")">×</span>
-						</div>
-						`);
+				const imgName = res.data.name;
+				const html = `<div class="form-group" id="bj_${imgName}" style="position:relative; margin-right:5px;"img id="${imgName}" src="/images/${imgName}.png" alt="预览" style="height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;"span class="delete-btn" onclick="deleteBj('${imgName}')" data-name="${imgName}" id="${imgName}_del" style="position:absolute; top:-8px; right:-8px; background:#f00; color:#fff; border-radius:50%; font-size:14px; line-height:16px; width:16px;  height:16px; text-align:center; cursor:pointer;">×</span/div>`;
+				$('.reload-bj').append(html);
 			}
 		},
-		error: function(res) {
+		error: function(err) {
 			$('#bjInput').val('');
-			lightyear.notify(res.msg, res.type, 3000);
+			lightyear.notify("❌ 上传失败！", "danger", 3000);
+			console.error("Upload error:", err);
 		}
 	});
 };
-
 function deleteBj(name) {
 	const params = new URLSearchParams();
 	params.append("deleteBj", name);
-
 	$.ajax({
-		url: '/admin/client',   // ✅ 删除接口
+		url: '/admin/client',   
 		type: 'POST',
 		data: params.toString(),
 		contentType: 'application/x-www-form-urlencoded',
@@ -657,29 +529,24 @@ function deleteBj(name) {
 				$('#bj_'+name).remove();
 				$('#bjInput').val('');
 			}
-			
 		},
 		error: function(res) {
-			lightyear.notify(res.msg, res.type, 3000); // ✅ 上传失败后，显示提示信息
-			$('#bjInput').val(''); // ✅ 清空输入框
+			lightyear.notify(res.msg, res.type, 3000); 
+			$('#bjInput').val(''); 
 		}
 	});
 }
-
 function moviesGet(btn) {
-
 	if (btn.name === "editmovie") {
-		var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+		var $tr = $(btn).closest("tr"); 
 		var movieid = $tr.find(".movie-id").data("value");
 		var moviename = $tr.find(".movie-name").data("value");
 		var movieapi = $tr.find(".movie-api").data("value");
-		
 		$("#movieId").val(movieid);
 		$("#movieName").val(moviename);
 		$("#mealApi").val(movieapi);
 	}
 }
-
 function confirmAndSubmit(btn ,msg) {
     $.confirm({
         title: '操作确认',
@@ -700,16 +567,14 @@ function confirmAndSubmit(btn ,msg) {
         }
     });
 }
-
 function getCategoryList(btn) {
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var cid = $tr.find(".cl-id").data("value");
 	var cname = $tr.find(".cl-name").data("value");
 	var curl = $tr.find(".cl-url").data("value");
 	var cua = $tr.find(".cl-ua").data("value");
 	var ca = $tr.find(".cl-a").data("value");
 	var cr = $tr.find(".cl-r").data("value");
-
 	$("#clId").val(cid);
 	$("#listname").val(cname);
 	$("#listurl").val(curl);
@@ -717,16 +582,14 @@ function getCategoryList(btn) {
 	$("#autocategory").prop("checked", ca === 1);
 	$("#repeat").prop("checked", cr === 1);
 }
-
 function getCategory(btn) {
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var cid = $tr.find(".ca-id").data("value");
 	var cname = $tr.find(".ca-name").data("value");
 	var ctype = $tr.find(".ca-type").data("value");
 	var cua = $tr.find(".ca-ua").data("value");
 	var crules = $tr.find(".ca-rules").data("value");
 	var cproxy = $tr.find(".ca-proxy").data("value");
-
 	$("#caId").val(cid);
 	$("#caname").val(cname);
 	$("#caua").val(cua);
@@ -739,54 +602,50 @@ function getCategory(btn) {
 	$("#autoagg").prop("checked", ctype === "auto");
 	$("#proxy").prop("checked", cproxy === 1);
 }
-
-function getChannels(id){
-	$("#showcaId").val(id);
-	$.ajax({
-		url: "/admin/channels",
-		type: "POST",
-		data: { caId: id, getchannels: "" },
-		success: function(data) {
-			lightyear.notify(data.msg, data.type, 3000);
-			if (data.type === "success") {
-				const tbody = document.getElementById("channellist_tbody");
-				tbody.innerHTML = "";
-				data.data.forEach(item => {
-					const tr = document.createElement("tr");
-					const displayUrl = item.url.length > 20 
-						? item.url.substring(0, 10) + "..." + item.url.slice(-10) 
-						: item.url;
-
-					tr.innerHTML = `
-					<tr align="center">
-						<td style="display:none;" class="ch-id" data-value="${item.id}">${item.id}</td>
-						<td style="display:none;" class="ch-eid" data-value="${item.e_id}">${item.e_id}</td>
-						<td align="center" class="ch-name" data-value="${item.name}">${item.name}</td>
-						<td align="center" class="ch-url" data-value="${item.url}"><a href="${item.url}" target="_blank">${displayUrl}</a></td>
-						<td align="center" class="status-show">${item.status === 1 ? '<font color="#33a996">上线</font>' : '<font color="red">下线</font>'}</td>
-						<td align="center">${item.epg_name || "未绑定"}</td>
-						<td align="center">${item.logo === "" ? "无" : `<div id="logo_${item.id}" style="position:relative;"><img class="ch-logo" src="${item.logo}" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;"></div>`}
-						</td>
-						<td align="center">
-						<button type="button" onclick="tdBtnPOST(this)" name="channelsStatus" value="${item.id}" class="btn btn-xs ${item.status === 1 ? 'btn-warning">下线': 'btn-success">上线'}</button>
-						<button class="btn btn-xs btn-info" type="button" value="${item.id}" data-toggle="modal" onclick="editChannel(this)" data-target="#editchannel">编辑</button>
-						<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="${item.id}">删除</button>
-						</td>
-					</tr>
-					`;
-					tbody.appendChild(tr);
-					$('.selectpicker').selectpicker('refresh'); // 刷新 selectpicker
-				});
-			}
-		},
-		error: function() {
-			lightyear.notify("请求失败", "danger", 3000);
-		}
-	});
+function getChannels(id) {
+    $("#showcaId").val(id);
+    $.ajax({
+        url: "/admin/channels",
+        type: "POST",
+        data: { caId: id, getchannels: "" },
+        success: function(data) {
+            lightyear.notify(data.msg, data.type, 3000);
+            if (data.type === "success") {
+                const tbody = document.getElementById("channellist_tbody");
+                tbody.innerHTML = "";
+                data.data.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.align = "center";
+                    const displayUrl = item.url.length > 20 
+                        ? item.url.substring(0, 10) + "..." + item.url.slice(-10) 
+                        : item.url;
+                    tr.innerHTML =
+  '<td style="display:none;" class="ch-id" data-value="' + item.id + '">' + item.id + '</td>' +
+  '<td style="display:none;" class="ch-eid" data-value="' + item.e_id + '">' + item.e_id + '</td>' +
+  '<td class="ch-name" data-value="' + item.name + '">' + item.name + '</td>' +
+  '<td class="ch-url" data-value="' + item.url + '"><a href="' + item.url + '" target="_blank">' + displayUrl + '</a></td>' +
+  '<td class="status-show">' + (item.status === 1 ? '<font color="#33a996">上线</font>' : '<font color="red">下线</font>') + '</td>' +
+  '<td>' + (item.epg_name || '未绑定') + '</td>' +
+  '<td>' + (item.logo === '' 
+      ? '无' 
+      : '<div id="logo_' + item.id + '" style="position:relative;"><img class="ch-logo" src="' + item.logo + '" alt="预览" style="background-color:black;height:38px;border:1px solid #ccc;border-radius:4px;cursor:pointer;"></div>') + '</td>' +
+  '<td>' +
+    '<button type="button" onclick="tdBtnPOST(this)" name="channelsStatus" value="' + item.id + '" class="btn btn-xs ' + (item.status === 1 ? 'btn-warning">下线' : 'btn-success">上线') + '</button>&nbsp;' +
+    '<button class="btn btn-xs btn-info" type="button" value="' + item.id + '" data-toggle="modal" onclick="editChannel(this)" data-target="#editchannel">编辑</button>&nbsp;' +
+    '<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="' + item.id + '">删除</button>' +
+  '</td>';
+                    tbody.appendChild(tr);
+                    $('.selectpicker').selectpicker('refresh'); 
+                });
+            }
+        },
+        error: function() {
+            lightyear.notify("请求失败", "danger", 3000);
+        }
+    });
 }
-
 function getChannelsTxt(btn){
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var cid = $tr.find(".ca-id").data("value");
 	var cname = $tr.find(".ca-name").data("value");
 	$("#showtxtcaId").val(cid);
@@ -811,26 +670,22 @@ function getChannelsTxt(btn){
 		}
 	});
 }
-
 function editChannel(btn) {
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var chid = $tr.find(".ch-id").data("value");
 	var cname = $tr.find(".ch-name").data("value");
 	var curl = $tr.find(".ch-url").data("value");
 	var ceid = $tr.find(".ch-eid").data("value");
 	var logoSrc = $(btn).closest("tr").find("td div img.ch-logo").attr("src") || "";
-
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return;
 	}
-
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
 		params.append(key, value);
-	})
-
+	});
 	$("#editcaId").val(params.get("caId"));
 	$("#chId").val(chid);
 	$("#chname").val(cname);
@@ -843,27 +698,21 @@ function editChannel(btn) {
 		$("#logoContainerEdit").show().find("img").attr("src", logoSrc);
 	}
 }
-
 function saveChannelsOne(btn){
-
 	var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
 		return;
 	}
-
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
 		if (key === "logofile") {
 			return;
 		}
 		params.append(key, value);
-	})
-
+	});
 	params.append("saveChannelsOne", "");
-
 	var editchmodal = $(btn).closest('.modal');
-
 	$.ajax({
 		url: "/admin/channels",
 		type: "POST",
@@ -880,25 +729,20 @@ function saveChannelsOne(btn){
 		}
 	});
 }
-
 function getLogo(){
 	var $select = $("#e_id");
     var logoSrc = $select.find("option:selected").data("value") || "";
-
     if (logoSrc) {
         $("#logoContainerEdit").show().find("img").attr("src", logoSrc);
     } else {
         $("#logoContainerEdit").hide().find("img").attr("src", "");
     }
 }
-
 function rssPOST(btn) {
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var mealid = $tr.find(".meal-id").data("value");
-
 	const params = new URLSearchParams();
 	params.append("id", mealid);
-
 	fetch("/admin/getRssUrl", {
 		method: "POST",
 		headers: {
@@ -907,12 +751,12 @@ function rssPOST(btn) {
 		body: params.toString()
 	})
 	.then(async response => {
-		const text = await response.text(); // 先拿到响应内容
+		const text = await response.text(); 
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
 		}
-		return JSON.parse(text); // 或 response.json()
+		return JSON.parse(text); 
 	})
 	.then(res => {
 		if (res.type === "success") {
@@ -932,20 +776,17 @@ function rssPOST(btn) {
 		}
 	})
 }
-
 function CopyRss(textarea) {
     textarea.select();
-    document.execCommand("copy"); // 执行复制
+    document.execCommand("copy"); 
     lightyear.notify("✅ 已复制到剪贴板！", "success", 1000);
 };
-
 function uploadPayList(event) {
 	var action = window.location.pathname;
 	const file = event.target.files[0];
 	if (!file) return;
-
 	const formData = new FormData();
-	const fileInput = document.querySelector('input[name="paylistfile"]'); // 获取文件输入框
+	const fileInput = document.querySelector('input[name="paylistfile"]'); 
 	if (fileInput && fileInput.files.length > 0) {
 	formData.append("paylistfile", fileInput.files[0]);
 	}else{
@@ -953,15 +794,15 @@ function uploadPayList(event) {
 		return;
 	}
 	$.ajax({
-		url: '/admin/channels/uploadPayList',  // ✅ 上传接口
+		url: '/admin/channels/uploadPayList',  
 		type: 'POST',
 		data: formData,
 		contentType: false,
 		processData: false,
 		success: function(res) {
-			$('#paylistfile').val(''); // ✅ 清空文件输入框
-			lightyear.notify(res.msg, res.type, 1000); // ✅ 上传成功后，显示提示信息
-			loadPage(action); // ✅ 上传成功后，重新加载页面
+			$('#paylistfile').val(''); 
+			lightyear.notify(res.msg, res.type, 1000); 
+			loadPage(action); 
 		},
 		error: function(res) {
 			lightyear.notify(res.msg, res.type, 3000);
@@ -969,38 +810,29 @@ function uploadPayList(event) {
 		}
 	});
 };
-
 function uploadEpg(event) {
 	var input = event.target;
     var file = input.files[0];
     if (file) {
-        $('#epgfilename').text(file.name); // 显示文件名
+        $('#epgfilename').text(file.name); 
     } else {
         $('#epgfilename').text('');
     }
 };
-
-
 function uploadLogo(input) {
     if (!input.files || input.files.length === 0) return;
-
     var file = input.files[0];
-
-    // 获取当前行标识
     var tr = $(input).closest("tr");
     var rowName = tr.data("name");
-
-    // 上传文件
     var formData = new FormData();
     formData.append("uploadlogo", file);
-    formData.append("epgname", rowName); // 发送行标识给后端
-
+    formData.append("epgname", rowName); 
     $.ajax({
         url: "/admin/channels/uploadLogo",
         type: "POST",
         data: formData,
-        processData: false, // 不处理数据
-        contentType: false, // 不设置 Content-Type，让浏览器自动生成 multipart/form-data
+        processData: false, 
+        contentType: false, 
         success: function(data) {
             if (typeof data === "string") {
                 try {
@@ -1011,12 +843,10 @@ function uploadLogo(input) {
                     return;
                 }
             }
-
 			if (data && typeof data.msg === "string" && data.msg.includes('/admin/login')) {
                 window.location.href = "/admin/login";
                 return;
             }
-
             if (data && data.type === "success") {
                 lightyear.notify(data.msg, data.type, 3000);
 				const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -1034,26 +864,22 @@ function uploadLogo(input) {
         }
     });
 }
-
 function getEpgList(btn) {
-	var $tr = $(btn).closest("tr"); // 获取当前行的 jQuery 对象
+	var $tr = $(btn).closest("tr"); 
 	var cid = $tr.find(".e-id").data("value");
 	var cname = $tr.find(".e-name").data("value");
 	var curl = $tr.find(".e-url").data("value");
 	var cua = $tr.find(".e-ua").data("value");
-
 	$("#eid").val(cid);
 	$("#epgfromname").val(cname);
 	$("#epgfromurl").val(curl);
 	$("#epgfromua").val(cua);
 }
-
 function deleteLogo(id) {
 	const params = new URLSearchParams();
 	params.append("deleteLogo", id);
-
 	$.ajax({
-		url: '/admin/epgsList',   // ✅ 删除接口
+		url: '/admin/epgsList',   
 		type: 'POST',
 		data: params.toString(),
 		contentType: 'application/x-www-form-urlencoded',
@@ -1063,15 +889,13 @@ function deleteLogo(id) {
 				$('#logo_'+id).remove();
 				$('#uploadlogo').val('');
 			}
-			
 		},
 		error: function(res) {
-			lightyear.notify(res.msg, res.type, 3000); // ✅ 上传失败后，显示提示信息
-			$('#uploadlogo').val(''); // ✅ 清空输入框
+			lightyear.notify(res.msg, res.type, 3000); 
+			$('#uploadlogo').val(''); 
 		}
 	});
 }
-
 function getnewkey(btn){
 	$.confirm({
         title: '操作确认',
@@ -1084,9 +908,8 @@ function getnewkey(btn){
                 action: function () {
 					const params = new URLSearchParams();
 					params.append("getnewkey", btn.value);
-
 					$.ajax({
-						url: '/admin/getRssUrl',   // ✅ 删除接口
+						url: '/admin/getRssUrl',   
 						type: 'POST',
 						data: params.toString(),
 						contentType: 'application/x-www-form-urlencoded',
@@ -1108,7 +931,7 @@ function getnewkey(btn){
 							}
 						},
 						error: function(res) {
-							lightyear.notify(res.msg, res.type, 3000); // ✅ 上传失败后，显示提示信息
+							lightyear.notify(res.msg, res.type, 3000); 
 						}
 					});
                 }
@@ -1120,19 +943,13 @@ function getnewkey(btn){
         }
     });
 }
-
 function BuildApk(btn) {
 var form = btn.closest("form");
 	if (!form) {
 		lightyear.notify("表单提交失败", "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
 		return;
 	}
-
-	var action = form.action || window.location.pathname; // 默认当前路径
-
+	var action = form.action || window.location.pathname; 
 	const params = new URLSearchParams();
 	new FormData(form).forEach((value, key) => {
 		params.append(key, value);
@@ -1141,7 +958,6 @@ var form = btn.closest("form");
 	if (!params.has("up_sets")) {
 		params.append("up_sets", 0);
 	}
-	// 使用 fetch AJAX 提交
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -1150,14 +966,13 @@ var form = btn.closest("form");
 		body: params.toString()
 	})
 	.then(async response => {
-		const text = await response.text(); // 先拿到响应内容
+		const text = await response.text(); 
 		if (text.includes('/admin/login')) {
 			window.location.href = "/admin/login";
 			throw text;
 		}
-		return JSON.parse(text); // 或 response.json()
+		return JSON.parse(text); 
 	})
-	// .then(response => response.json())
 	.then(data => {
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
@@ -1168,43 +983,31 @@ var form = btn.closest("form");
 	})
 	.catch(err => {
 		lightyear.notify("提交失败:"+ err, "danger", 3000);
-		// document.querySelector('.modal-backdrop').remove();
-		// document.body.classList.remove('modal-open');
-		// document.body.style.overflow = ''; // 恢复滚动条
 	});
 }
 function getBuildStatus() {
-    // 定义定时器
     var timer = setInterval(function() {
         $.getJSON('/admin/client/buildStatus', function(resp) {
-            // 将返回的 data 值更新到 #apksize
             $('#apksize').val(resp.data.size);
-
-            // 如果 code 为 1，取消 #submitappinfo 的 disabled
             if(resp.code === 1) {
 				lightyear.notify(resp.msg, resp.type, 1000);
 				$('.download-link').each(function() {
-   					// 单独设置每个下载链接
 					$(this).attr('href', resp.data.url);
 					$(this).attr('download', resp.data.name);
 				});
 				$('#app_version').val(resp.data.version);
-					
                 $('#submitappinfo').prop('disabled', false);
 				$('.download-link').prop('disabled', false);
-                // 停止轮询
                 clearInterval(timer);
             }
         }).fail(function() {
 			lightyear.notify("请求失败，稍后重试...", 'danger', 1000);
         });
-    }, 1000); // 每秒执行一次
+    }, 1000); 
 }
-
 function toggleLock(btn) {
     const input = document.getElementById("serverUrl");
     const icon = btn.querySelector("i");
-
     if (input.hasAttribute("readonly")) {
 		$.confirm({
 			title: '操作确认',
@@ -1218,9 +1021,9 @@ function toggleLock(btn) {
 						input.removeAttribute("readonly");
 						input.focus();
 						input.value = window.location.origin;
-						icon.className = "mdi mdi-lock-open"; // 图标变为“解锁”
+						icon.className = "mdi mdi-lock-open"; 
 						btn.classList.remove("btn-danger");
-						btn.classList.add("btn-primary"); // 解锁蓝色
+						btn.classList.add("btn-primary"); 
 					}
 				},
 				cancel: {
@@ -1231,42 +1034,32 @@ function toggleLock(btn) {
 		});
     } else {
         input.setAttribute("readonly", true);
-        icon.className = "mdi mdi-lock"; // 图标变为“锁定”
+        icon.className = "mdi mdi-lock"; 
 		btn.classList.remove("btn-primary");
-        btn.classList.add("btn-danger"); // 锁定红色
+        btn.classList.add("btn-danger"); 
     }
 }
-
 function caMoveup() {
-
 	const tbody = document.getElementById("categorylist_tbody");
     if (!tbody) return;
-
-    // 找到第一个被选中的 checkbox
     const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
     if (!firstChecked) {
 		lightyear.notify("请先选择一个分类", 'danger', 1000);
         return;
     }
-
 	const tr = firstChecked.closest("tr");
     if (!tr) {
 		lightyear.notify("未找到对应行", 'danger', 1000);
         return;
 	};
-
 	const prevTr = tr.previousElementSibling;
     if (!prevTr) {
 		lightyear.notify("已经是第一行了", 'danger', 1000);
-		return;// 已经是第一行了
+		return;
 	}; 
-
-    // 获取 value
     const value = firstChecked.value;
-
 	const params = new URLSearchParams();
 	params.append("moveup", value);
-
     $.ajax({
         url: "/admin/channels",
         type: "POST",
@@ -1274,7 +1067,7 @@ function caMoveup() {
         success: function (data) {
             if (data.type === "success") {
                 lightyear.notify(data.msg, data.type, 1000);
-				tbody.insertBefore(tr, prevTr); // 移动到 prevTr 之前
+				tbody.insertBefore(tr, prevTr); 
             } else {
                 lightyear.notify(data.msg, data.type, 1000);
             }
@@ -1284,37 +1077,27 @@ function caMoveup() {
 		}
     });
 }
-
 function caMovedown() {
     const tbody = document.getElementById("categorylist_tbody");
     if (!tbody) return;
-
-    // 找到第一个被选中的 checkbox
     const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
     if (!firstChecked) {
         lightyear.notify("请先选择一个分类", 'danger', 1000);
         return;
     }
-
     const tr = firstChecked.closest("tr");
     if (!tr) {
         lightyear.notify("未找到对应行", 'danger', 1000);
         return;
     }
-
-    // 找到下一行
     const nextTr = tr.nextElementSibling;
     if (!nextTr) {
         lightyear.notify("已经是最后一行了", 'danger', 1000);
-        return; // 已经是最后一行
+        return; 
     }
-
-    // 获取 value
     const value = firstChecked.value;
-
     const params = new URLSearchParams();
     params.append("movedown", value);
-
     $.ajax({
         url: "/admin/channels",
         type: "POST",
@@ -1322,7 +1105,6 @@ function caMovedown() {
         success: function (data) {
             if (data.type === "success") {
                 lightyear.notify(data.msg, data.type, 1000);
-                // 下移：把下一行的下一个位置插入当前 tr
                 tbody.insertBefore(tr, nextTr.nextElementSibling);
             } else {
                 lightyear.notify(data.msg, data.type, 1000);
@@ -1333,35 +1115,26 @@ function caMovedown() {
         }
     });
 }
-
 function caMovetop() {
     const tbody = document.getElementById("categorylist_tbody");
     if (!tbody) return;
-
-    // 找到第一个被选中的 checkbox
     const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
     if (!firstChecked) {
         lightyear.notify("请先选择一个分类", 'danger', 1000);
         return;
     }
-
     const tr = firstChecked.closest("tr");
     if (!tr) {
         lightyear.notify("未找到对应行", 'danger', 1000);
         return;
     }
-
-    // 如果已经在第一行，不操作
     if (tr === tbody.firstElementChild) {
         lightyear.notify("已经在最顶端了", 'danger', 1000);
         return;
     }
-
-    // 获取 value
     const value = firstChecked.value;
     const params = new URLSearchParams();
     params.append("movetop", value);
-
     $.ajax({
         url: "/admin/channels",
         type: "POST",
@@ -1369,7 +1142,6 @@ function caMovetop() {
         success: function (data) {
             if (data.type === "success") {
                 lightyear.notify(data.msg, data.type, 1000);
-                // 移动到 tbody 的第一个位置
                 tbody.insertBefore(tr, tbody.firstElementChild);
             } else {
                 lightyear.notify(data.msg, data.type, 1000);

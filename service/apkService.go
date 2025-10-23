@@ -105,12 +105,12 @@ func GetChannels(channel dto.DataReqDto) string {
 
 	var meal models.IptvMeals
 	dao.DB.Model(&models.IptvMeals{}).Where("status = ? and id = ?", 1, dbUser.Meal).First(&meal)
-	cList := strings.Split(meal.Content, "_")
+	cList := strings.Split(meal.Content, ",")
 
 	var channelList []models.IptvChannel
 
 	if len(cList) > 1 || (len(cList) == 1 && cList[0] != "") {
-		dao.DB.Model(&models.IptvChannel{}).Where("category in ?", cList).Order("sort asc").Find(&channelList)
+		dao.DB.Model(&models.IptvChannel{}).Where("c_id in ?", cList).Order("sort asc").Find(&channelList)
 	} else {
 		resList = append(resList, dto.ChannelListDto{
 			Name: "该套餐无频道",
@@ -247,17 +247,43 @@ func getUserInfo(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 
 func getMealName(user models.IptvUser, result dto.LoginRes) dto.LoginRes {
 	var meals []models.IptvMeals
+	var caList []models.IptvCategory
 	dao.DB.Model(&models.IptvMeals{}).Where("status = ?", 1).Find(&meals)
+	dao.DB.Model(&models.IptvCategory{}).Where("enable = ?", 1).Find(&caList)
 
 	for _, v := range meals {
 		if v.ID == 1000 && result.MealName == "" {
 			result.MealName = v.Name
-			result.ProvList = strings.Split(v.Content, "_")
+			for _, v1 := range strings.Split(v.Content, ",") {
+				v1Int64, err := strconv.ParseInt(v1, 10, 64)
+				if err != nil {
+					continue
+				}
+				for _, v2 := range caList {
+					if v2.ID == v1Int64 {
+						result.ProvList = append(result.ProvList, v2.Name)
+					}
+
+				}
+			}
+
 		}
 		if v.ID == user.Meal {
 			result.MealName = v.Name
-			result.ProvList = strings.Split(v.Content, "_")
+			for _, v1 := range strings.Split(v.Content, ",") {
+				v1Int64, err := strconv.ParseInt(v1, 10, 64)
+				if err != nil {
+					continue
+				}
+				for _, v2 := range caList {
+					if v2.ID == v1Int64 {
+						result.ProvList = append(result.ProvList, v2.Name)
+					}
+
+				}
+			}
 		}
+
 	}
 	return result
 }

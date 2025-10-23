@@ -208,6 +208,13 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 	re := regexp.MustCompile(category.Rules)
 
 	for _, ch := range channelList {
+		if strings.Contains(ch.Name, category.Rules) {
+			if ch.EpgName != "" {
+				ch.Logo = EpgNameGetLogo(ch.EpgName)
+			}
+			result = append(result, ch)
+			continue
+		}
 		if re.MatchString(ch.Name) {
 			if ch.EpgName != "" {
 				ch.Logo = EpgNameGetLogo(ch.EpgName)
@@ -315,8 +322,6 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 		line = reVer.ReplaceAllString(line, "")
 		line = reTme.ReplaceAllString(line, "")
 		line = reBbsok.ReplaceAllString(line, "")
-
-		log.Println(line)
 
 		if line == "" {
 			continue

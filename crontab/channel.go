@@ -12,25 +12,48 @@ import (
 	"time"
 )
 
-var CrontabStatus bool = false
-var UpdateStatus bool = false
-var StopChan = make(chan struct{})
+var (
+	CrontabStatus bool
+	UpdateStatus  bool
+	StopChan      = make(chan struct{})
+	UpdateChan    = make(chan time.Duration) // 新增：用于动态调整间隔
+	ticker        *time.Ticker
+)
 
 func Crontab() {
-	defer func() { CrontabStatus = false }()
 	if CrontabStatus {
-		log.Println("定时任务服务已启动，请勿重复启动")
+		log.Println("定时任务已在运行，尝试更新定时间隔...")
+
+		cfg := dao.GetConfig()
+		newInterval := time.Duration(cfg.Channel.Interval) * time.Hour
+		if newInterval <= 0 {
+			log.Println("新间隔无效，忽略更新")
+			return
+		}
+
+		// 发送新的时间间隔信号
+		select {
+		case UpdateChan <- newInterval:
+			log.Println("已更新定时间隔为：", newInterval)
+		default:
+			log.Println("更新信号通道被占用，稍后再试")
+		}
 		return
 	}
+
 	cfg := dao.GetConfig()
 	autoUpdate := cfg.Channel.Auto
 	upInterval := cfg.Channel.Interval
+
 	if autoUpdate == 1 && upInterval > 0 {
 		log.Println("定时任务服务启动...")
 		CrontabStatus = true
-		interval := time.Duration(upInterval) * time.Minute
-		ticker := time.NewTicker(interval)
+		defer func() { CrontabStatus = false }()
+
+		interval := time.Duration(upInterval) * time.Hour
+		ticker = time.NewTicker(interval)
 		defer ticker.Stop()
+
 		for {
 			select {
 			case t := <-ticker.C:
@@ -40,6 +63,13 @@ func Crontab() {
 				}
 				log.Println("开始执行更新频道任务：", t.Format("2006-01-02 15:04:05"))
 				UpdateList()
+
+			case newInterval := <-UpdateChan:
+				log.Println("接收到新定时间隔，更新中...")
+				ticker.Stop()
+				ticker = time.NewTicker(newInterval)
+				log.Println("频道更新时间间隔已更新为：", newInterval)
+
 			case <-StopChan:
 				log.Println("收到停止信号，停止更新频道任务")
 				ticker.Stop()

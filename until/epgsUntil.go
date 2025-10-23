@@ -15,8 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func ConvertCntvToXml(cntv dto.CntvJsonChannel, eName string) dto.XmlTV {
@@ -248,34 +246,37 @@ func BindChannel() bool {
 	}
 
 	var epgList []models.IptvEpg
-	if err := dao.DB.Model(&models.IptvEpg{}).Find(&epgList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvEpg{}).Where("status = 1").Find(&epgList).Error; err != nil {
 		return false
 	}
 
 	for _, epgData := range epgList {
 		var tmpList []string
 		for _, channelData := range channelList {
-
-			if strings.EqualFold(channelData.Name, epgData.Name) {
+			if strings.EqualFold(channelData.Name, strings.SplitN(epgData.Name, "-", 2)[1]) {
 				tmpList = append(tmpList, channelData.Name)
-				break
+				continue
 			}
 
 			nameList := strings.Split(epgData.Remarks, "|")
+
 			for _, name := range nameList {
-				if strings.EqualFold(channelData.Name, name) {
+				if strings.EqualFold(channelData.Name, name) || channelData.Name == name {
 					tmpList = append(tmpList, channelData.Name)
 					break
 				}
 			}
 		}
 		chNameList := MergeAndUnique(strings.Split(epgData.Content, ","), tmpList)
-		if len(chNameList) > 0 {
-			dao.DB.Model(&models.IptvChannel{}).Where("name in (?)", chNameList).Update("e_id", epgData.ID)
-		}
-		epgData.Content = strings.Join(chNameList, ",")
-		if epgData.Content != "" {
-			dao.DB.Save(&epgData)
+		if len(tmpList) > 0 {
+			dao.DB.Model(&models.IptvChannel{}).Where("name in (?) and e_id == 0", chNameList).Update("e_id", epgData.ID)
+
+			if !EqualStringSets(strings.Split(epgData.Content, ","), chNameList) {
+				epgData.Content = strings.Join(chNameList, ",")
+				if epgData.Content != "" {
+					dao.DB.Save(&epgData)
+				}
+			}
 		}
 	}
 	go CleanAutoCacheAll() // 清理缓存
@@ -354,9 +355,9 @@ func GetTxt(id int64) string {
 	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
 		return res
 	}
-	categoryNameList := strings.Split(meal.Content, "_")
+	categoryIdList := strings.Split(meal.Content, ",")
 	var categoryList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?) and enable = 1", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
 	}
 
@@ -464,15 +465,15 @@ func GetEpg(id int64) dto.XmlTV {
 	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
 		return res
 	}
-	categoryNameList := strings.Split(meal.Content, "_")
-	categoryNameList = slices.DeleteFunc(categoryNameList, func(s string) bool {
+	categoryIdList := strings.Split(meal.Content, ",")
+	categoryIdList = slices.DeleteFunc(categoryIdList, func(s string) bool {
 		return strings.TrimSpace(s) == ""
 	})
-	if len(categoryNameList) == 0 {
+	if len(categoryIdList) == 0 {
 		return res
 	}
 	var categoryList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("name in (?) and enable = 1", categoryNameList).Order("sort asc").Find(&categoryList).Error; err != nil {
+	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
 	}
 
@@ -551,112 +552,118 @@ func GetEpgXml(channelList []models.IptvChannelShow) dto.XmlTV {
 		GeneratorURL:  "https://www.qingh.xyz",
 	}
 
+	var epgXmlexit map[string]bool = make(map[string]bool) // 记录已经存在的epg
 	for _, channel := range channelList {
 		if channel.EId <= 0 {
 			continue
 		}
-		var epgs []models.IptvEpg
-		if err := dao.DB.Model(&models.IptvEpg{}).Where("id = ? and status = 1", channel.EId).Find(&epgs).Error; err != nil {
+		if epgXmlexit[channel.Name] {
 			continue
 		}
-		for _, epg := range epgs {
-			eType := strings.SplitN(epg.Name, "-", 2)[0]
-			eName := strings.SplitN(epg.Name, "-", 2)[1]
-			dName := []dto.DisplayName{}
-			exists := false
-			if eType == "cntv" {
-				tmpData, err := GetEpgCntv(eName)
-				if err == nil {
-					tmpXml := ConvertCntvToXml(tmpData, eName)
-					for k, c := range epgXml.Channels {
-						if c.ID == eName {
-							exists = true
-							var tmpExists bool
-							for _, v := range c.DisplayName {
-								if v.Value == channel.Name {
-									tmpExists = true
-									break
-								}
-							}
-							if !tmpExists {
-								dName = append(c.DisplayName, dto.DisplayName{
-									Lang:  "zh",
-									Value: channel.Name,
-								})
-								epgXml.Channels[k].DisplayName = dName
+		var epg models.IptvEpg
+		if err := dao.DB.Model(&models.IptvEpg{}).Where("id = ? and status = 1", channel.EId).First(&epg).Error; err != nil {
+			continue
+		}
 
+		eType := strings.SplitN(epg.Name, "-", 2)[0]
+		eName := strings.SplitN(epg.Name, "-", 2)[1]
+		dName := []dto.DisplayName{}
+		exists := false
+		if eType == "cntv" {
+			tmpData, err := GetEpgCntv(eName)
+			if err == nil {
+				tmpXml := ConvertCntvToXml(tmpData, eName)
+				for k, c := range epgXml.Channels {
+					if c.ID == eName {
+						exists = true
+						var tmpExists bool
+						for _, v := range c.DisplayName {
+							if v.Value == channel.Name {
+								tmpExists = true
+								break
 							}
-							break
 						}
-					}
+						if !tmpExists {
+							dName = append(c.DisplayName, dto.DisplayName{
+								Lang:  "zh",
+								Value: channel.Name,
+							})
+							epgXml.Channels[k].DisplayName = dName
 
-					if !exists {
-						dName = append(dName, dto.DisplayName{
-							Lang:  "zh",
-							Value: channel.Name,
-						})
-						epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
-							ID:          eName,
-							DisplayName: dName,
-						})
-					}
-
-					for _, p := range tmpXml.Programmes {
-						p.Channel = eName
-						epgXml.Programmes = append(epgXml.Programmes, p)
-					}
-					if len(epgXml.Channels) > 0 && len(epgXml.Programmes) > 0 {
+						}
 						break
 					}
-					continue
 				}
-			}
 
-			var epgList models.IptvEpgList
-			result := dao.DB.Where("remarks = ? and status = 1", eType).First(&epgList)
-
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.Error != nil {
-				// 没找到，跳过或执行其他逻辑
-				continue
-			}
-
-			tmpXml := GetEpgListXml(epgList.Name, epgList.Url)
-			for k, c := range epgXml.Channels {
-				if c.ID == eName {
-					exists = true
-					dName = append(c.DisplayName, dto.DisplayName{
+				if !exists {
+					dName = append(dName, dto.DisplayName{
 						Lang:  "zh",
 						Value: channel.Name,
 					})
-					epgXml.Channels[k].DisplayName = dName
+					epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
+						ID:          eName,
+						DisplayName: dName,
+					})
 				}
-			}
 
-			if !exists {
-				dName = append(dName, dto.DisplayName{
-					Lang:  "zh",
-					Value: channel.Name,
-				})
-				epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
-					ID:          eName,
-					DisplayName: dName,
-				})
-			}
-
-			var cId string
-			for _, c := range tmpXml.Channels {
-				if c.DisplayName[0].Value == eName {
-					cId = c.ID
-					break
-				}
-			}
-
-			for _, p := range tmpXml.Programmes {
-				if p.Channel == cId {
+				for _, p := range tmpXml.Programmes {
 					p.Channel = eName
 					epgXml.Programmes = append(epgXml.Programmes, p)
 				}
+				if len(epgXml.Channels) > 0 && len(epgXml.Programmes) > 0 {
+					epgXmlexit[channel.Name] = true
+					continue
+				}
+				continue
 			}
+		}
+
+		var epgList models.IptvEpgList
+		err := dao.DB.Where("remarks = ? and status = 1", eType).First(&epgList).Error
+		if err != nil {
+			log.Println("获取 EPG 列表失败:", err)
+			continue
+		}
+
+		tmpXml := GetEpgListXml(epgList.Name, epgList.Url)
+		for k, c := range epgXml.Channels {
+			if c.ID == eName {
+				exists = true
+				dName = append(c.DisplayName, dto.DisplayName{
+					Lang:  "zh",
+					Value: channel.Name,
+				})
+				epgXml.Channels[k].DisplayName = dName
+			}
+		}
+
+		if !exists {
+			dName = append(dName, dto.DisplayName{
+				Lang:  "zh",
+				Value: channel.Name,
+			})
+			epgXml.Channels = append(epgXml.Channels, dto.XmlChannel{
+				ID:          eName,
+				DisplayName: dName,
+			})
+		}
+
+		var cId string
+		for _, c := range tmpXml.Channels {
+			if c.DisplayName[0].Value == eName {
+				cId = c.ID
+				break
+			}
+		}
+
+		for _, p := range tmpXml.Programmes {
+			if p.Channel == cId {
+				p.Channel = eName
+				epgXml.Programmes = append(epgXml.Programmes, p)
+			}
+		}
+		if len(epgXml.Channels) > 0 && len(epgXml.Programmes) > 0 {
+			epgXmlexit[channel.Name] = true
 		}
 	}
 
