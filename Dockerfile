@@ -9,7 +9,7 @@ RUN go mod download
 COPY . .
 
 RUN  go build -o iptv main.go
-
+RUN chmod +x /app/iptv
 
 FROM alpine:latest
 WORKDIR /app
@@ -29,7 +29,7 @@ RUN apk add --no-cache openjdk8 bash curl tzdata sqlite;\
     cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone; \
     # mkdir -p /config/images/icon ; \
     # mkdir -p /config/images/bj ; \
-    chmod 777 -R /app/iptv /usr/bin/apktool* 
+    chmod 777 -R /usr/bin/apktool* 
 
 COPY --from=builder /app/iptv .
 
