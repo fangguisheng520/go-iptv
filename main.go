@@ -83,6 +83,7 @@ func main() {
 
 	go crontab.Crontab()
 	go crontab.EpgCron()
+	go until.InitCacheRebuild()
 
 	if !debug {
 		bootstrap.InitJwtKey() // 初始化JWTkey
