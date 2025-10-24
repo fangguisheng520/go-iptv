@@ -17,9 +17,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -591,5 +593,45 @@ func InStringSlice(target string, list []string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func CheckRam() bool {
+	// 判断可用内存
+	var sysInfo syscall.Sysinfo_t
+	err := syscall.Sysinfo(&sysInfo)
+	if err == nil {
+		freeRam := sysInfo.Freeram * uint64(syscall.Getpagesize()) // 可用内存字节
+		log.Println("可用内存:", freeRam/1024/1024, "MB")
+		if freeRam < 512*1024*1024 { // 小于 512M
+			return true
+		}
+	}
+	return false
+}
+
+func IsLowResource() bool {
+	// 判断 ARM 架构
+	if runtime.GOARCH == "arm" {
+		return true
+	}
+
+	// 判断 CPU 核心数
+	if runtime.NumCPU() < 2 {
+		return true
+	}
+
+	// 判断可用内存
+	var sysInfo syscall.Sysinfo_t
+	err := syscall.Sysinfo(&sysInfo)
+	if err == nil {
+		freeRam := sysInfo.Freeram * uint64(syscall.Getpagesize()) // 可用内存字节
+		if freeRam < 1*1024*1024*1024 {                            // 小于 1G
+			return true
+		}
+	} else {
+		fmt.Println("获取内存信息失败:", err)
+	}
+
 	return false
 }

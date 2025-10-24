@@ -515,7 +515,7 @@ func SaveChannelsOne(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误, 不得为空", Type: "danger"}
 	}
 
-	if !until.IsSafe(chId) || !until.IsSafe(e_id) || !until.IsSafe(chname) {
+	if !until.IsSafe(chId) || !until.IsSafe(e_id) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误, 存在非法字符", Type: "danger"}
 	}
 
