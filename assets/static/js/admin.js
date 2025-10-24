@@ -110,9 +110,9 @@ function submitFormPOST(btn) {
 		return JSON.parse(text); 
 	})
 	.then(data => {
+		lightyear.loading('hide');
 		lightyear.notify(data.msg, data.type, 3000);
 		if (data.type === "success") {
-			lightyear.loading('hide');
 			var sub = $(btn).closest('.modal');
 			sub.modal('hide');
 			loadPage(window.location.href);
@@ -222,6 +222,7 @@ function tdBtnPOST(btn) {
 	}else{
 		params.append(btn.name, btn.value);
 	}
+	lightyear.loading('show');
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -238,9 +239,10 @@ function tdBtnPOST(btn) {
 		return JSON.parse(text); 
 	})
 	.then(data => {
+		lightyear.loading('hide');
 		if (data.type === "success") {
 			lightyear.notify(data.msg, data.type, 1000);
-			if (btn.name.includes("del")) {
+			if (btn.name.includes("del") && !btn.name.includes("dellist")) {
 				const tr = btn.closest("tr");
 				if (tr) tr.remove();
 			}else if (btn.name.includes("Status")) {
