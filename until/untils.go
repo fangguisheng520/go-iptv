@@ -601,7 +601,7 @@ func CheckRam() bool {
 	var sysInfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysInfo)
 	if err == nil {
-		freeRam := sysInfo.Freeram * uint64(syscall.Getpagesize()) // 可用内存字节
+		freeRam := uint64(sysInfo.Freeram) * uint64(syscall.Getpagesize()) // 可用内存字节
 		log.Println("可用内存:", freeRam/1024/1024, "MB")
 		if freeRam < 512*1024*1024 { // 小于 512M
 			return true
@@ -625,8 +625,8 @@ func IsLowResource() bool {
 	var sysInfo syscall.Sysinfo_t
 	err := syscall.Sysinfo(&sysInfo)
 	if err == nil {
-		freeRam := sysInfo.Freeram * uint64(syscall.Getpagesize()) // 可用内存字节
-		if freeRam < 1*1024*1024*1024 {                            // 小于 1G
+		freeRam := uint64(sysInfo.Freeram) * uint64(syscall.Getpagesize()) // 可用内存字节
+		if freeRam < 1*1024*1024*1024 {                                    // 小于 1G
 			return true
 		}
 	} else {
