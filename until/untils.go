@@ -21,11 +21,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shirou/gopsutil/mem"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -598,16 +598,12 @@ func InStringSlice(target string, list []string) bool {
 
 func CheckRam() bool {
 	// 判断可用内存
-	var sysInfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysInfo)
-	if err == nil {
-		freeRam := uint64(sysInfo.Freeram) * uint64(syscall.Getpagesize()) // 可用内存字节
-		log.Println("可用内存:", freeRam/1024/1024, "MB")
-		if freeRam < 512*1024*1024 { // 小于 512M
-			return true
-		}
+	vmStat, err := mem.VirtualMemory()
+	if err != nil {
+		return false
 	}
-	return false
+	log.Printf("可用内存: %d MB (%d GB)\n", vmStat.Available/1024/1024, vmStat.Available/1024/1024/1024)
+	return vmStat.Available < 512*1024*1024
 }
 
 func IsLowResource() bool {
@@ -622,16 +618,9 @@ func IsLowResource() bool {
 	}
 
 	// 判断可用内存
-	var sysInfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysInfo)
-	if err == nil {
-		freeRam := uint64(sysInfo.Freeram) * uint64(syscall.Getpagesize()) // 可用内存字节
-		if freeRam < 1*1024*1024*1024 {                                    // 小于 1G
-			return true
-		}
-	} else {
-		fmt.Println("获取内存信息失败:", err)
+	vmStat, err := mem.VirtualMemory()
+	if err != nil {
+		return false
 	}
-
-	return false
+	return vmStat.Available < 512*1024*1024
 }
