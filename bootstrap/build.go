@@ -129,7 +129,7 @@ func BuildAPK() bool {
 
 	if until.IsLowResource() {
 		cmd = exec.Command("apktool",
-			"-JXmx512M",
+			"-JXmx256M",
 			"-JXX:+UseParallelGC",
 			"-JXX:+UseStringDeduplication",
 			"-JXX:ParallelGCThreads=2",

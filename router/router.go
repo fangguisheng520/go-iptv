@@ -172,7 +172,9 @@ func InitRouter(debug bool) *gin.Engine {
 				cfg.ServerUrl = strings.TrimSuffix(apkApi, "/")
 				dao.SetConfig(cfg)
 				crontab.StopChan = make(chan struct{})
-				go bootstrap.BuildAPK()
+				if os.Getenv("NOBUILD") != "true" {
+					go bootstrap.BuildAPK()
+				}
 				go crontab.Crontab()
 				go crontab.EpgCron()
 				go until.InitCacheRebuild()

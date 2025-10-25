@@ -12,9 +12,15 @@ import (
 )
 
 func main() {
+
 	if until.CheckRam() {
-		log.Println("可用内存不足512MB，无法运行")
+		log.Println("可用内存不足256MB，无法运行")
 		return
+	}
+
+	build := true
+	if os.Getenv("NOBUILD") == "true" {
+		build = false
 	}
 
 	port := flag.String("port", "80", "启动端口 eg: 80")
@@ -62,7 +68,6 @@ func main() {
 
 	log.Println("加载数据库...")
 	if debug {
-		debug = true
 		dao.InitDBDebug("/config/iptv.db")
 	} else {
 		dao.InitDB("/config/iptv.db")
@@ -92,9 +97,11 @@ func main() {
 
 	if !debug {
 		bootstrap.InitJwtKey() // 初始化JWTkey
-		if !bootstrap.BuildAPK() {
-			log.Println("APK编译错误")
-			return
+		if build {
+			if !bootstrap.BuildAPK() {
+				log.Println("APK编译错误")
+				return
+			}
 		}
 	}
 

@@ -603,7 +603,7 @@ func CheckRam() bool {
 		return false
 	}
 	log.Printf("可用内存: %d MB (%d GB)\n", vmStat.Available/1024/1024, vmStat.Available/1024/1024/1024)
-	return vmStat.Available < 512*1024*1024
+	return vmStat.Available < 256*1024*1024
 }
 
 func IsLowResource() bool {
@@ -622,5 +622,5 @@ func IsLowResource() bool {
 	if err != nil {
 		return false
 	}
-	return vmStat.Available < 512*1024*1024
+	return vmStat.Available < 256*1024*1024
 }
