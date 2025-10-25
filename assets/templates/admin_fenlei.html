@@ -1,0 +1,258 @@
+{{ template "header" . }}
+{{ template "admin_header" . }}
+<main class="lyear-layout-content">
+    <style type="text/css">
+	#categorylist{padding-left: 0px;padding-top: 5px;}
+	ul li{list-style: none}
+</style>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-lg-12">
+				<div class="card">
+					<div class="card-header"><h4>频道分类管理</h4></div>
+					<div class="tab-content">
+						<div class="tab-pane active">
+	                		<div class="table-responsive">
+								<table class="table table-bordered table-vcenter">
+									<tr>
+										<td>
+											<form class="form-inline" method="post" id='cclass_form' action="/admin/fenlei">
+												<button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addclass">新增分类</button>
+                                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="caMoveup_fenlei()" name="moveup">上移分类</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="caMovedown_fenlei()" name="movedown">下移分类</button>
+												<button class="btn btn-xs btn-info btn-default" type="button" onclick="caMovetop_fenlei()" name="movetop">移动到顶</button>
+											</form>
+										</td>
+									</tr>
+								</table>
+								<table class="table table-hover table-vcenter">
+									<thead>
+										<tr>
+											<th style="text-align:center;">#</th>
+											<th style="text-align:center;">分组名称</th>
+											<th style="text-align:center;">状态</th>
+											<th style="text-align:center;">操作</th>
+										</tr>
+									</thead>
+									<tbody id="categorylist_tbody">
+										{{ if gt (len .Fenlei) 0 }}{{ range .Fenlei }}
+										<tr align="center">
+											<td align="center">
+												<label class="lyear-checkbox checkbox-inline">
+													<input type="checkbox" data-value="{{ .ID }}" value="{{ .ID }}">
+													<span></span>
+												</label>
+											</td>
+											<td style="display:none;" class="ca-id" data-value="{{ .ID }}">{{ .ID }}</td>
+											<td style="display:none;" class="ca-ua" data-value="{{ .UA }}">{{ .UA }}</td>
+											<td class="ca-name" data-value="{{ .Name }}">{{ .Name }}</td>
+											<td class="status-show">{{ if eq .Enable 1 }}<font color="#33a996">上线</font>{{else}}<font color="red">下线</font>{{end}}</td>
+											<td>
+												<button type="button" onclick="tdBtnPOST(this)" name="fenleiStatus" value="{{.ID}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
+												<button class="btn btn-xs btn-info" type="button" value="{{.ID}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addclass">编辑</button>
+												<button class="btn btn-xs btn-info" type="button" data-toggle="modal" onclick="getChannels_pindao('{{.ID}}')" data-target="#showlist">编辑频道</button>
+												<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="delca" value="{{.ID}}">删除</button>
+											</td>
+										{{ end }}{{ end }}
+									</tbody>
+								</table>
+
+								<div class="modal fade" id="addclass" tabindex="-1" role="dialog">
+									<div class="modal-dialog" role="document">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title">分组编辑</h4>
+											</div>
+											<form method="post" action="/admin/fenlei">
+												<div class="modal-body">
+													<input type="hidden" id="caId" data-value="" name="caId" value="">
+													<div class="form-group">
+														<label for="recipient-name" class="control-label">分组名称：</label>
+														<input type="text" class="form-control" id="caname" name="caname" placeholder="分组名称">
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="saveCa">确定</button>
+													<button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);" data-dismiss="modal">关闭</button>
+												</div>
+											</form>
+										</div>
+									</div>
+								</div>
+								<div class="modal fade" id="showlist" tabindex="-1" role="dialog">
+									<div class="modal-dialog modal-lg" role="document" style="width: 90%; max-width: none;">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#channellist_tbody_pindao').html('');"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title">频道列表</h4>
+											</div>
+											<form method="post" action="/admin/fenlei">
+<!--                                                <table class="table table-bordered table-vcenter">-->
+<!--                                                    <tr>-->
+<!--                                                        <td>-->
+<!--                                                            <button class="btn btn-xs btn-info btn-default" type="button" data-toggle="modal" data-target="#addpindao">添加频道</button>-->
+<!--                                                        </td>-->
+<!--                                                    </tr>-->
+<!--                                                </table>-->
+												<input type="hidden" id="showcaId" name="caId" value="">
+												<div class="modal-body">
+													<table class="table table-bordered table-striped table-vcenter" align="center">
+														<tr>
+															<td>
+																<div class="input-group">
+																</div>
+															</td>
+														</tr>
+													</table>
+													<div class="table-responsive">
+													<table class="table table-hover  table-vcenter">
+														<thead>
+															<tr>
+																<th style="text-align:center;">频道名称</th>
+																<th style="text-align:center;">状态</th>
+																<th style="text-align:center;">LOGO</th>
+																<th style="text-align:center;">操作</th>
+															</tr>
+														</thead>
+														<tbody id="channellist_tbody_pindao">
+														</tbody>
+													</table>
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" class="btn btn-default" data-dismiss="modal" onclick="">关闭</button>
+												</div>
+											</form>
+										</div>
+									</div>
+								</div>
+                                <!--添加频道-->
+<!--                                <div class="modal fade" id="addpindao" tabindex="-1" role="dialog">-->
+<!--                                    <div class="modal-dialog" role="document">-->
+<!--                                        <div class="modal-content">-->
+<!--                                            <div class="modal-header">-->
+<!--                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"><span aria-hidden="true">&times;</span></button>-->
+<!--                                                <h4 class="modal-title">添加频道</h4>-->
+<!--                                            </div>-->
+<!--                                            <form method="post" action="/admin/fenlei">-->
+<!--                                                <div class="modal-body">-->
+<!--                                                    <input type="hidden" id="caId_pindao" data-value="" name="caId" value="">-->
+<!--                                                    <div class="form-group">-->
+<!--                                                        <label for="recipient-name" class="control-label">频道名称：</label>-->
+<!--                                                        <input type="text" class="form-control" id="pindao_name" name="pindao_name" placeholder="频道名称">-->
+<!--                                                    </div>-->
+<!--                                                </div>-->
+<!--                                                <div class="modal-footer">-->
+<!--                                                    <button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="addPindao">确定</button>-->
+<!--                                                    <button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;" data-dismiss="modal">关闭</button>-->
+<!--                                                </div>-->
+<!--                                            </form>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+
+								<div class="modal fade" id="editChannel_pindao" tabindex="-1" role="dialog" aria-hidden="true" style="overflow:visible;">
+									<div class="modal-dialog" role="document"
+										style="height:70vh; margin:5vh auto; display:flex; flex-direction:column;">
+										
+										<div class="modal-content" style="flex:1; display:flex; flex-direction:column; overflow:visible;">
+										
+										<div class="modal-header" style="flex-shrink:0;">
+											<button type="button" class="close" data-dismiss="modal" aria-label="Close"
+											onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;">
+											<span aria-hidden="true">&times;</span>
+											</button>
+											<h4 class="modal-title">频道编辑</h4>
+										</div>
+
+										<form method="post" action="/admin/fenlei" style="flex:1; display:flex; flex-direction:column;">
+											<div class="modal-body" style="flex:1; overflow-y:auto; overflow-x:hidden; padding:15px;">
+												<input type="hidden" id="editcaId" name="caId" value="">
+												<input type="hidden" id="chId" name="chId" value="">
+												
+												<div class="form-group">
+													<label for="recipient-name" class="control-label">频道名称:</label>
+													<input type="text" class="form-control" id="chname" name="chname" placeholder="频道名称">
+												</div>
+
+												<div class="form-group">
+													<label for="recipient-name" class="control-label">订阅源规则:</label>
+													<input type="text" class="form-control" id="rss_rules" name="rss_rules" placeholder="CCTV1|CCTV-1">
+												</div>
+
+												<div class="form-group">
+													<label>订阅源列表：</label>
+													<select class="form-control selectpicker" id="rss_list_id" name="rss_list_id[]" multiple data-live-search="true" data-none-results-text="未找到匹配项" style="--max-height:300px;">
+                                                        <option value="-1" data-value="">全部</option>
+<!--                                                        <option value="0" data-value="">无</option>-->
+                                                        {{ range .Categorys }}
+                                                        <option value="{{.ID}}">{{.Name}}</option>
+                                                        {{end}}
+													</select>
+												</div>
+
+                                                <div class="form-group">
+                                                    <label for="recipient-name" class="control-label">EPG规则:</label>
+                                                    <input type="text" class="form-control" id="epg_rules" name="epg_rules" placeholder="CCTV1|CCTV-1">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>EPG列表：</label>
+                                                    <select class="form-control selectpicker" id="epg_list_id" name="epg_list_id[]" multiple data-live-search="true" data-none-results-text="未找到匹配项" style="--max-height:300px;">
+                                                        <option value="-1" data-value="">全部</option>
+<!--                                                        <option value="0"data-value="">无</option>-->
+                                                        {{ range .EpgsList }}
+                                                        <option value="{{.ID}}">{{.Name}}</option>
+                                                        {{end}}
+                                                    </select>
+                                                </div>
+
+												<div style="display: flex; align-items: center; gap: 10px;">
+													<label>台标:</label>
+													<!-- 上传按钮 -->
+													<label class="btn btn-primary" style="margin:0;">
+														上传台标
+														<input type="file" name="logofile" accept="image/png" onchange="uploadLogo(event)" id="logoInput" style="display:none;">
+													</label>
+
+													<!-- 预览图 -->
+													<div id="logoContainerEdit" style="position:relative;">
+														<img id="logoImg" src="" alt="预览" style="background-color: black;height:38px; border:1px solid #ccc; border-radius:4px; cursor:pointer;">
+														<!-- 删除按钮 -->
+														<span id="deleteIconView" onclick="" style="
+															position:absolute; top:-8px; right:-8px;
+															background:#f00; color:#fff; border-radius:50%;
+															font-size:14px; line-height:16px; width:16px; height:16px;
+															text-align:center; cursor:pointer;">×</span>
+													</div>
+												</div>
+											</div>
+
+											<div class="modal-footer" style="flex-shrink:0; margin-top:auto;">
+											<button type="button" onclick="saveChannelsOne_fenlei(this)" class="btn btn-primary" name="saveCa">确定</button>
+											<button type="button" class="btn btn-default"
+												onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);"
+												data-dismiss="modal">关闭</button>
+											</div>
+										</form>
+
+										</div>
+									</div>
+									</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<style>
+	.bootstrap-select .dropdown-menu.inner {
+	max-height: var(--max-height, 240px) !important;
+	}
+	</style>
+</main>
+{{ template "admin_footer" . }}
