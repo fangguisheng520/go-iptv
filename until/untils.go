@@ -17,11 +17,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -452,11 +450,27 @@ func GetLogos() []string {
 }
 
 func EpgNameGetLogo(eNmae string) string {
-	// 直接构造 logo 路径（如 "/config/logo/1.png"）
-	logoPath := filepath.Join("/config/logo", eNmae+".png")
-	// 检查文件是否存在
-	if _, err := os.Stat(logoPath); err == nil {
-		return "/logo/" + eNmae + ".png"
+	// 获取指定目录下的所有png文件
+	dir := "/config/logo"
+	files, err := filepath.Glob(filepath.Join(dir, "*.png"))
+	if err != nil {
+		return ""
+	}
+	if len(files) == 0 {
+		return ""
+	}
+
+	pngs := make([]string, len(files))
+	for i, file := range files {
+		pngs[i] = filepath.Base(file)
+	}
+
+	epgName := strings.SplitN(eNmae, "-", 2)[1]
+	for _, logo := range pngs {
+		logoName := strings.Split(logo, ".")[0]
+		if strings.EqualFold(epgName, logoName) {
+			return "/logo/" + logo
+		}
 	}
 	return ""
 }
@@ -577,45 +591,5 @@ func InStringSlice(target string, list []string) bool {
 			return true
 		}
 	}
-	return false
-}
-
-func CheckRam() bool {
-	// 判断可用内存
-	var sysInfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysInfo)
-	if err == nil {
-		freeRam := uint64(sysInfo.Freeram) * uint64(syscall.Getpagesize()) // 可用内存字节
-		log.Println("可用内存:", freeRam/1024/1024, "MB")
-		if freeRam < 512*1024*1024 { // 小于 512M
-			return true
-		}
-	}
-	return false
-}
-
-func IsLowResource() bool {
-	// 判断 ARM 架构
-	if runtime.GOARCH == "arm" {
-		return true
-	}
-
-	// 判断 CPU 核心数
-	if runtime.NumCPU() < 2 {
-		return true
-	}
-
-	// 判断可用内存
-	var sysInfo syscall.Sysinfo_t
-	err := syscall.Sysinfo(&sysInfo)
-	if err == nil {
-		freeRam := uint64(sysInfo.Freeram) * uint64(syscall.Getpagesize()) // 可用内存字节
-		if freeRam < 1*1024*1024*1024 {                                    // 小于 1G
-			return true
-		}
-	} else {
-		fmt.Println("获取内存信息失败:", err)
-	}
-
 	return false
 }

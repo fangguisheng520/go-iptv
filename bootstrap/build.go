@@ -127,20 +127,7 @@ func BuildAPK() bool {
 	}
 	log.Println("开始编译APK ...")
 
-	if until.IsLowResource() {
-		cmd = exec.Command("apktool",
-			"-JXmx512M",
-			"-JXX:+UseParallelGC",
-			"-JXX:+UseStringDeduplication",
-			"-JXX:ParallelGCThreads=2",
-			"-JDfile.encoding=utf-8",
-			"-JDjdk.util.zip.disableZip64ExtraFieldValidation=true",
-			"-JDjdk.nio.zipfs.allowDotZipEntry=true",
-			"b", buildSourceDir, "-o", apkPath)
-	} else {
-		cmd = exec.Command("apktool", "b", buildSourceDir, "-o", apkPath)
-	}
-
+	cmd = exec.Command("apktool", "b", buildSourceDir, "-o", apkPath)
 	if err := cmd.Run(); err != nil {
 		log.Println("编译出错:", err)
 		return false

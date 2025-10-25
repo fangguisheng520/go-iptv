@@ -9,7 +9,6 @@ import (
 )
 
 func Epgs(c *gin.Context) {
-	print("Epgs1")
 	_, ok := until.GetAuthName(c)
 	if !ok {
 		c.JSON(200, dto.NewAdminRedirectDto())

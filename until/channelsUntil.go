@@ -231,55 +231,6 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 	return result
 }
 
-func GetAutoChannelList2(category models.IptvFenlei) []models.IptvChannelShow {
-
-	var result []models.IptvChannelShow
-
-	autoCaCheKey := "autoCategory_" + strconv.FormatInt(category.ID, 10)
-	if dao.Cache.Exists(autoCaCheKey) {
-		err := dao.Cache.GetStruct(autoCaCheKey, result)
-		if err == nil {
-			return result
-		}
-	}
-
-	var channelList []models.IptvChannelShow
-	if err := dao.DB.Table(models.IptvChannelShow{}.TableName() + " AS c").
-		Select("c.*, e.name AS epg_name").
-		Joins("LEFT JOIN " + models.IptvEpg{}.TableName() + " AS e ON c.e_id = e.id AND e.status = 1").
-		Where("c.e_id != 0 and c.status = 1").
-		Order("c_id,sort asc").
-		Find(&channelList).Error; err != nil {
-		log.Println("获取频道列表失败:", err)
-		return result
-	}
-
-	re := regexp.MustCompile(category.Rules)
-
-	for _, ch := range channelList {
-		if strings.Contains(ch.Name, category.Rules) {
-			if ch.EpgName != "" {
-				ch.Logo = EpgNameGetLogo(ch.EpgName)
-			}
-			result = append(result, ch)
-			continue
-		}
-		if re.MatchString(ch.Name) {
-			if ch.EpgName != "" {
-				ch.Logo = EpgNameGetLogo(ch.EpgName)
-			}
-			result = append(result, ch)
-		}
-	}
-
-	if err := dao.Cache.SetStruct(autoCaCheKey, result); err != nil {
-		log.Println("epg缓存设置失败:", err)
-		dao.Cache.Delete(autoCaCheKey)
-	}
-
-	return result
-}
-
 func CaGetChannels(categoryDb models.IptvCategory) []models.IptvChannelShow {
 
 	if categoryDb.Type == "auto" {
@@ -310,7 +261,7 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 		}); err != nil {
 			return 0, err
 		}
-		BindChannel()
+		go BindChannel()
 		return 0, nil
 	}
 
@@ -494,7 +445,7 @@ func AddChannelList(srclist string, cId, listId int64, doRepeat bool) (int, erro
 
 	// 只有当有新增或删除时才执行异步更新
 	if len(newChannels) > 0 || len(delIDs) > 0 {
-		BindChannel()
+		go BindChannel()
 	}
 	log.Printf("订阅频道数量: %d", rawCount) // 新增日志输出
 	dao.DB.Model(&models.IptvCategory{}).Where("id = ?", cId).Update("rawcount", rawCount)

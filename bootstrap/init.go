@@ -109,7 +109,7 @@ func initIptvCategory() {
 	has = dao.DB.Migrator().HasColumn(&IptvCategory{}, "latesttime")
 	if has {
 		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN url")
-		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN latesttime;")
+		dao.DB.Exec("ALTER TABLE iptv_category DROP DROP COLUMN latesttime;")
 		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN autocategory;")
 		dao.DB.Exec("ALTER TABLE iptv_category DROP COLUMN repeat;")
 	}
@@ -153,7 +153,6 @@ func initIptvChannel() {
 			}
 		}
 		dao.DB.Exec("ALTER TABLE iptv_channels DROP COLUMN category;")
-		dao.DB.Model(&models.IptvCategory{}).Delete(&models.IptvCategory{}, "type = ? and rules =''", "auto")
 	}
 
 	dao.DB.AutoMigrate(&models.IptvChannel{})

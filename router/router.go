@@ -175,7 +175,6 @@ func InitRouter(debug bool) *gin.Engine {
 				go bootstrap.BuildAPK()
 				go crontab.Crontab()
 				go crontab.EpgCron()
-				go until.InitCacheRebuild()
 				bootstrap.Installed = true
 				c.JSON(http.StatusOK, gin.H{
 					"code": 1,

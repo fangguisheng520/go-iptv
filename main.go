@@ -12,11 +12,6 @@ import (
 )
 
 func main() {
-	if until.CheckRam() {
-		log.Println("可用内存不足512MB，无法运行")
-		return
-	}
-
 	port := flag.String("port", "80", "启动端口 eg: 80")
 	flag.Parse()
 	if !until.CheckPort(*port) {
@@ -88,7 +83,6 @@ func main() {
 
 	go crontab.Crontab()
 	go crontab.EpgCron()
-	go until.InitCacheRebuild()
 
 	if !debug {
 		bootstrap.InitJwtKey() // 初始化JWTkey
