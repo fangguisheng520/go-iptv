@@ -15,6 +15,7 @@ import (
 )
 
 func Epgs(c *gin.Context) {
+	print("Epgs2")
 	username, ok := until.GetAuthName(c)
 	if !ok {
 		c.JSON(200, dto.NewAdminRedirectDto())

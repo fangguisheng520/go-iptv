@@ -515,7 +515,7 @@ func SaveChannelsOne(params url.Values) dto.ReturnJsonDto {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误, 不得为空", Type: "danger"}
 	}
 
-	if !until.IsSafe(chId) || !until.IsSafe(e_id) || !until.IsSafe(chname) {
+	if !until.IsSafe(chId) || !until.IsSafe(e_id) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误, 存在非法字符", Type: "danger"}
 	}
 
@@ -644,7 +644,7 @@ func ChannelsChangeStatus(params url.Values) dto.ReturnJsonDto {
 
 	var chData models.IptvChannel
 	if err := dao.DB.Model(&models.IptvChannel{}).Where("id = ?", chId).First(&chData).Error; err != nil {
-		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败", Type: "danger"}
+		return dto.ReturnJsonDto{Code: 0, Msg: "查询频道失败22", Type: "danger"}
 	}
 
 	if chData.Status == 1 {

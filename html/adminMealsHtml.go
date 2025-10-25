@@ -22,8 +22,8 @@ func Meals(c *gin.Context) {
 	}
 
 	dao.DB.Model(&models.IptvMeals{}).Find(&pageData.Meals)
-	var tmpCas []models.IptvCategory
-	dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Find(&tmpCas)
+	var tmpCas []models.IptvFenlei
+	dao.DB.Model(&models.IptvFenlei{}).Where("enable = 1").Find(&tmpCas)
 	pageData.ChannelNum = int64(len(tmpCas))
 
 	for i, meal := range pageData.Meals {

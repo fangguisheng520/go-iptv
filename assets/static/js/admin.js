@@ -632,6 +632,53 @@ function getChannels(id) {
         }
     });
 }
+function getChannels_pindao(id) {
+    $("#showcaId").val(id);
+    $.ajax({
+        url: "/admin/fenlei",
+        type: "POST",
+        data: { caId: id, getchannels_pindao: "" },
+        success: function(data) {
+            lightyear.notify(data.msg, data.type, 3000);
+            if (data.type === "success") {
+                const tbody = document.getElementById("channellist_tbody_pindao");
+                tbody.innerHTML = "";
+                console.log('普通日志', data);
+                data.data.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.align = "center";
+                    const displayUrl = item.url.length > 20
+                        ? item.url.substring(0, 10) + "..." + item.url.slice(-10)
+                        : item.url;
+                    tr.innerHTML =
+                        '<td style="display:none;" class="ch-id" data-value="' + item.id + '">' + item.id + '</td>' +
+                        // '<td style="display:none;" class="rss-list" data-value="' + item.rss_list + '">' + item.rss_list + '</td>' +
+                        '<td class="ch-name" data-value="' + item.name + '">' + item.name + '</td>' +
+                        '<td class="status-show">' + (item.status === 1 ? '<font color="#33a996">上线</font>' : '<font color="red">下线</font>') + '</td>' +
+                        '<td>' + (item.logo === ''
+                            ? '无'
+                            : '<div id="logo_' + item.id + '" style="position:relative;"><img class="ch-logo" src="' + item.logo + '" alt="预览" style="background-color:black;height:38px;border:1px solid #ccc;border-radius:4px;cursor:pointer;"></div>') + '</td>' +
+                        '<td>' +
+                        '<button type="button" onclick="tdBtnPOST(this)" name="channelsStatus" value="' + item.id + '" class="btn btn-xs ' + (item.status === 1 ? 'btn-warning">下线' : 'btn-success">上线') + '</button>&nbsp;' +
+                        '<button class="btn btn-xs btn-info" type="button" value="' + item.id + '" data-toggle="modal" onclick="editChannel_pindao(this)" data-target="#editChannel_pindao">修改</button>&nbsp;' +
+                        '<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="dellist" value="' + item.id + '">删除</button>' +
+                        '</td>';
+                    // 将 epg_rules 存储在 tr 的 data 属性中
+                    $(tr).data('rss-rules', item.rss_rules);
+                    $(tr).data('epg-rules', item.epg_rules);
+                    $(tr).data('rss-list', item.rss_list);
+                    $(tr).data('epg-list', item.epg_list);
+                    tbody.appendChild(tr);
+                    $('.selectpicker').selectpicker('refresh');
+                });
+            }
+        },
+        error: function() {
+            lightyear.notify("请求失败", "danger", 3000);
+        }
+    });
+}
+
 function getChannelsTxt(btn){
 	var $tr = $(btn).closest("tr"); 
 	var cid = $tr.find(".ca-id").data("value");
@@ -686,6 +733,90 @@ function editChannel(btn) {
 		$("#logoContainerEdit").show().find("img").attr("src", logoSrc);
 	}
 }
+function editChannel_pindao(btn) {
+    var $tr = $(btn).closest("tr");
+    var chid = $tr.find(".ch-id").data("value");
+    var cname = $tr.find(".ch-name").data("value");
+    var rss_rules = $tr.data("rss-rules");
+    var epg_rules = $tr.data("epg-rules");
+    var rss_list = $tr.data("rss-list");
+    var epg_list = $tr.data("epg-list");
+    // console.log("rss_rules",rss_rules)
+    // console.log("epg_rules",epg_rules)
+    // console.log("rss_list",rss_list)
+    var curl = $tr.find(".ch-url").data("value");
+    // var ceid = $tr.find(".ch-eid").data("value");
+    var logoSrc = $(btn).closest("tr").find("td div img.ch-logo").attr("src") || "";
+    var form = btn.closest("form");
+    if (!form) {
+        lightyear.notify("表单提交失败", "danger", 3000);
+        return;
+    }
+    const params = new URLSearchParams();
+    new FormData(form).forEach((value, key) => {
+        console.log(key,value)
+        params.append(key, value);
+    });
+    console.log("editChannel_pindao")
+    $("#editcaId").val(params.get("caId"));
+    $("#chId").val(chid);
+    $("#chname").val(cname);
+    $("#chURL").val(curl);
+    // $("#e_id").val(ceid);
+    // $("#e_id").selectpicker('refresh');
+    $("#rss_rules").val(rss_rules);
+    $("#epg_rules").val(epg_rules);
+
+    // 处理 rss_list（多选框）
+    if (rss_list) {
+        // 将字符串转换为数组（如 "-1,0,1,2" -> ["-1", "0", "1", "2"]）
+        var rssArray = rss_list.split(",");
+        // 设置多选框选中状态
+        $("#rss_list_id").val(rssArray);
+    }
+
+    if (epg_list) {
+        // 将字符串转换为数组（如 "-1,0,1,2" -> ["-1", "0", "1", "2"]）
+        var epgArray = epg_list.split(",");
+        // 设置多选框选中状态
+        $("#epg_list_id").val(epgArray);
+    }
+
+    // 刷新选择器
+    $("#rss_list_id").selectpicker("refresh");
+    $("#epg_list_id").selectpicker("refresh");
+
+    // 添加事件监听器，当选择"全部"或"无"时取消其他选项
+    $('#rss_list_id, #epg_list_id').on('changed.bs.select', function(e, clickedIndex, isSelected, previousValue) {
+        var select = $(this);
+        var selectedValues = select.val() || [];
+
+        // 获取当前点击的值
+        var clickedValue = $(select.find('option')[clickedIndex]).val();
+
+        // 如果选择了"全部"(-1)或"无"(0)
+        if (clickedValue === "-1" || clickedValue === "0") {
+            // 取消所有其他选项，只保留当前点击的"全部"或"无"
+            var newValues = selectedValues.filter(val => val === clickedValue);
+            select.val(newValues);
+        }
+        // 如果选择了其他选项(非"全部"和"无")
+        else if (clickedValue !== "-1" && clickedValue !== "0") {
+            // 取消"全部"和"无"选项
+            var newValues = selectedValues.filter(val => val !== "-1" && val !== "0");
+            select.val(newValues);
+        }
+
+        select.selectpicker('refresh');
+    });
+
+    if (!logoSrc) {
+        $("#logoContainerEdit").hide();
+    } else {
+        $("#logoContainerEdit").show().find("img").attr("src", logoSrc);
+    }
+}
+
 function saveChannelsOne(btn){
 	var form = btn.closest("form");
 	if (!form) {
@@ -716,6 +847,51 @@ function saveChannelsOne(btn){
 			lightyear.notify("请求失败", "danger", 3000);
 		}
 	});
+}
+
+function saveChannelsOne_fenlei(btn){
+    var form = btn.closest("form");
+    if (!form) {
+        lightyear.notify("表单提交失败", "danger", 3000);
+        return;
+    }
+    const params = new URLSearchParams();
+    new FormData(form).forEach((value, key) => {
+        if (key === "logofile") {
+            return;
+        }
+        params.append(key, value);
+    });
+
+    // 处理rss_list_id - 如果未选择任何选项，则设置为"0"
+    var rssListValues = $("#rss_list_id").val();
+    if (!rssListValues || rssListValues.length === 0) {
+        params.set("rss_list_id[]", "0");
+    }
+    // 处理epg_list_id - 如果未选择任何选项，则设置为"0"
+    var epgListValues = $("#epg_list_id").val();
+    if (!epgListValues || epgListValues.length === 0) {
+        params.set("epg_list_id[]", "0");
+    }
+
+    params.append("saveChannelsOne_fenlei", "");
+    var editchmodal = $(btn).closest('.modal');
+    console.log('params',params)
+    $.ajax({
+        url: "/admin/fenlei",
+        type: "POST",
+        data: params.toString(),
+        success: function(data) {
+            lightyear.notify(data.msg, data.type, 3000);
+            if (data.type === "success") {
+                editchmodal.modal('hide');
+                getChannels_pindao(params.get("caId"));
+            }
+        },
+        error: function() {
+            lightyear.notify("请求失败", "danger", 3000);
+        }
+    });
 }
 function getLogo(){
 	var $select = $("#e_id");
@@ -1065,6 +1241,44 @@ function caMoveup() {
 		}
     });
 }
+function caMoveup_fenlei() {
+    const tbody = document.getElementById("categorylist_tbody");
+    if (!tbody) return;
+    const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
+    if (!firstChecked) {
+        lightyear.notify("请先选择一个分类", 'danger', 1000);
+        return;
+    }
+    const tr = firstChecked.closest("tr");
+    if (!tr) {
+        lightyear.notify("未找到对应行", 'danger', 1000);
+        return;
+    };
+    const prevTr = tr.previousElementSibling;
+    if (!prevTr) {
+        lightyear.notify("已经是第一行了", 'danger', 1000);
+        return;
+    };
+    const value = firstChecked.value;
+    const params = new URLSearchParams();
+    params.append("moveup", value);
+    $.ajax({
+        url: "/admin/fenlei",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+                lightyear.notify(data.msg, data.type, 1000);
+                tbody.insertBefore(tr, prevTr);
+            } else {
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+            lightyear.notify("操作失败", 'danger', 1000);
+        }
+    });
+}
 function caMovedown() {
     const tbody = document.getElementById("categorylist_tbody");
     if (!tbody) return;
@@ -1103,6 +1317,44 @@ function caMovedown() {
         }
     });
 }
+function caMovedown_fenlei() {
+    const tbody = document.getElementById("categorylist_tbody");
+    if (!tbody) return;
+    const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
+    if (!firstChecked) {
+        lightyear.notify("请先选择一个分类", 'danger', 1000);
+        return;
+    }
+    const tr = firstChecked.closest("tr");
+    if (!tr) {
+        lightyear.notify("未找到对应行", 'danger', 1000);
+        return;
+    }
+    const nextTr = tr.nextElementSibling;
+    if (!nextTr) {
+        lightyear.notify("已经是最后一行了", 'danger', 1000);
+        return;
+    }
+    const value = firstChecked.value;
+    const params = new URLSearchParams();
+    params.append("movedown", value);
+    $.ajax({
+        url: "/admin/fenlei",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+                lightyear.notify(data.msg, data.type, 1000);
+                tbody.insertBefore(tr, nextTr.nextElementSibling);
+            } else {
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+            lightyear.notify("操作失败", 'danger', 1000);
+        }
+    });
+}
 function caMovetop() {
     const tbody = document.getElementById("categorylist_tbody");
     if (!tbody) return;
@@ -1125,6 +1377,43 @@ function caMovetop() {
     params.append("movetop", value);
     $.ajax({
         url: "/admin/channels",
+        type: "POST",
+        data: params.toString(),
+        success: function (data) {
+            if (data.type === "success") {
+                lightyear.notify(data.msg, data.type, 1000);
+                tbody.insertBefore(tr, tbody.firstElementChild);
+            } else {
+                lightyear.notify(data.msg, data.type, 1000);
+            }
+        },
+        error: function () {
+            lightyear.notify("操作失败", 'danger', 1000);
+        }
+    });
+}
+function caMovetop_fenlei() {
+    const tbody = document.getElementById("categorylist_tbody");
+    if (!tbody) return;
+    const firstChecked = tbody.querySelector("input[type='checkbox']:checked");
+    if (!firstChecked) {
+        lightyear.notify("请先选择一个分类", 'danger', 1000);
+        return;
+    }
+    const tr = firstChecked.closest("tr");
+    if (!tr) {
+        lightyear.notify("未找到对应行", 'danger', 1000);
+        return;
+    }
+    if (tr === tbody.firstElementChild) {
+        lightyear.notify("已经在最顶端了", 'danger', 1000);
+        return;
+    }
+    const value = firstChecked.value;
+    const params = new URLSearchParams();
+    params.append("movetop", value);
+    $.ajax({
+        url: "/admin/fenlei",
         type: "POST",
         data: params.toString(),
         success: function (data) {
