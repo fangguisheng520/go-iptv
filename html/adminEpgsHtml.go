@@ -15,6 +15,7 @@ import (
 )
 
 func Epgs(c *gin.Context) {
+	print("Epgs2")
 	username, ok := until.GetAuthName(c)
 	if !ok {
 		c.JSON(200, dto.NewAdminRedirectDto())
@@ -63,9 +64,11 @@ func Epgs(c *gin.Context) {
 	}
 
 	recStart := recCounts * (pageData.Page - 1)
-	keywords := "%" + pageData.Keywords + "%" // 模糊查询
-
-	dbQuery := dao.DB.Model(&models.IptvEpg{}).Where("name like ? or remarks like ? or content like ?", keywords, keywords, keywords)
+	dbQuery := dao.DB.Model(&models.IptvEpg{})
+	if pageData.Keywords == "" {
+		keywords := "%" + pageData.Keywords + "%" // 模糊查询
+		dbQuery = dbQuery.Where("name like ? or remarks like ? or content like ?", keywords, keywords, keywords)
+	}
 
 	var count int64
 	err = dbQuery.Count(&count).Error

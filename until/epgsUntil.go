@@ -271,7 +271,7 @@ func BindChannel() bool {
 		}
 		chNameList := MergeAndUnique(strings.Split(epgData.Content, ","), tmpList)
 		if len(tmpList) > 0 {
-			dao.DB.Model(&models.IptvChannel{}).Where("name in (?) and e_id == 0", chNameList).Update("e_id", epgData.ID)
+			dao.DB.Model(&models.IptvChannel{}).Where("name in (?) and e_id = 0", chNameList).Update("e_id", epgData.ID)
 
 			if !EqualStringSets(strings.Split(epgData.Content, ","), chNameList) {
 				epgData.Content = strings.Join(chNameList, ",")
@@ -358,29 +358,86 @@ func GetTxt(id int64) string {
 		return res
 	}
 	categoryIdList := strings.Split(meal.Content, ",")
-	var categoryList []models.IptvCategory
-	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
+	var categoryList []models.IptvFenlei
+	if err := dao.DB.Model(&models.IptvFenlei{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
 	}
-
+	println("打印IptvFenlei列表")
 	for _, category := range categoryList {
-		var channels []models.IptvChannelShow
-		if category.Type != "auto" {
-			dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&channels)
-		} else {
-			channels = GetAutoChannelList(category)
-		}
-		if len(channels) == 0 {
-			continue
-		}
+		//分类名称
 		res += category.Name + ",#genre#\n"
-		for _, channel := range channels {
-			if channel.Status == 1 {
-				res += channel.Name + "," + channel.Url + "\n"
+
+		var channels_pindao []models.IptvPindaoShow
+		dao.DB.Model(&models.IptvPindaoShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&channels_pindao)
+
+		for _, pindao := range channels_pindao {
+
+			if pindao.Rss_List == "0" {
+				println("无列表")
+				continue
+			}
+			if pindao.Rss_List == "-1" {
+				println("全部列表")
+				var category_tmp []models.IptvCategory
+				dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Order("sort asc").Find(&category_tmp)
+				for _, channels_tmp := range category_tmp {
+					println("category: ", channels_tmp.Name)
+					rss_rules_tmp := strings.Split(pindao.Rss_Rules, "|")
+					var channels_tmp_2 []models.IptvChannelShow
+					dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", channels_tmp.ID).Where("name in (?)", rss_rules_tmp).Order("sort asc").Find(&channels_tmp_2)
+					for _, channels_tmp_3 := range channels_tmp_2 {
+						println("channels_tmp_3: ", channels_tmp_3.Name)
+						if channels_tmp_3.Status == 1 {
+							//频道名称+URL
+							res += pindao.Name + "," + channels_tmp_3.Url + "\n"
+						}
+					}
+				}
+			} else {
+				println("其他列表:", pindao.Rss_List)
+				Rss_List_tmp := strings.Split(pindao.Rss_List, ",")
+				var category_tmp []models.IptvCategory
+				dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", Rss_List_tmp).Order("sort asc").Find(&category_tmp)
+
+				for _, channels_tmp := range category_tmp {
+					println("category: ", channels_tmp.Name)
+					rss_rules_tmp := strings.Split(pindao.Rss_Rules, "|")
+					var channels_tmp_2 []models.IptvChannelShow
+					dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", channels_tmp.ID).Where("name in (?)", rss_rules_tmp).Order("sort asc").Find(&channels_tmp_2)
+					for _, channels_tmp_3 := range channels_tmp_2 {
+						println("channels_tmp_3: ", channels_tmp_3.Name)
+						if channels_tmp_3.Status == 1 {
+							//频道名称+URL
+							res += pindao.Name + "," + channels_tmp_3.Url + "\n"
+						}
+					}
+				}
 			}
 
 		}
+
 	}
+
+	print(res)
+
+	//for _, category := range categoryList {
+	//	var channels []models.IptvChannelShow
+	//	if category.Type != "auto" {
+	//		dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&channels)
+	//	} else {
+	//		channels = GetAutoChannelList(category)
+	//	}
+	//	if len(channels) == 0 {
+	//		continue
+	//	}
+	//	res += category.Name + ",#genre#\n"
+	//	for _, channel := range channels {
+	//		if channel.Status == 1 {
+	//			res += channel.Name + "," + channel.Url + "\n"
+	//		}
+	//
+	//	}
+	//}
 
 	if err := dao.Cache.Set(txtCaCheKey, []byte(res)); err != nil {
 		log.Println("epg缓存设置失败:", err)
@@ -467,6 +524,7 @@ func GetEpg(id int64) dto.XmlTV {
 	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
 		return res
 	}
+
 	categoryIdList := strings.Split(meal.Content, ",")
 	categoryIdList = slices.DeleteFunc(categoryIdList, func(s string) bool {
 		return strings.TrimSpace(s) == ""
@@ -474,6 +532,171 @@ func GetEpg(id int64) dto.XmlTV {
 	if len(categoryIdList) == 0 {
 		return res
 	}
+
+	var categoryList []models.IptvFenlei
+	if err := dao.DB.Model(&models.IptvFenlei{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
+		return res
+	}
+
+	println("EPG获取")
+	var channels_epg_tmp []models.IptvChannelShow
+
+	for _, category := range categoryList {
+		//分类名称
+		//res += category.Name + ",#genre#\n"
+
+		var channels_pindao []models.IptvPindaoShow
+		dao.DB.Model(&models.IptvPindaoShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&channels_pindao)
+
+		for _, pindao := range channels_pindao {
+
+			if pindao.Rss_List == "0" {
+				println("EPG获取-无列表")
+				continue
+			}
+			if pindao.Rss_List == "-1" {
+				println("EPG获取-全部列表")
+				var category_tmp []models.IptvCategory
+				dao.DB.Model(&models.IptvCategory{}).Where("enable = 1").Order("sort asc").Find(&category_tmp)
+				for _, channels_tmp := range category_tmp {
+					println("category: ", channels_tmp.Name)
+					rss_rules_tmp := strings.Split(pindao.Rss_Rules, "|")
+					var channels_tmp_2 []models.IptvChannelShow
+					dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", channels_tmp.ID).Where("name in (?)", rss_rules_tmp).Order("sort asc").Find(&channels_tmp_2)
+					for _, channels_tmp_3 := range channels_tmp_2 {
+						println("channels_tmp_3: ", channels_tmp_3.Name)
+						channels_epg_tmp = append(channels_epg_tmp, models.IptvChannelShow{
+							ID:      channels_tmp_3.ID,
+							Name:    pindao.Name,
+							Url:     channels_tmp_3.Url,
+							Status:  channels_tmp_3.Status,
+							Sort:    channels_tmp_3.Sort,
+							EId:     channels_tmp_3.EId,
+							CId:     channels_tmp_3.CId,
+							ListId:  channels_tmp_3.ListId,
+							EpgName: channels_tmp_3.EpgName,
+							Logo:    channels_tmp_3.Logo,
+						})
+					}
+				}
+			} else {
+				println("EPG获取-其他列表:", pindao.Rss_List)
+				Rss_List_tmp := strings.Split(pindao.Rss_List, ",")
+				var category_tmp []models.IptvCategory
+				dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", Rss_List_tmp).Order("sort asc").Find(&category_tmp)
+
+				for _, channels_tmp := range category_tmp {
+					println("EPG获取-category: ", channels_tmp.Name)
+					rss_rules_tmp := strings.Split(pindao.Rss_Rules, "|")
+					var channels_tmp_2 []models.IptvChannelShow
+					dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", channels_tmp.ID).Where("name in (?)", rss_rules_tmp).Order("sort asc").Find(&channels_tmp_2)
+					for _, channels_tmp_3 := range channels_tmp_2 {
+						println("channels_tmp_3: ", channels_tmp_3.Name)
+						channels_epg_tmp = append(channels_epg_tmp, models.IptvChannelShow{
+							ID:      channels_tmp_3.ID,
+							Name:    pindao.Name,
+							Url:     channels_tmp_3.Url,
+							Status:  channels_tmp_3.Status,
+							Sort:    channels_tmp_3.Sort,
+							EId:     channels_tmp_3.EId,
+							CId:     channels_tmp_3.CId,
+							ListId:  channels_tmp_3.ListId,
+							EpgName: channels_tmp_3.EpgName,
+							Logo:    channels_tmp_3.Logo,
+						})
+					}
+				}
+			}
+
+		}
+
+	}
+
+	println("EPG获取-channels_tmp_3: ")
+	for _, channels_tmp_4 := range channels_epg_tmp {
+		println("ID", channels_tmp_4.ID)
+		println("Name", channels_tmp_4.Name)
+		println("Url", channels_tmp_4.Url)
+		println("Status", channels_tmp_4.Status)
+		println("Sort", channels_tmp_4.Sort)
+		println("EId", channels_tmp_4.EId)
+		println("CId", channels_tmp_4.CId)
+		println("ListId", channels_tmp_4.ListId)
+		println("EpgName", channels_tmp_4.EpgName)
+		println("Logo", channels_tmp_4.Logo)
+	}
+
+	//categoryIdList := strings.Split(meal.Content, ",")
+	//categoryIdList = slices.DeleteFunc(categoryIdList, func(s string) bool {
+	//	return strings.TrimSpace(s) == ""
+	//})
+	//if len(categoryIdList) == 0 {
+	//	return res
+	//}
+	//var categoryList []models.IptvCategory
+	//if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
+	//	return res
+	//}
+	//
+	//var channels []models.IptvChannelShow
+	//for _, category := range categoryList {
+	//	if category.Type != "auto" {
+	//		var tmpChannels []models.IptvChannelShow
+	//		dao.DB.Model(&models.IptvChannelShow{}).Where("c_id = ? and status = 1", category.ID).Order("sort asc").Find(&tmpChannels)
+	//		channels = append(channels, tmpChannels...)
+	//	} else {
+	//		channels = GetAutoChannelList(category)
+	//	}
+	//}
+	//
+
+	res = CleanTV(GetEpgXml(channels_epg_tmp))
+
+	data, err := xml.Marshal(res)
+	if err == nil {
+		err := dao.Cache.Set(epgCaCheKey, data)
+		if err != nil {
+			log.Println("epg缓存设置失败:", err)
+			dao.Cache.Delete(epgCaCheKey)
+		}
+	} else {
+		log.Println("epg缓存序列化失败:", err)
+		dao.Cache.Delete(epgCaCheKey)
+	}
+	return res
+}
+
+func GetEpg3(id int64) dto.XmlTV {
+
+	res := dto.XmlTV{
+		GeneratorName: "清和IPTV管理系统",
+		GeneratorURL:  "https://www.qingh.xyz",
+	}
+
+	epgCaCheKey := "rssEpgXml_" + strconv.FormatInt(id, 10)
+	if dao.Cache.Exists(epgCaCheKey) {
+		cacheData, err := dao.Cache.Get(epgCaCheKey)
+		if err == nil {
+			err := xml.Unmarshal(cacheData, &res)
+			if err == nil {
+				return res
+			}
+		}
+	}
+
+	var meal models.IptvMeals
+	if err := dao.DB.Model(&models.IptvMeals{}).Where("id = ? and status = 1", id).First(&meal).Error; err != nil {
+		return res
+	}
+
+	//categoryIdList := strings.Split(meal.Content, ",")
+	//categoryIdList = slices.DeleteFunc(categoryIdList, func(s string) bool {
+	//	return strings.TrimSpace(s) == ""
+	//})
+	//if len(categoryIdList) == 0 {
+	//	return res
+	//}
+	categoryIdList := []string{"1", "2", "3"}
 	var categoryList []models.IptvCategory
 	if err := dao.DB.Model(&models.IptvCategory{}).Where("id in (?) and enable = 1", categoryIdList).Order("sort asc").Find(&categoryList).Error; err != nil {
 		return res
@@ -488,6 +711,20 @@ func GetEpg(id int64) dto.XmlTV {
 		} else {
 			channels = GetAutoChannelList(category)
 		}
+	}
+
+	println("EPG获取-channels_tmp_3: ")
+	for _, channels_tmp_4 := range channels {
+		println("ID", channels_tmp_4.ID)
+		println("Name", channels_tmp_4.Name)
+		println("Url", channels_tmp_4.Url)
+		println("Status", channels_tmp_4.Status)
+		println("Sort", channels_tmp_4.Sort)
+		println("EId", channels_tmp_4.EId)
+		println("CId", channels_tmp_4.CId)
+		println("ListId", channels_tmp_4.ListId)
+		println("EpgName", channels_tmp_4.EpgName)
+		println("Logo", channels_tmp_4.Logo)
 	}
 
 	res = CleanTV(GetEpgXml(channels))

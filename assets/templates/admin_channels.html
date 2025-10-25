@@ -9,7 +9,7 @@
 		<div class="row">
 			<div class="col-lg-12">
 				<div class="card">
-					<div class="card-header"><h4>频道源设置</h4></div>
+					<div class="card-header"><h4>订阅源设置</h4></div>
 					<div class="tab-content">
 						<div class="tab-pane active">
 	                		<div class="table-responsive" >
@@ -48,7 +48,16 @@
 										<td style="display:none;" class="cl-id" data-value="{{ .ID }}">{{ .ID }}</td>
 										<td style="display:none;" class="cl-ua" data-value="{{ .UA }}">{{ .UA }}</td>
 										<td align="center" class="cl-name" data-value="{{ .Name }}">{{ .Name }}</td>
-										<td align="center" class="cl-url" data-value="{{ .Url }}">{{ .Url }}</td>
+										<td align="center" class="cl-url" data-value="{{ .Url }}" style="max-width: 200px; 
+											word-wrap: break-word; 
+											white-space: normal; 
+											-webkit-line-clamp: 3; 
+											-webkit-box-orient: vertical; 
+											overflow: hidden; 
+											 text-align: center;
+											text-overflow: ellipsis;">
+										<a href="{{ .Url }}" target="_blank">{{ .Url }}</a>
+										</td>
 										<td align="center">{{ .LatestTime }}</td>
 										<td align="center" class="cl-a" data-value="{{ .AutoCategory }}">{{if eq .AutoCategory 1 }}启用{{else}}关闭{{ end }}</td>
 										<td align="center" class="cl-r" data-value="{{ .Repeat }}">{{if eq .Repeat 1 }}启用{{else}}关闭{{ end }}</td>
