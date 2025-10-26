@@ -183,7 +183,7 @@
 												<button type="button" onclick="tdBtnPOST(this)" name="categoryStatus" value="{{.ID}}" class="btn btn-xs {{if eq .Enable 1 }}btn-warning">下线{{else}}btn-success">上线{{end}}</button>
 												<button class="btn btn-xs btn-info" type="button" value="{{.ID}}" data-toggle="modal" onclick="getCategory(this)" data-target="#addclass">编辑</button>
 												<button class="btn btn-xs btn-info" type="button" data-toggle="modal" onclick="getChannelsTxt(this)" data-target="#showtxt">编辑频道</button>
-												<button class="btn btn-xs btn-info" type="button" data-toggle="modal" onclick="getChannels('{{.ID}}')" data-target="#showlist">EPG管理</button>
+<!--												<button class="btn btn-xs btn-info" type="button" data-toggle="modal" onclick="getChannels('{{.ID}}')" data-target="#showlist">EPG管理</button>-->
 												<button class="btn btn-xs btn-danger" type="button" onclick="tdBtnPOST(this)" name="delca" value="{{.ID}}">删除</button>
 											</td>
 										{{ end }}{{ end }}
