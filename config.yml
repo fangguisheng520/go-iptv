@@ -25,3 +25,6 @@ channel:
     auto: 1
 rss:
     key: ''
+proxy:
+    status: 0
+    port: 8080

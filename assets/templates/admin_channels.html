@@ -194,7 +194,7 @@
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 											<div class="modal-header">
-												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"><span aria-hidden="true">&times;</span></button>
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#caproxy').prop('checked', false);$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;"><span aria-hidden="true">&times;</span></button>
 												<h4 class="modal-title">分组编辑</h4>
 											</div>
 											<form method="post" action="/admin/channels">
@@ -204,11 +204,18 @@
 														<label for="recipient-name" class="control-label">分组名称：</label>
 														<input type="text" class="form-control" id="caname" name="caname" placeholder="分组名称">
 													</div>
-													<!-- <div class="form-group">
+													<div class="form-group">
 														<label for="message-text" class="control-label">User-Agent: </label>
 														<input class="form-control" id="caua" name="caua" placeholder="Go-http-client/1.1"></input>
 														<small class="help-block">APTV源的UA样例为: AptvPlayer/1.4.10</small>
-													</div> -->
+													</div>
+													<div class="form-group" style="margin-right: 15px;">
+														<label>开启代理:</label>
+														<label class="lyear-switch switch-primary">
+															<input type="checkbox" id="caproxy" name="caproxy"/>
+															<span></span>
+														</label>
+													</div>
 													<div class="form-group">
 														<label for="rules" class="control-label">自动聚合规则: </label>
 														<input class="form-control" id="rules" name="rules" placeholder="正则表达式" disabled></input>
@@ -222,7 +229,7 @@
 												</div>
 												<div class="modal-footer">
 													<button type="button" onclick="submitFormPOST(this)" class="btn btn-primary" name="saveCa">确定</button>
-													<button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;" data-dismiss="modal">关闭</button>
+													<button type="button" class="btn btn-default" onclick="$('#caId').val('');$('#caname').val('');$('#rules').val('');$('#caproxy').prop('checked', false);$('#autoagg').prop('checked', false);document.getElementById('rules').disabled = true;" data-dismiss="modal">关闭</button>
 												</div>
 											</form>
 										</div>

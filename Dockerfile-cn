@@ -2,6 +2,7 @@ FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/golang:1.24-alpine AS bu
 
 VOLUME /config
 WORKDIR /app
+EXPOSE 80 8080
 
 COPY go.mod go.sum ./
 RUN go env -w GO111MODULE=on 
@@ -26,6 +27,7 @@ COPY ./README.md  /app/README.md
 COPY ./ChangeLog.md /app/ChangeLog.md
 COPY ./logo /app/logo
 COPY ./Version /app/Version
+COPY ./license/license-amd64 /app/license
 
 ENV TZ=Asia/Shanghai
 RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories; \

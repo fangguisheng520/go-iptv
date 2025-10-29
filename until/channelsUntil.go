@@ -205,6 +205,7 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 		return result
 	}
 
+	cfg := dao.GetConfig()
 	re := regexp.MustCompile(category.Rules)
 
 	for _, ch := range channelList {
@@ -212,12 +213,18 @@ func GetAutoChannelList(category models.IptvCategory) []models.IptvChannelShow {
 			if ch.EpgName != "" {
 				ch.Logo = EpgNameGetLogo(ch.EpgName)
 			}
+			if category.Proxy == 1 && cfg.Proxy.Status == 1 {
+				ch.Url = fmt.Sprintf("%s:%d/p/%d?u=%s", cfg.ServerUrl, cfg.Proxy.Port, category.ID, ch.Url)
+			}
 			result = append(result, ch)
 			continue
 		}
 		if re.MatchString(ch.Name) {
 			if ch.EpgName != "" {
 				ch.Logo = EpgNameGetLogo(ch.EpgName)
+			}
+			if category.Proxy == 1 && cfg.Proxy.Status == 1 {
+				ch.Url = fmt.Sprintf("%s:%d/p/%d?u=%s", cfg.ServerUrl, cfg.Proxy.Port, category.ID, ch.Url)
 			}
 			result = append(result, ch)
 		}
@@ -236,6 +243,7 @@ func CaGetChannels(categoryDb models.IptvCategory) []models.IptvChannelShow {
 	if categoryDb.Type == "auto" {
 		return GetAutoChannelList(categoryDb)
 	} else {
+		cfg := dao.GetConfig()
 		var channels []models.IptvChannelShow
 		dao.DB.Table(models.IptvChannelShow{}.TableName()+" AS c").
 			Select("c.*, e.name AS epg_name").
@@ -246,6 +254,9 @@ func CaGetChannels(categoryDb models.IptvCategory) []models.IptvChannelShow {
 		for i, ch := range channels {
 			if ch.EpgName != "" {
 				channels[i].Logo = EpgNameGetLogo(ch.EpgName)
+			}
+			if categoryDb.Proxy == 1 && cfg.Proxy.Status == 1 {
+				channels[i].Url = fmt.Sprintf("%s:%d/p/%d?u=%s", cfg.ServerUrl, cfg.Proxy.Port, categoryDb.ID, ch.Url)
 			}
 		}
 		return channels

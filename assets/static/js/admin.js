@@ -93,7 +93,13 @@ function submitFormPOST(btn) {
 		}
 		params.append(key, value);
 	});
-	params.append(btn.name, "");
+
+	if ($(btn).is(":checkbox")) {
+		params.append(btn.name, btn.checked ? 1 : 0);
+	}else{
+		params.append(btn.name, btn.value);
+	}
+	
 	fetch(action, {
 		method: "POST",
 		headers: {
@@ -588,7 +594,7 @@ function getCategory(btn) {
 		document.getElementById('rules').disabled = true;
 	}
 	$("#autoagg").prop("checked", ctype === "auto");
-	$("#proxy").prop("checked", cproxy === 1);
+	$("#caproxy").prop("checked", cproxy === 1);
 }
 function getChannels(id) {
     $("#showcaId").val(id);

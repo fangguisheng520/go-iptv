@@ -717,7 +717,7 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 	caua := params.Get("caua")
 	autoagg := params.Get("autoagg")
 	rules := params.Get("rules")
-	proxy := params.Get("proxy")
+	proxy := params.Get("caproxy")
 
 	if caname == "" || !until.IsSafe(caname) || !until.IsSafe(autoagg) || !until.IsSafe(proxy) {
 		return dto.ReturnJsonDto{Code: 0, Msg: "参数错误或非法参数", Type: "danger"}
@@ -748,6 +748,8 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 		dao.DB.Model(&models.IptvCategory{}).Create(&new)
 		if new.Type == "auto" {
 			go until.CleanAutoCacheAll()
+		} else {
+			go until.CleanMealsTxtCacheAll()
 		}
 	} else {
 		caIdInt, err := strconv.ParseInt(caId, 10, 64)
@@ -768,10 +770,20 @@ func SaveCategory(params url.Values) dto.ReturnJsonDto {
 		}
 		if proxy == "1" || proxy == "true" || proxy == "on" {
 			ca.Proxy = 1
+		} else {
+			ca.Proxy = 0
 		}
-		dao.DB.Model(&models.IptvCategory{}).Where("id = ?", caIdInt).Updates(&ca)
+		dao.DB.Model(&models.IptvCategory{}).Where("id = ?", caIdInt).Updates(map[string]interface{}{
+			"name":  ca.Name,
+			"ua":    ca.UA,
+			"type":  ca.Type,
+			"rules": ca.Rules,
+			"proxy": ca.Proxy,
+		})
 		if ca.Type == "auto" {
 			go until.CleanAutoCacheAll()
+		} else {
+			go until.CleanMealsTxtCacheAll()
 		}
 	}
 	return dto.ReturnJsonDto{Code: 1, Msg: "操作成功", Type: "success"}
